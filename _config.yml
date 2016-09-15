@@ -1,11 +1,11 @@
 
 # Syntax highlighting
-markdown:            redcarpet
-highlighter:         pygments
-
+kramdown:          
+  input: GFM
+  syntax_highlighter: rouge
 # Permalinks
-permalink:           /:title
-relative_permalinks: true
+permalink:           pretty
+# relative_permalinks: true
 
 # Setup
 timezone:            your timezone # eg. Asia/Kathmandu
