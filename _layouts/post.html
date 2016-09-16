@@ -42,6 +42,8 @@ layout: default
       </div>
     </div>
   </section>
+    
+
   <section class="section--last">
     <div class="container container--content">
       <div class="content-body">
@@ -55,11 +57,18 @@ layout: default
     <hr/>
     <div class="container container--content">
       <div class="content-body">
+            <embed src="{{ site.baseurl }}assets/bgm/{{ page.bgm }}" autostart="true" loop="true" width=0 height=0 ></embed>
         {% include subscribe.html %}
-        {% include comments.html %}
+        <!-- {% include comments.html %} -->
       </div>
     </div>
   </section>
+  
+
+
+
+
+
   <footer class="postFooter">
     {% if page.previous.url %}
       <section class="section--prePost is-darkBackgrounded u-table">

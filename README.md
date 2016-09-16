@@ -60,7 +60,7 @@ bgGradientOpacity: darker # darker or lighter - control featured image opacity
 
 ### Identity
 
-To replace logos with your own, simply update the following files in `assets/images/`:
+To replace logos with your own, simply update the following  files in `assets/images/`:
 
 - `logo-white.svg`
 - `logo-black.svg`
@@ -114,7 +114,7 @@ Mickey has two branches, but only one is used for active development.
 During development, simply run `gulp` in terminal and it will compile the jekyll site, compile Sass, create post thumbnails, launch BrowserSync & watch files for changes and recompile.
 
 Source Sass files are located in `_scss/`, included into `main.scss`, and compile to `assets/css/main.css`.
-
+ 
 Post thumbnails are automatically resized via Gulp's image resize package, and moved to `assets/images/thumbnails`. Any featured images you put in `assets/images/hero` will be automatically created
 
 ## Author
