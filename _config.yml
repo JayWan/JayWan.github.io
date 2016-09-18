@@ -1,52 +1,12 @@
+# Site settings
+title: JackWan's BLOG
+email: 842631684@qq.com
+description: > # this means to ignore newlines until "baseurl:"
+baseurl: "" # the subpath of your site, e.g. /blog/
+url: "" # the base hostname & protocol for your site
 
-# Syntax highlighting
-kramdown:          
-  input: GFM
-  syntax_highlighter: rouge
-# Permalinks
-permalink:           pretty
-# relative_permalinks: true
+twitter_username: 
+github_username: WanNJ
 
-# Setup
-timezone:            Asia/Shanghai # eg. Asia/Kathmandu
-locale:              your locale language # eg. en_us
-name:				         LoveStory
-title:               221 FOREVER
-tagline:             'LOVE'
-description:         'An website filled of stories of THE VERY TWO SOUL.'
-url:                 site url
-rss:                 rss feed url
-baseurl:             '/'
-baseurl_posts_img:   '/assets/images/posts/'
-baseurl_featured_img: '/assets/images/hero/'
-baseurl_featured_thumbnail: '/assets/images/thumbnail/'
-baseurl_javascripts: '/assets/javascripts/'
-icon:                '/assets/images/icon.png' # /assets/img/icon.png [best 300px X 300px]
-disqus:              disqus_shortname # get it on https://disqus.com/admin/
-
-author:
-  name:           	 WanNJ
-  url:            	 your site url
-  facebook:          username
-  twitter:           username
-  google_plus:       username
-  linkedin:          username
-  dribbble:          username
-  pinterest:         username
-  kiva:              username
-
-fb_admins:           your facebook profile id
-fb_appid:            your facebook app id
-
-# Server
-destination:      	 ./_site
-exclude:          	 [".editorconfig", ".gitignore", "bower.json", "composer.json", "CONTRIBUTING.md", "CNAME", "LICENSE", "Gruntfile.js", "package.json", "node_modules", "README.md", "sass", "haml"]
-port:             	 9000
-
-defaults:
-  -
-    scope:
-      path: "_posts"
-      type: "posts"
-    values:
-      layout: "default"
+# Build settings
+markdown: kramdown
