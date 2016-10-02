@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><generator uri="http://jekyllrb.com" version="3.2.1">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2016-10-02T12:52:03+08:00</updated><id>/</id><title>Running Jack</title><subtitle>Jack Quick Running. Never Too Late.</subtitle><entry><title>Hello Blog</title><link href="/HelloBlog/" rel="alternate" type="text/html" title="Hello Blog" /><published>2016-10-02T00:00:00+08:00</published><updated>2016-10-02T00:00:00+08:00</updated><id>/HelloBlog</id><content type="html" xml:base="/HelloBlog/">&lt;figure&gt;
+    
+    &lt;a href=&quot;/assets/img/projects/1.png&quot;&gt;&lt;img src=&quot;/assets/img/projects/1.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;
+    
+    &lt;figcaption&gt;Thanks to this girl - FYQ&lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;h1 id=&quot;section&quot;&gt;初衷&lt;/h1&gt;
+&lt;p&gt;一开始想有个自己的博客，（准确来说不是自己，而是我们俩，哈哈哈哈）是在今天暑假（就是因为上面这个人），结果感觉做个动态网站要学的东西太多，所以就先搁置。&lt;/p&gt;
+
+&lt;p&gt;开心的是，开学小百合的灿海学长给介绍了Jekyll，然后我回去捣鼓了一天，终于把Ruby什么的一堆环境配置好了。就开始改写代码，加自己的功能，然后又过了几天，搞出来了只属于我和上面这个人的网站，然后绑定CNAME(之前早就买好了域名，10年的)，放到GitHub Pages上托管，&lt;b&gt;Everything is done.&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;所以这是我搞的第二个了，就是想给自己写点东西的动力，给点自己记录生活的激情。别每天看着身边的人一个个的都在成长，都好厉害的样子就盲目去追逐。就像长跑一样，如果你跑步时总想着追着前面那个人，那你自己的节奏就会乱，到了后程就会感觉力不从心。但行好事，莫问前程。河狭水急，人急计生。做自己想做之事，这总不是错的。&lt;/p&gt;
+
+&lt;h1 id=&quot;section-1&quot;&gt;行动&lt;/h1&gt;
+&lt;p&gt;如果你们也想自己做一个，其实也挺简单，不过没有&lt;a href=&quot;http://jekyllrb.com/&quot;&gt;Jekyll&lt;/a&gt;官网上说的那么简单，原话是：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Get up and running &lt;i&gt;in seconds&lt;/i&gt;.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;下面简单介绍一下这几秒钟内要做的事：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;配置Jekyll Environment，安装Ruby，什么一大堆，如果是Mac，装个Homebrew（简直神器），一个个安吧，详情见Jekyll官网，祝好运。&lt;/li&gt;
+  &lt;li&gt;去Github上找自己喜欢的主题，找的时候一定要注意跨设备性，如果这玩意要自己写的话就很麻烦，不如让别人帮你写好，然后Fork到自己的Github上，到现在为止没用过Github的同学就…&lt;/li&gt;
+  &lt;li&gt;简单配置网站的话，直接修改Fork下来的文件夹中的&lt;code class=&quot;highlighter-rouge&quot;&gt;_config.yml&lt;/code&gt;文件&lt;/li&gt;
+  &lt;li&gt;再把 &lt;code class=&quot;highlighter-rouge&quot;&gt;_posts&lt;/code&gt; 文件夹中的样本删掉，用Markdown写出你自己的.&lt;/li&gt;
+  &lt;li&gt;再改改这的代码，改改那的代码，加特技，最后如果想把这个网站弄的彻底的面目全非，请再在主页加上你自己的自拍。&lt;/li&gt;
+  &lt;li&gt;在Github上把这个文件夹拷贝到&lt;code class=&quot;highlighter-rouge&quot;&gt;YourUserName.github.io&lt;/code&gt;里，YourUserName就是Your User Name了，一定要完全一样，不然会失败。&lt;/li&gt;
+  &lt;li&gt;(optional)在GitHub的Settings里绑定自己的域名，如果你不想每次看自己的网站都要输入&lt;i&gt;Balabalabala.github.io&lt;/i&gt;这么一长串的话。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;That’s all. 完全不懂编程的同学可能比较难以完成，或者完成了之后完全没办法修改，只能照搬。这个时候，只需要你完成下面的四个步骤&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;学！&lt;/li&gt;
+  &lt;li&gt;习！&lt;/li&gt;
+  &lt;li&gt;编！&lt;/li&gt;
+  &lt;li&gt;程！&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h1 id=&quot;section-2&quot;&gt;成果&lt;/h1&gt;
+
+&lt;figure&gt;
+    
+    &lt;a href=&quot;/assets/img/projects/2.png&quot;&gt;&lt;img src=&quot;/assets/img/projects/2.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;
+    
+    &lt;figcaption&gt;Screenshots of My Page&lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;hr /&gt;
+
+&lt;h1 id=&quot;section-3&quot;&gt;尾声&lt;/h1&gt;
+&lt;p&gt;最后如果有人做了，或者已经有了，可以通过各种途径告诉我，以后可以多多交流，刚好我也想加个&lt;code class=&quot;highlighter-rouge&quot;&gt;FRIENDS&lt;/code&gt;模块，里面列出友情链接，哈哈哈。&lt;/p&gt;</content><category term="blog" /><category term="about" /><category term="life" /><summary>Hello, My coming 2017. Hello, My life.</summary></entry><entry><title>Hello World</title><link href="/HelloWorld/" rel="alternate" type="text/html" title="Hello World" /><published>2016-10-02T00:00:00+08:00</published><updated>2016-10-02T00:00:00+08:00</updated><id>/HelloWorld</id><content type="html" xml:base="/HelloWorld/">&lt;h1 id=&quot;hello-world&quot;&gt;Hello World!&lt;/h1&gt;
+
+&lt;p&gt;网站基本配置完成，还有要搞的就是跨设备支持（那个返回顶端的小箭头在移动设备上显示不出来），话说iPhone的屏是真长啊。&lt;/p&gt;
+
+&lt;p&gt;原本想加个背景音乐，但在上个网站的配置过程中发现，只有Chrome支持自动播放，索性就不加了。&lt;/p&gt;
+
+&lt;p&gt;关于更多这个玩意是怎么弄出来的，请移步Projects.&lt;/p&gt;
+
+&lt;p&gt;把以前的文章拉出来凑数，以后&lt;b&gt;不定期&lt;/b&gt;应该会更新…&lt;/p&gt;
+
+&lt;p&gt;就这样吧，最后放个图&lt;/p&gt;</content><category term="life" /><summary>就这样吧</summary></entry><entry><title>没有色彩</title><link href="/%E6%B2%A1%E6%9C%89%E8%89%B2%E5%BD%A9/" rel="alternate" type="text/html" title="没有色彩" /><published>2016-08-12T00:00:00+08:00</published><updated>2016-08-12T00:00:00+08:00</updated><id>/没有色彩</id><content type="html" xml:base="/%E6%B2%A1%E6%9C%89%E8%89%B2%E5%BD%A9/">&lt;figure&gt;
+    
+    &lt;a href=&quot;/assets/img/posts/3_0.png&quot;&gt;&lt;img src=&quot;/assets/img/posts/3_0.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;
+    
+    &lt;figcaption&gt;&lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;“听着，作，有一件事你得记住了。你不是缺乏色彩。那种东西仅仅是姓名而已。我们的确拿这件事开过你的玩笑，可全都没有意义。其实，多崎作，你是个无比优秀、色彩丰富的人，一直在建造美妙的火车站。如今你是个三十六岁的健康市民，拥有选举权，定期纳税，为了看我甚至还一个人坐飞机到芬兰来。你什么都不欠缺。你要有自信，要有勇气。你需要的就是这两样。千万别因为怯懦和无聊的自尊心失去心爱的人。”&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;方才躺在榻榻米上久久地望向窗外。马总说过，“你们头顶的天要变了”。可刚才我发现它无时无刻不在变。其实我一直都有个疑问，那就是地球自转的时候，裹在其表面的大气，到底跟不跟着动。如果我们看到的云在动，大部分是由于我们自己在动，而我们却浑然未觉，那可真是件令人悲哀的事。&lt;/p&gt;
+
+&lt;p&gt;读村上读多了会发现，村上主要写的，是孤独，是一个人被关在小黑屋中的思想见闻，如《挪威的森林》、《国境以南太阳以西》等。男主都是与世无争的类型，少言寡语，彬彬有礼，对身边的事反应迟钝又极其敏感，喜欢一个人漫无目的地在街上闲逛，喜欢安静地思考胜过与他人交谈。一言以蔽之，愚以为，村上写的都是现代意义上的咸鱼。不论其家境如何，如《挪》中渡边的普通家庭，《没有色彩…》中作的三年换一辆奔驰的富裕家庭，其本质都一样——甘心做一条咸鱼又能时常自得其乐的伪咸鱼。可能有些玄乎，但个人印象就是这样。&lt;/p&gt;
+
+&lt;p&gt;看看自己，其实也与咸鱼无异，不过，做一只会思考的咸鱼，也未尝不潇洒。甚至，可以说是快意之事。&lt;/p&gt;
+
+&lt;p&gt;咸鱼最喜欢做的，就是感时伤怀，消磨时间。比如说，《没有色彩》中的多崎作，他最爱做的事竟然是眺望火车站，不知是什么原因，从懂事起到现在，他始终如一地沉迷于火车站。“有关火车站的一切事物，都强烈地迷惑着他的心。”原文如是说。&lt;/p&gt;
+
+&lt;p&gt;所以，一旦无事可做而又不想回家的时候，他便会跑到火车站去看人来人往，望云卷云舒，观众生百态，尝人情冷暖，怡然自得，虽然大部分时间他都在发呆、沉浸在自己的那点小情绪中，我还是很佩服他。&lt;/p&gt;
+
+&lt;p&gt;为什么佩服他？因为我特么也想过，如果自己没什么事干，又不想回家时，会干嘛！苦苦思索，抓耳挠腮，面红耳赤之后，我还是不知道去干嘛！也许就特么的这样往路边一坐，然后开始自己45度角的人生。或是找一家酒吧进去点一杯凉白开，然后无视送水小哥的白眼，开始听驻唱哼哼唧唧，有时候，人们喜欢管这叫“靡靡之音”，而我们，管这个叫民谣。&lt;/p&gt;
+
+&lt;p&gt;时常会感叹，生活奇妙啊，真特么的奇妙啊。生活无奈啊，真特么的无奈啊。然后身后老爸老妈异口同声：“小屁孩懂个什么生活，洗洗早点滚去睡觉。”“……”&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;“真是不可思议啊。”惠理说。&lt;br /&gt;
+“什么？”&lt;br /&gt;
+“那个美好的时代悄然逝去，而且一去不复返。各种美丽的&lt;b&gt;可能性&lt;/b&gt;竟被流逝的光阴吞没，消失地无影无踪。就是这个。”&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;我们这个年纪啊，真的充满了各种可能性啊。而不知为什么，恰如其分的话总是姗姗来迟，错过最恰当的时机。而这些错过，同样能把人迷得神魂颠倒。&lt;/p&gt;
+
+&lt;p&gt;听着赵雷的少年锦时，顿感文风突变。音乐无疑可以很大程度上改变人的心境，无奈没有一口好嗓。寒酸歌声，请多包涵。&lt;/p&gt;
+
+&lt;p&gt;突然想起去杭州玩时找长桥的过程，问两个面相和蔼的警察叔叔，“哥，你知不知道长桥在哪里啊？”“知道。”“…”“哦，你说双投桥啊，往前走，在大马路上呢。”“啊，谢谢，谢谢，好难找啊。”“哈哈哈哈，马路上那桥就是。”然后屁颠屁颠跑到马路上，相拥而跳，然后找了半天长桥这俩字，愣是没找着。面面相觑，大眼瞪小眼，“我们不会被忽悠了吧？”“不会吧，他们俩还在那站着呢。”“那搜一搜长桥长什么样子？”“…….”“卧槽，这不就是我们来的路上的那个桥吗！”“妈的智障，给忽悠了。”“……”&lt;/p&gt;
+
+&lt;p&gt;刚才帮妈妈拿了个快递，走在地下停车场，望向出口那里的阳光，穿着邋遢的拖鞋，随意套上的初中就买的绿色衣服，一点也不青春。然后过了一会儿，妈妈又来了一个快递，我穿着同样邋遢的拖鞋，套上同样的初中就买的绿色衣服，走在同样的地下停车场，望向同样的出口，竟无法抑制地破声而笑，我也不知道为什么，可能是耳机里放着“沾满口水的枕头”吧，哈哈哈。&lt;/p&gt;
+
+&lt;p&gt;“人生就像复杂的乐谱，作想。写满十六分音符和三十二分音符，以及许多奇妙的符号、意义不明的批注。很难正确地解读。即便解读出来，将它转换成正确的乐音，也未必能正确理解和评价其中寄托的意义。它也未必能让人幸福。人类的行为为什么非得如此错综复杂呢？”&lt;/p&gt;
+
+&lt;p&gt;的确，我们会忍不住去想一些东西，但是，想了也不一定有结果，有结果了也没办法证实。那么这类的思考在我看来就是徒增烦恼，庸人自扰。&lt;/p&gt;
+
+&lt;p&gt;这个时候，我往往会想起当重新来到那个曾经错过的长桥时，我们笑的样子。&lt;/p&gt;
+
+&lt;p&gt;而我总会莫名其妙地停止脑中的一切，放下手中的一切，插上心中的竹蜻蜓，来到夕影亭下，笑成一个傻逼。&lt;/p&gt;
+
+&lt;figure&gt;
+    
+    &lt;a href=&quot;/assets/img/posts/3_1.JPG&quot;&gt;&lt;img src=&quot;/assets/img/posts/3_1.JPG&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;
+    
+    &lt;figcaption&gt;&lt;/figcaption&gt;
+&lt;/figure&gt;</content><category term="book" /><summary>而我总会莫名其妙地停止脑中的一切，放下手中的一切，插上心中的竹蜻蜓，来到夕影亭下，笑成一个傻逼。</summary></entry><entry><title>自说自的话</title><link href="/%E8%87%AA%E8%AF%B4%E8%87%AA%E7%9A%84%E8%AF%9D/" rel="alternate" type="text/html" title="自说自的话" /><published>2016-02-10T00:00:00+08:00</published><updated>2016-02-10T00:00:00+08:00</updated><id>/自说自的话</id><content type="html" xml:base="/%E8%87%AA%E8%AF%B4%E8%87%AA%E7%9A%84%E8%AF%9D/">&lt;h2 id=&quot;section&quot;&gt;&lt;em&gt;这不是影评！不是影评！&lt;/em&gt;&lt;/h2&gt;
+&lt;blockquote&gt;
+  &lt;p&gt;无敌是多么 多么寂寞&lt;br /&gt;
+无敌是多么 多么空虚&lt;br /&gt;
+独自在顶峰中 冷风不断的吹过&lt;br /&gt;
+我的寂寞 谁能明白我&lt;br /&gt;
+无敌是多么 多么寂寞&lt;br /&gt;
+无敌是多么 多么空虚&lt;br /&gt;
+躲在天边的她 可不可听我诉说&lt;br /&gt;
+我的寂寞 无尽的寂寞&lt;br /&gt;
+（周星弛词曲 邓超演唱）&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;hr /&gt;
+&lt;p&gt;如果硬是要我从这无厘头的感慨中，提炼出一个中心思想，一个10分的阅读理解，我的能力大概只能做4分。因为阅读理解本身就是因人而异，可某些人硬是要来个标准答案，让人挖空心思去想他人是怎么想的。所以我们老实人的阅读理解不很厉害，因为做多了难免互相猜忌，伤感情嘛！&lt;/p&gt;
+
+&lt;p&gt;言归正传，我是来写观影记录的。&lt;/p&gt;
+
+&lt;p&gt;看完，语文功底不那么深厚的我，就只是不断感慨，星爷牛逼啊，牛逼啊！这剧情，这主题表达，这主题曲！好像瞬间涌入我脑海中的词就只有牛逼…我不会告诉你我还学过成像才华横溢、卓尔不群、出类拔萃这样的四个字的词儿！我姑且认为人到激动时，语言能力便急剧下降，所以这不是我的错…&lt;/p&gt;
+
+&lt;p&gt;环保主题，那个女的一开始介绍声纳时，我就感觉不对劲，怎么派个日本人过来，然后提到了海豚。瞬间明白了什么。《海豚湾》是纪录片，现实主义。而此作周星驰用自己的方式再次谴责了日本这种不负责任又极度短视的行为，可谓业界良心。全片，我一字以蔽之——黑！的！漂！亮！&lt;/p&gt;
+
+&lt;p&gt;对星爷的佩服、尊敬也不重复说了，我不会说我早上看了第N遍功夫。&lt;/p&gt;
+
+&lt;p&gt;然后让我们先抛开剧情设置、人物表演不管，单看主题表达。抛开副主题——金钱与爱情不管，单看环保主题，我认为《美人鱼》是成功的，是能打动人心的。当然不是说剧情不好，表演差劲，而是我个人太矫情，死抓着主题不放。乱炮轰死，乱枪射死，乱刀砍死，乱棍打死，那几分钟的杀戮，的确露骨，淋漓尽致地表达了人性中恶的那一面，让人不忍直视却又逼你思考。还是无法抑制地想起了《海豚湾》中的场景，出现在电影中刘轩查资料的视频中的片段即出于此，触目惊心。&lt;/p&gt;
+
+&lt;p&gt;刚才说“先”抛开，然后我想说的就这些，然后就没有然后了…&lt;/p&gt;
+
+&lt;p&gt;想黑日本，可本着一个理性网民的良知，还是等知识水平提高了以后再发表言论吧。&lt;/p&gt;
+
+&lt;p&gt;如果世界上连一滴干净的水,一口新鲜的空气都没有,挣再多的钱,都是死路一条。&lt;/p&gt;
+
+&lt;p&gt;号召呼吁的什么就不说了，冷暖自知。最后安利一波海豚湾，“违法”拍摄，真实性无可置疑，动机你可以去怀疑，反正我是懒得怀疑。&lt;/p&gt;
+
+&lt;figure class=&quot;third&quot;&gt;
+    
+    &lt;a href=&quot;/assets/img/posts/2_0.png&quot;&gt;&lt;img src=&quot;/assets/img/posts/2_0.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;
+    
+    &lt;a href=&quot;/assets/img/posts/2_1.png&quot;&gt;&lt;img src=&quot;/assets/img/posts/2_1.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;
+    
+    &lt;a href=&quot;/assets/img/posts/2_2.png&quot;&gt;&lt;img src=&quot;/assets/img/posts/2_2.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;
+    
+    &lt;figcaption&gt;整蛊专家&lt;/figcaption&gt;
+&lt;/figure&gt;</content><category term="life" /><category term="movie" /><category term="comments" /><summary>无敌是多么 多么寂寞</summary></entry><entry><title>越了个狱</title><link href="/%E8%B6%8A%E4%BA%86%E4%B8%AA%E7%8B%B1/" rel="alternate" type="text/html" title="越了个狱" /><published>2016-01-25T00:00:00+08:00</published><updated>2016-01-25T00:00:00+08:00</updated><id>/越了个狱</id><content type="html" xml:base="/%E8%B6%8A%E4%BA%86%E4%B8%AA%E7%8B%B1/">&lt;figure&gt;
+    
+    &lt;a href=&quot;/assets/img/posts/1_0.png&quot;&gt;&lt;img src=&quot;/assets/img/posts/1_0.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;
+    
+    &lt;figcaption&gt;T-bag&lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;从初中就开始看《越狱》，那时候还在凤凰卫视连载。六年之后，终于把四季看完，结局不出所料，过程让人难忘。最后在Spiritualized略显沙哑的歌声中，Lay it down slow 的旋律缓缓升起，人各有梦，浮光掠影般的几个镜头竟湿润了眼眶。T-bag看到了那本书上的GATE，不知勾起了多少痛苦的回忆。科尔.普发，在他踩上那个名片的一刻就再也不存在了，那一刻我仿佛看到了刚刚被唤醒的善的灵魂又溘然逝去。他掏出裤兜，在草地上抬头仰望天空，镜头拉远，监狱在屏幕中越来越小，未来会怎样？Lay it down easy.&lt;/p&gt;
+
+&lt;p&gt;如果邪恶 是华丽残酷的乐章，那么正义 是深沉无奈的惆怅。我们可以遗忘原谅，但必须知道真相。《Prison Break》里Machel的行为诠释了个人对社会的力量，正所谓，每一朵雪花在雪崩发生时都有责任。如此黑暗的社会背景，成就了一群人的传奇。&lt;/p&gt;
+
+&lt;p&gt;家庭、爱情、友谊、自由、金钱、权利，这几个永恒的话题在这部剧中得到了多层次的演绎，欺骗与被欺骗，背叛与被背叛，好像学到了很多，却不知从何谈起，只好对一把琴、一壶酒、一溪云，相视无言。Just be a man.That’s it.&lt;/p&gt;
+
+&lt;p&gt;有些事情的真相真的就是那么冰冷，我们只有选择相信。为什么不相信呢，就让夜空中最亮的那颗，指引你前进吧。偶尔，你揩揩鼻头的泡泡，仰头问，能否 给一只肩膀。我会轻轻笑下，能啊。Cause C’est la vie .&lt;/p&gt;</content><category term="life" /><category term="movie" /><category term="comments" /><summary>Just be a man.That’s it.</summary></entry></feed>
