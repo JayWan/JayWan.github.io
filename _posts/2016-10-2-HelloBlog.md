@@ -41,6 +41,7 @@ comments: true
 * (optional)在GitHub的Settings里绑定自己的域名，如果你不想每次看自己的网站都要输入<i>Balabalabala.github.io</i>这么一长串的话。
      
 That's all. 完全不懂编程的同学可能比较难以完成，或者完成了之后完全没办法修改，只能照搬。这个时候，只需要你完成下面的四个步骤
+
 1. 学！
 2. 习！
 3. 编！
