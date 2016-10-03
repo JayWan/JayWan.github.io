@@ -28,7 +28,7 @@ comments: false
 
 ## Contact Me
 
-Besides the four links given on the homepage.
+Besides the five links given on the homepage.
 
 * WeChat : <b>Wan_NJ</b>
 * QQ     : <b>842631684</b>
