@@ -1,24 +1,26 @@
 ---
 layout: page
 title: About Me
-tags: [about,personal]
 date: 2016-10-2
 comments: false
 ---
     
-<center>My name is <b>WanNianJay</b>. A Software Dog But NOT single.</center>
+<center>My name is <b>万年杰</b>, Jack Wan.</center>
+
+## WHO AM I
+
 
 ## I HAVE
-* GirlFriend(Sorry to put that on the top, LOL)
+* A Girlfriend
 * Bike(Why did I get that involved?)
-* Very good roomates
-* Very awesome classmates
+* Very Good Roommates
+* Very Awesome Classmates
 * Curiosity
 * Passion
-* Balalala...
+* Relatively Enough Time to Do ANYTHING
+* BalaBalaBala...
 
-## Photos
-
+## PHOTOS
 {% capture images %}
 {{ site.url}}/assets/img/about/3.png
 /assets/img/about/4.png
@@ -26,11 +28,12 @@ comments: false
 {% include gallery images=images caption="A Stupid Photo of WanNJ and ..." cols=2 %}
 
 
-## Contact Me
+## CONTACT ME
 
 Besides the five links given on the homepage.
 
 * WeChat : <b>Wan_NJ</b>
 * QQ     : <b>842631684</b>
+* FaceBook: Jack Wan
 
 Welcome all you guys!
