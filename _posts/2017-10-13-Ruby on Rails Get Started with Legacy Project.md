@@ -2,7 +2,7 @@
 layout: post
 title:  "Legacy Projects in Ruby on Rails"
 date:   2017-10-13
-excerpt: "Ruby Rails Audience1st"
+excerpt: "Notes made when configure Audience1st..."
 project: true
 tag:
 - Ruby on Rials

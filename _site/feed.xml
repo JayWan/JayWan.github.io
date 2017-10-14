@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><generator uri="http://jekyllrb.com" version="3.2.1">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2017-10-13T11:44:29-07:00</updated><id>/</id><title>Running Jack</title><subtitle>Jack Quick Running. Never Too Late.</subtitle><entry><title>Legacy Projects in Ruby on Rails</title><link href="/Ruby-on-Rails-Get-Started-with-Legacy-Project/" rel="alternate" type="text/html" title="Legacy Projects in Ruby on Rails" /><published>2017-10-13T00:00:00-07:00</published><updated>2017-10-13T00:00:00-07:00</updated><id>/Ruby on Rails Get Started with Legacy Project</id><content type="html" xml:base="/Ruby-on-Rails-Get-Started-with-Legacy-Project/">&lt;h1 id=&quot;audience1st&quot;&gt;Audience1st&lt;/h1&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><generator uri="http://jekyllrb.com" version="3.2.1">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2017-10-13T22:45:08-07:00</updated><id>/</id><title>Running Jack</title><subtitle>Jack Quick Running. Never Too Late.</subtitle><entry><title>Legacy Projects in Ruby on Rails</title><link href="/Ruby-on-Rails-Get-Started-with-Legacy-Project/" rel="alternate" type="text/html" title="Legacy Projects in Ruby on Rails" /><published>2017-10-13T00:00:00-07:00</published><updated>2017-10-13T00:00:00-07:00</updated><id>/Ruby on Rails Get Started with Legacy Project</id><content type="html" xml:base="/Ruby-on-Rails-Get-Started-with-Legacy-Project/">&lt;h1 id=&quot;audience1st&quot;&gt;Audience1st&lt;/h1&gt;
 &lt;p&gt;I am working on Ruby on Rails this semester, which is very suitable for Agile/XP. &lt;a href=&quot;https://github.com/WanNJ/audience1st&quot;&gt;Audience1st&lt;/a&gt; is an open source project designated to offer ticketing system to local theaters, in which case they will be able to have their own customer resources in stead of just a list of names provided by the third party ticketing system. Our professor, &lt;a href=&quot;http://www.armandofox.com/&quot;&gt;Armando Fox&lt;/a&gt;, is an excellent versatile EECS educator, who is also the creator of this repo for his love in play and music. He did this not for money but for his interests in this area, so he only charge the local theaters the money for maintaining the website.&lt;/p&gt;
 
 &lt;p&gt;Although the look of the website is not perfect, sometimes you may think ugly, but this is for that we have no professional front programmer in hand. But we are considering to make some improvements later.&lt;/p&gt;
@@ -61,7 +61,61 @@ tmp/&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 &lt;h3 id=&quot;setup-database&quot;&gt;Setup Database&lt;/h3&gt;
 &lt;p&gt;Now we can directly run &lt;code class=&quot;highlighter-rouge&quot;&gt;rake db:setup&lt;/code&gt;, which runs &lt;code class=&quot;highlighter-rouge&quot;&gt;db:migrate&lt;/code&gt; followed by &lt;code class=&quot;highlighter-rouge&quot;&gt;db:seed&lt;/code&gt; to create necessary seed data.&lt;/p&gt;
 
-&lt;h3 id=&quot;to-be-continued&quot;&gt;To Be Continued…&lt;/h3&gt;</content><category term="Ruby on Rials" /><category term="Audience1st" /><category term="Notes" /><summary>Ruby Rails Audience1st</summary></entry><entry><title>Java 8 Lambda Expression</title><link href="/Java8Learning/" rel="alternate" type="text/html" title="Java 8 Lambda Expression" /><published>2017-03-09T00:00:00-08:00</published><updated>2017-03-09T00:00:00-08:00</updated><id>/Java8Learning</id><content type="html" xml:base="/Java8Learning/">&lt;p&gt;最近又在写大作业，感觉自己根本不会Java，于是赶紧恶补Java 8，以免被组长还有各路大神嫌弃。&lt;/p&gt;
+&lt;h3 id=&quot;to-be-continued&quot;&gt;To Be Continued…&lt;/h3&gt;</content><category term="Ruby on Rials" /><category term="Audience1st" /><category term="Notes" /><summary>Notes made when configure Audience1st...</summary></entry><entry><title>Agile/XP Tools</title><link href="/Agile-XP-Tools/" rel="alternate" type="text/html" title="Agile/XP Tools" /><published>2017-09-21T00:00:00-07:00</published><updated>2017-09-21T00:00:00-07:00</updated><id>/Agile:XP Tools</id><content type="html" xml:base="/Agile-XP-Tools/">&lt;h2 id=&quot;software-engineering&quot;&gt;Software Engineering&lt;/h2&gt;
+&lt;p&gt;Software Engineering is a relatively new term which was first used as a title for the World’s first conference on software engineering, sponsored and facilitated by NATO in 1968. It was designated to solve the troublesome problems in building softwares. The concept is to apply engineering disciplines to software design and construction. It aims to make software product predictable in terms of cost, quality and time. Brooks mentioned “No silver bullet” in his article &lt;em&gt;The Mythical Man-Month&lt;/em&gt; in 1986, which is to say that there’s no specific solutions for the uncertainties, unconsistencies and complexities. But are there any ways to improve this process? Of course.&lt;/p&gt;
+
+&lt;p class=&quot;notice&quot;&gt;&lt;em&gt;The following contents &lt;strong&gt;draw heavily from Armando Fox’s slides&lt;/strong&gt;.&lt;/em&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;p--d&quot;&gt;P &amp;amp; D&lt;/h2&gt;
+&lt;p&gt;Plan &amp;amp; Document is one of the methods in the early stage of SE. It emphasizes the importance of plan and document in advance. Here are some key points:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Make plan before doing any coding.&lt;/li&gt;
+  &lt;li&gt;Write detailed documents (e.g.: requirement documents and interface documents) of all phases of the plan you made.&lt;/li&gt;
+  &lt;li&gt;Members should strictly follow the documents decided in earlier phases.&lt;/li&gt;
+  &lt;li&gt;Any changes in plan or design should be reflected in documentation.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;waterfall-model-1970&quot;&gt;Waterfall Model, 1970&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;Requirements Analysis and Specification&lt;/li&gt;
+  &lt;li&gt;Architecture design.&lt;/li&gt;
+  &lt;li&gt;Implementation and Integration&lt;/li&gt;
+  &lt;li&gt;Verification.&lt;/li&gt;
+  &lt;li&gt;Maintenance.
+It believes that “Earlier catch bug, cheaper it is”. But it requires extensive documentations, which may be too heavy and even too “clumsy” sometimes.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;spiral-model-1986&quot;&gt;Spiral Model, 1986&lt;/h3&gt;
+&lt;p&gt;As far as I am concerned, spiral model is the former prototype of Agile. It emphasizes the whole process of building a healthy software consists of mutiple iterations, in which every iteration contains almost every phase that waterfall model requires. Here is the illustration:&lt;/p&gt;
+
+&lt;h3 id=&quot;rational-unified-process-2003&quot;&gt;Rational Unified Process, 2003&lt;/h3&gt;
+&lt;p&gt;It is called &lt;code class=&quot;highlighter-rouge&quot;&gt;Rational&lt;/code&gt; for it is first developed by a compang called Rational Software.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;The RUP framework is two dimensional, with axes indicating time and content. The time dimension is organized by phases, iterations, and milestones. The content dimension consists of software disciplines containing the workflows, &lt;strong&gt;roles&lt;/strong&gt;, &lt;strong&gt;activities&lt;/strong&gt;, and &lt;strong&gt;artifacts&lt;/strong&gt; as they apply to that discipline.
+-IBM&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;agile-manifesto-2001&quot;&gt;Agile Manifesto, 2001&lt;/h2&gt;
+&lt;p&gt;“We are uncovering better ways of developing SW by doing it and helping others do it. Through this work we have come to value:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Individuals and interactions over processes &amp;amp; tools&lt;/li&gt;
+  &lt;li&gt;Working software over comprehensive documentation&lt;/li&gt;
+  &lt;li&gt;Customer collaboration over contract negotiation&lt;/li&gt;
+  &lt;li&gt;Responding to change over following a plan
+That is, while there is value in the items on the right, we value the items on the left more.”&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;extreme-programming-1999---2003&quot;&gt;Extreme Programming, 1999 - 2003&lt;/h2&gt;
+&lt;p&gt;If one thing is good, then do it whenever you can and make best use of it:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;If short iterations are good, make them as short as possible (weeks vs. years)&lt;/li&gt;
+  &lt;li&gt;If simplicity is good, always do the simplest thing that could possibly work&lt;/li&gt;
+  &lt;li&gt;If testing is good, test all the time. Write the test code before you write the code to test.&lt;/li&gt;
+  &lt;li&gt;If code reviews are good, review code continuously, by programming in pairs, taking turns looking over each others’ shoulders.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;tools-for-agilexp-in-ruby-on-rails&quot;&gt;Tools for Agile/XP in Ruby on Rails&lt;/h3&gt;</content><category term="Ruby on Rials" /><category term="Agile" /><category term="SE" /><summary>A Introduction to Agile program Tools</summary></entry><entry><title>Java 8 Lambda Expression</title><link href="/Java8Learning/" rel="alternate" type="text/html" title="Java 8 Lambda Expression" /><published>2017-03-09T00:00:00-08:00</published><updated>2017-03-09T00:00:00-08:00</updated><id>/Java8Learning</id><content type="html" xml:base="/Java8Learning/">&lt;p&gt;最近又在写大作业，感觉自己根本不会Java，于是赶紧恶补Java 8，以免被组长还有各路大神嫌弃。&lt;/p&gt;
 
 &lt;h3 id=&quot;lambda-expression&quot;&gt;Lambda Expression&lt;/h3&gt;
 &lt;p class=&quot;notice&quot;&gt;A function (or a subroutine) defined, and possibly called, without being bound to an identifier.&lt;/p&gt;
