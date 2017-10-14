@@ -45,7 +45,7 @@ It is called `Rational` for it is first developed by a compang called Rational S
 {% capture images %}
 	/assets/img/projects/RUP.png
 {% endcapture %}
-{% include gallery images=images caption="- RUP" cols=1 %}
+{% include gallery images=images caption="- From JOSE MANUEL SAMPAYO" cols=1 %}
 
 > The RUP framework is two dimensional, with axes indicating time and content. The time dimension is organized by phases, iterations, and milestones. The content dimension consists of software disciplines containing the workflows, **roles**, **activities**, and **artifacts** as they apply to that discipline.
 > -IBM
