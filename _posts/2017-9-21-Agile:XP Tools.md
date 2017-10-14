@@ -73,6 +73,6 @@ If one thing is good, then do it whenever you can and make best use of it:
 * [Github](https://github.com/) to perform version control.
 * [Pivotal Tracker](http://pivotaltracker.com/) for project management. We can use points and veloctiy to track our current progress and to predict our future progress.
 * [Heroku](https://heroku.com/) for deploying our app. (This is only for those who don't have the access to a personal server. But it's indeed a perfect way to check your code structure and independency.)
-* [Travis CI](http://travis-ci.org/) for automatically running tests.
+* [Travis CI](http://travis-ci.org/) for automatically running tests, which is called **continuous integration(CI)** by some people.
 * [Coveralls](http://coveralls.io/) for detailed test coverage measurements.
 * [CodeClimate](http://codeclimate.com/) for reporting on the quality and robustness of our source code. (Static Analysis.)
