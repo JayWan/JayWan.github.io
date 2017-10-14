@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><generator uri="http://jekyllrb.com" version="3.2.1">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2017-10-14T01:11:23-07:00</updated><id>/</id><title>Running Jack</title><subtitle>Jack Quick Running. Never Too Late.</subtitle><entry><title>Legacy Projects in Ruby on Rails</title><link href="/Ruby-on-Rails-Get-Started-with-Legacy-Project/" rel="alternate" type="text/html" title="Legacy Projects in Ruby on Rails" /><published>2017-10-13T00:00:00-07:00</published><updated>2017-10-13T00:00:00-07:00</updated><id>/Ruby on Rails Get Started with Legacy Project</id><content type="html" xml:base="/Ruby-on-Rails-Get-Started-with-Legacy-Project/">&lt;h1 id=&quot;audience1st&quot;&gt;Audience1st&lt;/h1&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><generator uri="http://jekyllrb.com" version="3.2.1">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2017-10-14T11:42:46-07:00</updated><id>/</id><title>Running Jack</title><subtitle>Never Too Late.</subtitle><entry><title>Legacy Projects in Ruby on Rails</title><link href="/Ruby-on-Rails-Get-Started-with-Legacy-Project/" rel="alternate" type="text/html" title="Legacy Projects in Ruby on Rails" /><published>2017-10-13T00:00:00-07:00</published><updated>2017-10-13T00:00:00-07:00</updated><id>/Ruby on Rails Get Started with Legacy Project</id><content type="html" xml:base="/Ruby-on-Rails-Get-Started-with-Legacy-Project/">&lt;h1 id=&quot;audience1st&quot;&gt;Audience1st&lt;/h1&gt;
 &lt;p&gt;I am working on Ruby on Rails this semester, which is very suitable for Agile/XP. &lt;a href=&quot;https://github.com/WanNJ/audience1st&quot;&gt;Audience1st&lt;/a&gt; is an open source project designated to offer ticketing system to local theaters, in which case they will be able to have their own customer resources in stead of just a list of names provided by the third party ticketing system. Our professor, &lt;a href=&quot;http://www.armandofox.com/&quot;&gt;Armando Fox&lt;/a&gt;, is an excellent versatile EECS educator, who is also the creator of this repo for his love in play and music. He did this not for money but for his interests in this area, so he only charge the local theaters the money for maintaining the website.&lt;/p&gt;
 
 &lt;p&gt;Although the look of the website is not perfect, sometimes you may think ugly, but this is for that we have no professional front programmer in hand. But we are considering to make some improvements later.&lt;/p&gt;
@@ -62,7 +62,7 @@ tmp/&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 &lt;p&gt;Now we can directly run &lt;code class=&quot;highlighter-rouge&quot;&gt;rake db:setup&lt;/code&gt;, which runs &lt;code class=&quot;highlighter-rouge&quot;&gt;db:migrate&lt;/code&gt; followed by &lt;code class=&quot;highlighter-rouge&quot;&gt;db:seed&lt;/code&gt; to create necessary seed data.&lt;/p&gt;
 
 &lt;h3 id=&quot;to-be-continued&quot;&gt;To Be Continued…&lt;/h3&gt;</content><category term="Ruby on Rials" /><category term="Audience1st" /><category term="Notes" /><summary>Notes made when configure Audience1st...</summary></entry><entry><title>Agile/XP Tools</title><link href="/Agile-XP-Tools/" rel="alternate" type="text/html" title="Agile/XP Tools" /><published>2017-09-21T00:00:00-07:00</published><updated>2017-09-21T00:00:00-07:00</updated><id>/Agile:XP Tools</id><content type="html" xml:base="/Agile-XP-Tools/">&lt;h2 id=&quot;software-engineering&quot;&gt;Software Engineering&lt;/h2&gt;
-&lt;p&gt;Software Engineering is a relatively new term which was first used as a title for the World’s first conference on software engineering, sponsored and facilitated by NATO in 1968. It was designated to solve the troublesome problems in building softwares. The concept is to apply engineering disciplines to software design and construction. It aims to make software product predictable in terms of cost, quality and time. Brooks mentioned “No silver bullet” in his article &lt;em&gt;The Mythical Man-Month&lt;/em&gt; in 1986, which is to say that there’s no specific solutions for the uncertainties, unconsistencies and complexities. But are there any ways to improve this process? Of course.&lt;/p&gt;
+&lt;p&gt;Software Engineering is a relatively new term which was first used as a title for the World’s first conference on software engineering, sponsored and facilitated by NATO in 1968. It was designated to solve the troublesome problems in building softwares. The concept is to apply engineering disciplines to software design and construction. It aims to make software product predictable in terms of cost, quality and time. Brooks mentioned “No silver bullet” in his article &lt;em&gt;The Mythical Man-Month&lt;/em&gt; in 1986, which is to say that there’s no specific solutions for the uncertainties, inconsistencies and complexities. But are there any ways to improve this process? Of course.&lt;/p&gt;
 
 &lt;p class=&quot;notice&quot;&gt;&lt;em&gt;The following contents &lt;strong&gt;draw heavily from Armando Fox’s slides&lt;/strong&gt;.&lt;/em&gt;&lt;/p&gt;
 
@@ -86,7 +86,7 @@ It believes that “Earlier catch bug, cheaper it is”. But it requires extensi
 &lt;/ol&gt;
 
 &lt;h3 id=&quot;spiral-model-1986&quot;&gt;Spiral Model, 1986&lt;/h3&gt;
-&lt;p&gt;As far as I am concerned, spiral model is the former prototype of Agile. It emphasizes the whole process of building a healthy software consists of mutiple iterations, in which every iteration contains almost every phase that waterfall model requires. Here is the illustration:&lt;/p&gt;
+&lt;p&gt;As far as I am concerned, spiral model is the former prototype of Agile. It emphasizes the whole process of building a healthy software consists of multiple iterations, in which every iteration contains almost every phase that waterfall model requires. Here is the illustration:&lt;/p&gt;
 
 &lt;figure&gt;
     
@@ -96,13 +96,13 @@ It believes that “Earlier catch bug, cheaper it is”. But it requires extensi
 &lt;/figure&gt;
 
 &lt;h3 id=&quot;rational-unified-process-2003&quot;&gt;Rational Unified Process, 2003&lt;/h3&gt;
-&lt;p&gt;It is called &lt;code class=&quot;highlighter-rouge&quot;&gt;Rational&lt;/code&gt; for it is first developed by a compang called Rational Software.&lt;/p&gt;
+&lt;p&gt;It is called &lt;code class=&quot;highlighter-rouge&quot;&gt;Rational&lt;/code&gt; for it is first developed by a company called Rational Software.&lt;/p&gt;
 
 &lt;figure&gt;
     
-    &lt;a href=&quot;/assets/img/projects/RUP.jpg&quot;&gt;&lt;img src=&quot;/assets/img/projects/RUP.jpg&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;
+    &lt;a href=&quot;/assets/img/projects/RUP.png&quot;&gt;&lt;img src=&quot;/assets/img/projects/RUP.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;
     
-    &lt;figcaption&gt;- RUP&lt;/figcaption&gt;
+    &lt;figcaption&gt;- From JOSE MANUEL SAMPAYO&lt;/figcaption&gt;
 &lt;/figure&gt;
 
 &lt;blockquote&gt;
@@ -136,7 +136,15 @@ That is, while there is value in the items on the right, we value the items on t
     &lt;figcaption&gt;- Agile Process&lt;/figcaption&gt;
 &lt;/figure&gt;
 
-&lt;h3 id=&quot;tools-for-agilexp-in-ruby-on-rails&quot;&gt;Tools for Agile/XP in Ruby on Rails&lt;/h3&gt;</content><category term="Ruby on Rials" /><category term="Agile" /><category term="SE" /><summary>A Introduction to Agile program Tools</summary></entry><entry><title>Java 8 Lambda Expression</title><link href="/Java8Learning/" rel="alternate" type="text/html" title="Java 8 Lambda Expression" /><published>2017-03-09T00:00:00-08:00</published><updated>2017-03-09T00:00:00-08:00</updated><id>/Java8Learning</id><content type="html" xml:base="/Java8Learning/">&lt;p&gt;最近又在写大作业，感觉自己根本不会Java，于是赶紧恶补Java 8，以免被组长还有各路大神嫌弃。&lt;/p&gt;
+&lt;h3 id=&quot;tools-for-agilexp-in-ruby-on-rails&quot;&gt;Tools for Agile/XP in Ruby on Rails&lt;/h3&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/&quot;&gt;Github&lt;/a&gt; to perform version control.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://pivotaltracker.com/&quot;&gt;Pivotal Tracker&lt;/a&gt; for project management. We can use points and velocity to track our current progress and to predict our future progress.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://heroku.com/&quot;&gt;Heroku&lt;/a&gt; for deploying our app. (This is only for those who don’t have the access to a personal server. But it’s indeed a perfect way to check your code structure and independency.)&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://travis-ci.org/&quot;&gt;Travis CI&lt;/a&gt; for automatically running tests, which is called &lt;strong&gt;continuous integration(CI)&lt;/strong&gt; by some people.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://coveralls.io/&quot;&gt;Coveralls&lt;/a&gt; for detailed test coverage measurements.&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://codeclimate.com/&quot;&gt;CodeClimate&lt;/a&gt; for reporting on the quality and robustness of our source code. (Static Analysis.)&lt;/li&gt;
+&lt;/ul&gt;</content><category term="Ruby on Rials" /><category term="Agile" /><category term="SE" /><summary>A Introduction to Agile program Tools</summary></entry><entry><title>Java 8 Lambda Expression</title><link href="/Java8Learning/" rel="alternate" type="text/html" title="Java 8 Lambda Expression" /><published>2017-03-09T00:00:00-08:00</published><updated>2017-03-09T00:00:00-08:00</updated><id>/Java8Learning</id><content type="html" xml:base="/Java8Learning/">&lt;p&gt;最近又在写大作业，感觉自己根本不会Java，于是赶紧恶补Java 8，以免被组长还有各路大神嫌弃。&lt;/p&gt;
 
 &lt;h3 id=&quot;lambda-expression&quot;&gt;Lambda Expression&lt;/h3&gt;
 &lt;p class=&quot;notice&quot;&gt;A function (or a subroutine) defined, and possibly called, without being bound to an identifier.&lt;/p&gt;
