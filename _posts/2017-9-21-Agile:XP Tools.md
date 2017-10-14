@@ -36,14 +36,17 @@ It believes that "Earlier catch bug, cheaper it is". But it requires extensive d
 As far as I am concerned, spiral model is the former prototype of Agile. It emphasizes the whole process of building a healthy software consists of mutiple iterations, in which every iteration contains almost every phase that waterfall model requires. Here is the illustration:
 
 {% capture images %}
-/assets/img/posts/SpiralModel.png
+	/assets/img/projects/SpiralModel.png
 {% endcapture %}
+{% include gallery images=images caption="- Spiral Model" cols=1 %}
 
 ### Rational Unified Process, 2003
 It is called `Rational` for it is first developed by a compang called Rational Software.
 {% capture images %}
-/assets/img/posts/RUP.jpg
+	/assets/img/projects/RUP.jpg
 {% endcapture %}
+{% include gallery images=images caption="- RUP" cols=1 %}
+
 > The RUP framework is two dimensional, with axes indicating time and content. The time dimension is organized by phases, iterations, and milestones. The content dimension consists of software disciplines containing the workflows, **roles**, **activities**, and **artifacts** as they apply to that discipline.
 > -IBM
 
@@ -62,7 +65,8 @@ If one thing is good, then do it whenever you can and make best use of it:
 * If testing is good, test all the time. Write the test code before you write the code to test. 
 * If code reviews are good, review code continuously, by programming in pairs, taking turns looking over each others’ shoulders.
 {% capture images %}
-/assets/img/posts/Extreme Programming.png
+/assets/img/projects/ExtremeProgramming.png
 {% endcapture %}
+{% include gallery images=images caption="- Agile Process" cols=1 %}
 
 ### Tools for Agile/XP in Ruby on Rails
