@@ -41,7 +41,7 @@ As far as I am concerned, spiral model is the former prototype of Agile. It emph
 {% include gallery images=images caption="- Spiral Model" cols=1 %}
 
 ### Rational Unified Process, 2003
-It is called `Rational` for it is first developed by a compang called Rational Software.
+It is called `Rational` for it was first developed by a compang called Rational Software.
 {% capture images %}
 	/assets/img/projects/RUP.png
 {% endcapture %}
