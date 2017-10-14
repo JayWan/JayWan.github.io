@@ -3,7 +3,7 @@ layout: post
 title:  "Agile/XP Tools"
 date:   2017-9-21
 excerpt: "A Introduction to Agile program Tools"
-project: false
+project: true
 tag:
 - Ruby on Rials
 - Agile
