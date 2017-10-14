@@ -34,6 +34,7 @@ It believes that "Earlier catch bug, cheaper it is". But it requires extensive d
 
 ### Spiral Model, 1986
 As far as I am concerned, spiral model is the former prototype of Agile. It emphasizes the whole process of building a healthy software consists of mutiple iterations, in which every iteration contains almost every phase that waterfall model requires. Here is the illustration:
+
 {% capture images %}
 /assets/img/posts/SpiralModel.png
 {% endcapture %}
