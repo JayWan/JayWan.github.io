@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Use LabVIEW to Construct State Machines"
-date:   2017-10-14
+date:   2017-10-10
 excerpt: "A brief summary of how to use labVIEW state chart to construct state machines..."
 project: true
 tag:
