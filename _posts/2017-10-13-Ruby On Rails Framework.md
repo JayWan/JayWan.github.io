@@ -3,6 +3,7 @@ layout: post
 title: Ruby on Rails Framework
 date: 2017-10-13
 excerpt: "For future review..."
+project: ture
 tag:
 - Ruby on Rials
 comments: true
@@ -83,5 +84,5 @@ class CustomersController < ApplicationController
 end
 {% endhighlight %}
 
-NOTE: ApplicationController is practically the class which every other controller in you application is going to inherit from (although this is not mandatory in any mean). In this case, :is_logged_in is an instance method in `appication_controller.rb`.
+NOTE: `ApplicationController` is practically the class **which every other controller in you application is going to inherit from** (although this is not mandatory in any mean). In this case, :is_logged_in is an instance method in `application_controller.rb`.
 {: .notice}
