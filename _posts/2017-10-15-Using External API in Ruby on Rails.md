@@ -10,7 +10,7 @@ tag:
 - Audience1st
 comments: true
 ---	
-Audience1st uses [`figaro`] to manage secrets. As mentioned in the [Get Started with Legacy Project](http://jackwan.win/Get-Started-with-Legacy-Project/). And it uses [`Stripe`](https://stripe.com/docs/api/ruby#intro) to deal with online payments.
+Audience1st uses [`figaro`](https://github.com/laserlemon/figaro) to manage secrets. As mentioned in the [Get Started with Legacy Project](http://jackwan.win/Get-Started-with-Legacy-Project/). And it uses [`Stripe`](https://stripe.com/docs/api/ruby#intro) to deal with online payments.
 
 ## [Figaro](https://github.com/laserlemon/figaro)
 `figaro` will generate a git-ignored file `config/application.yml` for secrets management.
@@ -34,7 +34,7 @@ constant_contact_secret: "CC secret part of API key
 You can use `ENV['stripe_key']` or `Figaro.env.stripe_key`, which totally depends on personal preference, to access the secrets you set in `config/application.yml`. Using a tool to manage secrets is a very good practice in terms of separating dependencies.
 
 ## [Stripe](https://stripe.com/docs/api/ruby#intro)
-*You should **never include your API keys in plaintext** as is showed in the API documentations of `Stripe`, because they do this for readability.*
+*You should **never include your API keys in plaintext** as is showed in the API documentations of `Stripe`, because they do this for readability.*  **You can get your api_key for free by creating an account at stripe.com**
 {: .notice}
 
 Here's a typical charge action using `stripe`, it will return a `JSON` object:
