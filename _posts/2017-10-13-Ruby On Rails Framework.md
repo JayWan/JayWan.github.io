@@ -79,6 +79,8 @@ class CustomersController < ApplicationController
   
   # This will skip the before filter - 'verify_authenticity_token' for the action 'auto_complete_for_customer_full_name'
   skip_before_filter :verify_authenticity_token, %w(auto_complete_for_customer_full_name)
+  ...
+end
 {% endhighlight %}
 
 NOTE: ApplicationController is practically the class which every other controller in you application is going to inherit from (although this is not mandatory in any mean). In this case, :is_logged_in is an instance method in `appication_controller.rb`.
