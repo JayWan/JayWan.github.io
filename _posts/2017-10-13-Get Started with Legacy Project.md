@@ -44,7 +44,7 @@ public/stylesheets/venue
 tmp/
 {% endhighlight %}
 
-In Ruby, we store the secrets in `config/application.yml` and we store database configurations in `config/database.yml`. As you can see, these two files are ignored by `.gitignore`. Others are explained in the comments section.
+In Ruby, if you use `figaro`, then you will store the secrets in `config/application.yml` and you will store database configurations in `config/database.yml`. As you can see, these two files are ignored by `.gitignore`. Others are explained in the comments section.
 
 One typical `config/application.yml` may look like this:
 {% highlight yaml %}
