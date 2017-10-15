@@ -5,7 +5,7 @@ date:   2017-10-13
 excerpt: "Notes made when configure Audience1st..."
 project: true
 tag:
-- Ruby on Rials
+- Ruby on Rails
 - Audience1st
 comments: true
 ---	

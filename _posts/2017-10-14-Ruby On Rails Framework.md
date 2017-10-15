@@ -5,7 +5,7 @@ date: 2017-10-14
 excerpt: "For future review..."
 project: ture
 tag:
-- Ruby on Rials
+- Ruby on Rails
 comments: true
 ---
 Today I browsed the source code of "Audience1st", during which I found many interesting things. I write them down just for future review. 
