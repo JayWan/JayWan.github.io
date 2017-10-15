@@ -25,8 +25,8 @@ I created a demo project call `Simple State Machine`.
 Here's the project file structure and the overview:
 
 {% capture images %}
-/assets/img/projects/Simple State Machine/ProjectStructure.png
-/assets/img/projects/Simple State Machine/OverviewOfProject.png
+/assets/img/projects/LabVIEW/ProjectStructure.png
+/assets/img/projects/LabVIEW/OverviewOfProject.png
 {% endcapture %}
 {% include gallery images=images caption="" cols=2 %}
 
