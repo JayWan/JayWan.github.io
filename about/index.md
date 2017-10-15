@@ -5,7 +5,7 @@ date: 2016-10-2
 comments: false
 ---
     
-<center>My name is <b>万年杰</b>, Jack Wan.</center>
+<center>This is <b>万年杰</b>, Jack Wan's About Page.</center>
 
 ## WHO AM I
 
