@@ -74,7 +74,7 @@ NOTE FURTHER: **Genuine card information cannot be used in test mode.** Instead,
 | 3852<span></span>0000<span></span>0232<span></span>37 | Diners Club |
 | 3530<span></span>1113<span></span>3330<span></span>0000 | JCB |
 
-To better understand `Stripe`, check this out:
+To better understand `Stripe`'s working mechanism, check this out:
 {% capture images %}
 	/assets/img/projects/Audience1st/Stripe.jpeg
 {% endcapture %}
