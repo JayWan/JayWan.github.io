@@ -49,7 +49,7 @@ Stripe::Charge.create({
   :source => "tok_mastercard", # obtained with Stripe.js
   :description => "Charge for jackwan@example.com"
 }, {
-  :idempotency_key => "O64FLjrM6fK1giod"
+  :idempotency_key => "whateverulike"
 })
 {% endhighlight %}
 
