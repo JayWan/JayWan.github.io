@@ -1,13 +1,12 @@
 ---
 layout: post
-title:  "Legacy Projects in Ruby on Rails"
+title:  "Get Started with Legacy Projects"
 date:   2017-10-13
 excerpt: "Notes made when configure Audience1st..."
 project: true
 tag:
 - Ruby on Rials
 - Audience1st
-- Notes
 comments: true
 ---	
 
