@@ -1,4 +1,114 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><generator uri="http://jekyllrb.com" version="3.2.1">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2017-10-15T16:32:45-07:00</updated><id>/</id><title>Running Jack</title><subtitle>Never Too Late.</subtitle><entry><title>Ruby on Rails Framework</title><link href="/Ruby-On-Rails-Framework/" rel="alternate" type="text/html" title="Ruby on Rails Framework" /><published>2017-10-14T00:00:00-07:00</published><updated>2017-10-14T00:00:00-07:00</updated><id>/Ruby On Rails Framework</id><content type="html" xml:base="/Ruby-On-Rails-Framework/">&lt;p&gt;Today I browsed the source code of “Audience1st”, during which I found many interesting things. I write them down just for future review.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><generator uri="http://jekyllrb.com" version="3.2.1">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2017-10-15T16:35:10-07:00</updated><id>/</id><title>Running Jack</title><subtitle>Never Too Late.</subtitle><entry><title>Using External APIs in Rails</title><link href="/Using-External-API-in-Ruby-on-Rails/" rel="alternate" type="text/html" title="Using External APIs in Rails" /><published>2017-10-15T00:00:00-07:00</published><updated>2017-10-15T00:00:00-07:00</updated><id>/Using External API in Ruby on Rails</id><content type="html" xml:base="/Using-External-API-in-Ruby-on-Rails/">&lt;p&gt;Audience1st uses [&lt;code class=&quot;highlighter-rouge&quot;&gt;figaro&lt;/code&gt;] to manage secrets. As mentioned in the &lt;a href=&quot;http://jackwan.win/Get-Started-with-Legacy-Project/&quot;&gt;Get Started with Legacy Project&lt;/a&gt;. And it uses &lt;a href=&quot;https://stripe.com/docs/api/ruby#intro&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;Stripe&lt;/code&gt;&lt;/a&gt; to deal with online payments.&lt;/p&gt;
+
+&lt;h2 id=&quot;figarohttpsgithubcomlaserlemonfigaro&quot;&gt;&lt;a href=&quot;https://github.com/laserlemon/figaro&quot;&gt;Figaro&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;figaro&lt;/code&gt; will generate a git-ignored file &lt;code class=&quot;highlighter-rouge&quot;&gt;config/application.yml&lt;/code&gt; for secrets management.
+In &lt;code class=&quot;highlighter-rouge&quot;&gt;Audience1st&lt;/code&gt;, it looks like this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span class=&quot;s&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;session_secret&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;30&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;or&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;more&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;random&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;characters&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;string&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;stripe_key&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;stripe&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;public&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;(publishable)&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;key&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;stripe_secret&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;stripe&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;private&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;API&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;key&quot;&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;# include at most one of the following two lines - not both:&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;email_integration&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;MailChimp&quot;&lt;/span&gt;  &lt;span class=&quot;c1&quot;&gt;# if you use MailChimp, include this line verbatim, else omit&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;email_integration&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;ConstantContact&quot;&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# if you use CC, include this line verbatime, else omit&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;# if you included one of the two Email Integration choices:&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;mailchimp_key&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;optional:&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;you&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;use&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;Mailchimp,&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;API&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;key;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;otherwise&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;omit&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;entry&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;constant_contact_username&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;Username&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;for&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;CC&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;login,&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;using&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;CC&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;constant_contact_password&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;for&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;CC&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;login,&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;using&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;CC&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;constant_contact_key&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;CC&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;publishable&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;part&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;of&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;API&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;key&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;constant_contact_secret&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;CC&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;secret&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;part&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;of&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;API&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;key&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;You can use &lt;code class=&quot;highlighter-rouge&quot;&gt;ENV['stripe_key']&lt;/code&gt; or &lt;code class=&quot;highlighter-rouge&quot;&gt;Figaro.env.stripe_key&lt;/code&gt;, which totally depends on personal preference, to access the secrets you set in &lt;code class=&quot;highlighter-rouge&quot;&gt;config/application.yml&lt;/code&gt;. Using a tool to manage secrets is a very good practice in terms of separating dependencies.&lt;/p&gt;
+
+&lt;h2 id=&quot;stripehttpsstripecomdocsapirubyintro&quot;&gt;&lt;a href=&quot;https://stripe.com/docs/api/ruby#intro&quot;&gt;Stripe&lt;/a&gt;&lt;/h2&gt;
+&lt;p class=&quot;notice&quot;&gt;&lt;em&gt;You should &lt;strong&gt;never include your API keys in plaintext&lt;/strong&gt; as is showed in the API documentations of &lt;code class=&quot;highlighter-rouge&quot;&gt;Stripe&lt;/code&gt;, because they do this for readability.&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Here’s a typical charge action using &lt;code class=&quot;highlighter-rouge&quot;&gt;stripe&lt;/code&gt;, it will return a &lt;code class=&quot;highlighter-rouge&quot;&gt;JSON&lt;/code&gt; object:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span class=&quot;nb&quot;&gt;require&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;stripe&quot;&lt;/span&gt;
+&lt;span class=&quot;no&quot;&gt;Stripe&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;api_key&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;wublubdabuda&quot;&lt;/span&gt;
+
+&lt;span class=&quot;no&quot;&gt;Stripe&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Charge&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;create&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;({&lt;/span&gt;
+  &lt;span class=&quot;c1&quot;&gt;# 2000 means $20.00, the unit is *cent*&lt;/span&gt;
+  &lt;span class=&quot;ss&quot;&gt;:amount&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;ss&quot;&gt;:currency&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;usd&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;ss&quot;&gt;:source&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;tok_mastercard&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# obtained with Stripe.js&lt;/span&gt;
+  &lt;span class=&quot;ss&quot;&gt;:description&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Charge for jackwan@example.com&quot;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;ss&quot;&gt;:idempotency_key&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;O64FLjrM6fK1giod&quot;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p class=&quot;notice&quot;&gt;NOTE: &lt;strong&gt;Credit card information is sent directly to Stripe, ensuring sensitive data never hits your servers, all you get is a token.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p class=&quot;notice&quot;&gt;NOTE FURTHER: &lt;strong&gt;Genuine card information cannot be used in test mode.&lt;/strong&gt; Instead, use any of the following test card numbers, a valid expiration date in the future, and any &lt;strong&gt;random&lt;/strong&gt; CVC number, to create a successful payment.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Number&lt;/th&gt;
+      &lt;th&gt;Brand&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;4242&lt;span&gt;&lt;/span&gt;4242&lt;span&gt;&lt;/span&gt;4242&lt;span&gt;&lt;/span&gt;4242&lt;/td&gt;
+      &lt;td&gt;Visa&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;4000&lt;span&gt;&lt;/span&gt;0566&lt;span&gt;&lt;/span&gt;5566&lt;span&gt;&lt;/span&gt;5556&lt;/td&gt;
+      &lt;td&gt;Visa (debit)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;5555&lt;span&gt;&lt;/span&gt;5555&lt;span&gt;&lt;/span&gt;5555&lt;span&gt;&lt;/span&gt;4444&lt;/td&gt;
+      &lt;td&gt;Mastercard&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;5200&lt;span&gt;&lt;/span&gt;8282&lt;span&gt;&lt;/span&gt;8282&lt;span&gt;&lt;/span&gt;8210&lt;/td&gt;
+      &lt;td&gt;Mastercard (debit)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;5105&lt;span&gt;&lt;/span&gt;1051&lt;span&gt;&lt;/span&gt;0510&lt;span&gt;&lt;/span&gt;5100&lt;/td&gt;
+      &lt;td&gt;Mastercard (prepaid)&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;3782&lt;span&gt;&lt;/span&gt;822463&lt;span&gt;&lt;/span&gt;10005&lt;/td&gt;
+      &lt;td&gt;American Express&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;3714&lt;span&gt;&lt;/span&gt;496353&lt;span&gt;&lt;/span&gt;98431&lt;/td&gt;
+      &lt;td&gt;American Express&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;6011&lt;span&gt;&lt;/span&gt;1111&lt;span&gt;&lt;/span&gt;1111&lt;span&gt;&lt;/span&gt;1117&lt;/td&gt;
+      &lt;td&gt;Discover&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;6011&lt;span&gt;&lt;/span&gt;0009&lt;span&gt;&lt;/span&gt;9013&lt;span&gt;&lt;/span&gt;9424&lt;/td&gt;
+      &lt;td&gt;Discover&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;3056&lt;span&gt;&lt;/span&gt;9309&lt;span&gt;&lt;/span&gt;0259&lt;span&gt;&lt;/span&gt;04&lt;/td&gt;
+      &lt;td&gt;Diners Club&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;3852&lt;span&gt;&lt;/span&gt;0000&lt;span&gt;&lt;/span&gt;0232&lt;span&gt;&lt;/span&gt;37&lt;/td&gt;
+      &lt;td&gt;Diners Club&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;3530&lt;span&gt;&lt;/span&gt;1113&lt;span&gt;&lt;/span&gt;3330&lt;span&gt;&lt;/span&gt;0000&lt;/td&gt;
+      &lt;td&gt;JCB&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;To better understand &lt;code class=&quot;highlighter-rouge&quot;&gt;Stripe&lt;/code&gt;’s working mechanism, check this out:&lt;/p&gt;
+
+&lt;figure&gt;
+    
+    &lt;a href=&quot;/assets/img/projects/Audience1st/Stripe.jpeg&quot;&gt;&lt;img src=&quot;/assets/img/projects/Audience1st/Stripe.jpeg&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;
+    
+    &lt;figcaption&gt;- From Anonymous&lt;/figcaption&gt;
+&lt;/figure&gt;</content><category term="Tools" /><category term="Ruby on Rails" /><category term="Audience1st" /><summary>Explain basic logic of online payment using the example of Figaro and Stripe...</summary></entry><entry><title>Ruby on Rails Framework</title><link href="/Ruby-On-Rails-Framework/" rel="alternate" type="text/html" title="Ruby on Rails Framework" /><published>2017-10-14T00:00:00-07:00</published><updated>2017-10-14T00:00:00-07:00</updated><id>/Ruby On Rails Framework</id><content type="html" xml:base="/Ruby-On-Rails-Framework/">&lt;p&gt;Today I browsed the source code of “Audience1st”, during which I found many interesting things. I write them down just for future review.&lt;/p&gt;
 
 &lt;h2 id=&quot;routes&quot;&gt;Routes&lt;/h2&gt;
 &lt;p&gt;Speaking of routes in Ruby on Rails, we have to go into the file &lt;code class=&quot;highlighter-rouge&quot;&gt;config/routes.rb&lt;/code&gt; to see what’s going on.&lt;/p&gt;
@@ -570,56 +680,4 @@ git commit -m 'update .gitignore'&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
     &lt;a href=&quot;/assets/img/posts/4_0.JPG&quot;&gt;&lt;img src=&quot;/assets/img/posts/4_0.JPG&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;
     
     &lt;figcaption&gt;Eh...&lt;/figcaption&gt;
-&lt;/figure&gt;</content><category term="life" /><summary>就这样吧</summary></entry><entry><title>没有色彩</title><link href="/%E6%B2%A1%E6%9C%89%E8%89%B2%E5%BD%A9/" rel="alternate" type="text/html" title="没有色彩" /><published>2016-08-12T00:00:00-07:00</published><updated>2016-08-12T00:00:00-07:00</updated><id>/没有色彩</id><content type="html" xml:base="/%E6%B2%A1%E6%9C%89%E8%89%B2%E5%BD%A9/">&lt;figure&gt;
-    
-    &lt;a href=&quot;/assets/img/posts/3_0.png&quot;&gt;&lt;img src=&quot;/assets/img/posts/3_0.png&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;
-    
-    &lt;figcaption&gt;&lt;/figcaption&gt;
-&lt;/figure&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;“听着，作，有一件事你得记住了。你不是缺乏色彩。那种东西仅仅是姓名而已。我们的确拿这件事开过你的玩笑，可全都没有意义。其实，多崎作，你是个无比优秀、色彩丰富的人，一直在建造美妙的火车站。如今你是个三十六岁的健康市民，拥有选举权，定期纳税，为了看我甚至还一个人坐飞机到芬兰来。你什么都不欠缺。你要有自信，要有勇气。你需要的就是这两样。千万别因为怯懦和无聊的自尊心失去心爱的人。”&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;方才躺在榻榻米上久久地望向窗外。马总说过，“你们头顶的天要变了”。可刚才我发现它无时无刻不在变。其实我一直都有个疑问，那就是地球自转的时候，裹在其表面的大气，到底跟不跟着动。如果我们看到的云在动，大部分是由于我们自己在动，而我们却浑然未觉，那可真是件令人悲哀的事。&lt;/p&gt;
-
-&lt;p&gt;读村上读多了会发现，村上主要写的，是孤独，是一个人被关在小黑屋中的思想见闻，如《挪威的森林》、《国境以南太阳以西》等。男主都是与世无争的类型，少言寡语，彬彬有礼，对身边的事反应迟钝又极其敏感，喜欢一个人漫无目的地在街上闲逛，喜欢安静地思考胜过与他人交谈。一言以蔽之，愚以为，村上写的都是现代意义上的咸鱼。不论其家境如何，如《挪》中渡边的普通家庭，《没有色彩…》中作的三年换一辆奔驰的富裕家庭，其本质都一样——甘心做一条咸鱼又能时常自得其乐的伪咸鱼。可能有些玄乎，但个人印象就是这样。&lt;/p&gt;
-
-&lt;p&gt;看看自己，其实也与咸鱼无异，不过，做一只会思考的咸鱼，也未尝不潇洒。甚至，可以说是快意之事。&lt;/p&gt;
-
-&lt;p&gt;咸鱼最喜欢做的，就是感时伤怀，消磨时间。比如说，《没有色彩》中的多崎作，他最爱做的事竟然是眺望火车站，不知是什么原因，从懂事起到现在，他始终如一地沉迷于火车站。“有关火车站的一切事物，都强烈地迷惑着他的心。”原文如是说。&lt;/p&gt;
-
-&lt;p&gt;所以，一旦无事可做而又不想回家的时候，他便会跑到火车站去看人来人往，望云卷云舒，观众生百态，尝人情冷暖，怡然自得，虽然大部分时间他都在发呆、沉浸在自己的那点小情绪中，我还是很佩服他。&lt;/p&gt;
-
-&lt;p&gt;为什么佩服他？因为我特么也想过，如果自己没什么事干，又不想回家时，会干嘛！苦苦思索，抓耳挠腮，面红耳赤之后，我还是不知道去干嘛！也许就特么的这样往路边一坐，然后开始自己45度角的人生。或是找一家酒吧进去点一杯凉白开，然后无视送水小哥的白眼，开始听驻唱哼哼唧唧，有时候，人们喜欢管这叫“靡靡之音”，而我们，管这个叫民谣。&lt;/p&gt;
-
-&lt;p&gt;时常会感叹，生活奇妙啊，真特么的奇妙啊。生活无奈啊，真特么的无奈啊。然后身后老爸老妈异口同声：“小屁孩懂个什么生活，洗洗早点滚去睡觉。”“……”&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;“真是不可思议啊。”惠理说。&lt;br /&gt;
-“什么？”&lt;br /&gt;
-“那个美好的时代悄然逝去，而且一去不复返。各种美丽的&lt;b&gt;可能性&lt;/b&gt;竟被流逝的光阴吞没，消失地无影无踪。就是这个。”&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;我们这个年纪啊，真的充满了各种可能性啊。而不知为什么，恰如其分的话总是姗姗来迟，错过最恰当的时机。而这些错过，同样能把人迷得神魂颠倒。&lt;/p&gt;
-
-&lt;p&gt;听着赵雷的少年锦时，顿感文风突变。音乐无疑可以很大程度上改变人的心境，无奈没有一口好嗓。寒酸歌声，请多包涵。&lt;/p&gt;
-
-&lt;p&gt;突然想起去杭州玩时找长桥的过程，问两个面相和蔼的警察叔叔，“哥，你知不知道长桥在哪里啊？”“知道。”“…”“哦，你说双投桥啊，往前走，在大马路上呢。”“啊，谢谢，谢谢，好难找啊。”“哈哈哈哈，马路上那桥就是。”然后屁颠屁颠跑到马路上，相拥而跳，然后找了半天长桥这俩字，愣是没找着。面面相觑，大眼瞪小眼，“我们不会被忽悠了吧？”“不会吧，他们俩还在那站着呢。”“那搜一搜长桥长什么样子？”“…….”“卧槽，这不就是我们来的路上的那个桥吗！”“妈的智障，给忽悠了。”“……”&lt;/p&gt;
-
-&lt;p&gt;刚才帮妈妈拿了个快递，走在地下停车场，望向出口那里的阳光，穿着邋遢的拖鞋，随意套上的初中就买的绿色衣服，一点也不青春。然后过了一会儿，妈妈又来了一个快递，我穿着同样邋遢的拖鞋，套上同样的初中就买的绿色衣服，走在同样的地下停车场，望向同样的出口，竟无法抑制地破声而笑，我也不知道为什么，可能是耳机里放着“沾满口水的枕头”吧，哈哈哈。&lt;/p&gt;
-
-&lt;p&gt;“人生就像复杂的乐谱，作想。写满十六分音符和三十二分音符，以及许多奇妙的符号、意义不明的批注。很难正确地解读。即便解读出来，将它转换成正确的乐音，也未必能正确理解和评价其中寄托的意义。它也未必能让人幸福。人类的行为为什么非得如此错综复杂呢？”&lt;/p&gt;
-
-&lt;p&gt;的确，我们会忍不住去想一些东西，但是，想了也不一定有结果，有结果了也没办法证实。那么这类的思考在我看来就是徒增烦恼，庸人自扰。&lt;/p&gt;
-
-&lt;p&gt;这个时候，我往往会想起当重新来到那个曾经错过的长桥时，我们笑的样子。&lt;/p&gt;
-
-&lt;p&gt;而我总会莫名其妙地停止脑中的一切，放下手中的一切，插上心中的竹蜻蜓，来到夕影亭下，笑成一个傻逼。&lt;/p&gt;
-
-&lt;figure&gt;
-    
-    &lt;a href=&quot;/assets/img/posts/3_1.JPG&quot;&gt;&lt;img src=&quot;/assets/img/posts/3_1.JPG&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;
-    
-    &lt;figcaption&gt;&lt;/figcaption&gt;
-&lt;/figure&gt;</content><category term="book" /><summary>而我总会莫名其妙地停止脑中的一切，放下手中的一切，插上心中的竹蜻蜓，来到夕影亭下，笑成一个傻逼。</summary></entry></feed>
+&lt;/figure&gt;</content><category term="life" /><summary>就这样吧</summary></entry></feed>
