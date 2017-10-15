@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
-<loc>/Ruby-on-Rails-Get-Started-with-Legacy-Project/</loc>
+<loc>/Ruby-On-Rails-Framework/</loc>
 <lastmod>2017-10-13T00:00:00-07:00</lastmod>
+</url>
+<url>
+<loc>/Get-Started-with-Legacy-Project/</loc>
+<lastmod>2017-10-13T00:00:00-07:00</lastmod>
+</url>
+<url>
+<loc>/Use-LabVIEW-to-Construct-State-Machines/</loc>
+<lastmod>2017-10-10T00:00:00-07:00</lastmod>
 </url>
 <url>
 <loc>/Agile-XP-Tools/</loc>

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Ruby on Rails Framework
-date: 2017-10-13
+date: 2017-10-14
 excerpt: "For future review..."
 project: ture
 tag:
