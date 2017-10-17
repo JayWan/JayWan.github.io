@@ -3,6 +3,7 @@ layout: post
 title: "Hello World"
 date: 2016-10-02
 excerpt: "就这样吧"
+post: true
 tags: [life]
 comments: true
 ---
