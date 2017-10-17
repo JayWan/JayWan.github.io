@@ -115,4 +115,4 @@ Rails.application.configure do
 end
 {% endhighlight %}
 
-But in `config/environments/production.rb`, `action_mailer.delivery_method` will probably be `:smtp` or `:sendmail`. Also, we'd better set `config.action_mailer.perform_deliveries` to `true`.
+But in `config/environments/production.rb`, `action_mailer.delivery_method` will probably be `:smtp` or `:sendmail`. **If it's `:smtp`, we should set `config.action_mailer.perform_deliveries` to `true` as well**.
