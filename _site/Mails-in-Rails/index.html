@@ -31,13 +31,13 @@
     <span class="nt">&lt;/p&gt;</span>
     <span class="nt">&lt;p&gt;</span>Thanks for joining and have a great day!<span class="nt">&lt;/p&gt;</span>
   <span class="nt">&lt;/body&gt;</span>
-<span class="nt">&lt;/html&gt;</span></code></pre></figure> <p class="notice">NOTE: Not all clients prefer HTML emails, so also creating a file called <code class="highlighter-rouge">welcome_email.text.erb</code> in <code class="highlighter-rouge">app/views/user_mailer/</code> is the best practice. **In this case, <code class="highlighter-rouge">ActionMailer</code> will detect these two templates and automatically generate a <code class="highlighter-rouge">multipart/alternative</code> email.</p> <figure class="highlight"><pre><code class="language-html" data-lang="html">Welcome to example.com, <span class="err">&lt;</span>%= @user.name %&gt;
+<span class="nt">&lt;/html&gt;</span></code></pre></figure> <p class="notice">NOTE: Not all clients prefer HTML emails, so also creating a file called <code class="highlighter-rouge">welcome_email.text.erb</code> in <code class="highlighter-rouge">app/views/user_mailer/</code> is the best practice. **In this case, <code class="highlighter-rouge">ActionMailer</code> will detect these two templates and automatically generate a <code class="highlighter-rouge">multipart/alternative</code> email.</p> <figure class="highlight"><pre><code class="language-erb" data-lang="erb">Welcome to example.com, <span class="cp">&lt;%=</span> <span class="vi">@user</span><span class="p">.</span><span class="nf">name</span> <span class="cp">%&gt;</span>
 ===============================================
  
 You have successfully signed up to example.com,
-your username is: <span class="err">&lt;</span>%= @user.login %&gt;.
+your username is: <span class="cp">&lt;%=</span> <span class="vi">@user</span><span class="p">.</span><span class="nf">login</span> <span class="cp">%&gt;</span>.
  
-To login to the site, just follow this link: <span class="err">&lt;</span>%= @url %&gt;.
+To login to the site, just follow this link: <span class="cp">&lt;%=</span> <span class="vi">@url</span> <span class="cp">%&gt;</span>.
  
 Thanks for joining and have a great day!</code></pre></figure> <p><strong>There’s all kinds of things you can do with Mailers, for more detailed information check: <a href="http://guides.rubyonrails.org/action_mailer_basics.html">THIS</a> out.</strong></p> <ul> <li>Sending multiple emails</li> <li>Attach files</li> <li>Insert Images</li> <li>Integrated with Gmail</li> </ul> <p>##Configurations Usually, if you are using Gmail, in <code class="highlighter-rouge">config/environments/development.rb</code>, it may looks like this:</p> <figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="no">Rails</span><span class="p">.</span><span class="nf">application</span><span class="p">.</span><span class="nf">configure</span> <span class="k">do</span>
   <span class="p">.</span><span class="nf">.</span><span class="p">.</span>

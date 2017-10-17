@@ -62,7 +62,7 @@ The corresponding view - `welcome_emails.html.erb` in `app/views/my_mailer` may 
 NOTE: Not all clients prefer HTML emails, so also creating a file called `welcome_email.text.erb` in `app/views/user_mailer/` is the best practice. **In this case, `ActionMailer` will detect these two templates and automatically generate a `multipart/alternative` email.
 {: .notice}
 
-{% highlight html %}
+{% highlight erb %}
 Welcome to example.com, <%= @user.name %>
 ===============================================
  
