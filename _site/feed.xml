@@ -1,4 +1,106 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><generator uri="http://jekyllrb.com" version="3.2.1">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2017-10-15T16:45:43-07:00</updated><id>/</id><title>Running Jack</title><subtitle>Never Too Late.</subtitle><entry><title>Using External APIs in Rails</title><link href="/Using-External-API-in-Ruby-on-Rails/" rel="alternate" type="text/html" title="Using External APIs in Rails" /><published>2017-10-15T00:00:00-07:00</published><updated>2017-10-15T00:00:00-07:00</updated><id>/Using External API in Ruby on Rails</id><content type="html" xml:base="/Using-External-API-in-Ruby-on-Rails/">&lt;p&gt;Audience1st uses &lt;a href=&quot;https://github.com/laserlemon/figaro&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;figaro&lt;/code&gt;&lt;/a&gt; to manage secrets. As mentioned in the &lt;a href=&quot;http://jackwan.win/Get-Started-with-Legacy-Project/&quot;&gt;Get Started with Legacy Project&lt;/a&gt;. And it uses &lt;a href=&quot;https://stripe.com/docs/api/ruby#intro&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;Stripe&lt;/code&gt;&lt;/a&gt; to deal with online payments.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><generator uri="http://jekyllrb.com" version="3.2.1">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2017-10-17T00:44:43-07:00</updated><id>/</id><title>Running Jack</title><subtitle>Never Too Late.</subtitle><entry><title>Mailers in Rails</title><link href="/Mails-in-Rails/" rel="alternate" type="text/html" title="Mailers in Rails" /><published>2017-10-17T00:00:00-07:00</published><updated>2017-10-17T00:00:00-07:00</updated><id>/Mails in Rails</id><content type="html" xml:base="/Mails-in-Rails/">&lt;p&gt;Usually, a sophisticated app will send their users all kinds of e-mails including confirmation e-mails, verification e-mails and so on. In Rails, we can use &lt;code class=&quot;highlighter-rouge&quot;&gt;ActionMailer&lt;/code&gt; or External APIs. Here, I provide a solution using &lt;code class=&quot;highlighter-rouge&quot;&gt;ActionMailer&lt;/code&gt;. Below is part of the summary of the official tutorial.&lt;/p&gt;
+
+&lt;h2 id=&quot;create-a-mailer&quot;&gt;Create A Mailer&lt;/h2&gt;
+&lt;p&gt;You can use a &lt;code class=&quot;highlighter-rouge&quot;&gt;generator&lt;/code&gt; or create a file in the directory -  &lt;code class=&quot;highlighter-rouge&quot;&gt;app/mailers&lt;/code&gt;, &lt;strong&gt;just make sure that it inherit from &lt;code class=&quot;highlighter-rouge&quot;&gt;ActionMailer::Base&lt;/code&gt; and have associated views that appear in &lt;code class=&quot;highlighter-rouge&quot;&gt;app/views&lt;/code&gt;&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p class=&quot;notice&quot;&gt;##Core Concept
+&lt;strong&gt;NOTE:&lt;/strong&gt; Mailers are very similar to Rails controllers. They also have methods called “actions” and use views to structure the content.&lt;/p&gt;
+
+&lt;p&gt;If we create a mailer called MyMailer like this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MyMailer&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;ActionMailer&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Base&lt;/span&gt;
+  &lt;span class=&quot;c1&quot;&gt;# Set the default sender address&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;default&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;from: &lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'notifications@example.com'&lt;/span&gt;
+ 
+  &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;welcome_email&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;vi&quot;&gt;@user&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;
+    &lt;span class=&quot;vi&quot;&gt;@url&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'http://example.com/login'&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;# Pass the :to and :subject headers in&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;mail&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;to: &lt;/span&gt;&lt;span class=&quot;vi&quot;&gt;@user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;email&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;subject: &lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'Welcome to My Awesome Site'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;default&lt;/code&gt; is a Hash contains all default values for any email you send from this mailer.&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;mail&lt;/code&gt; is the actual email message&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;This will create a number of routes for each of the articles and comments controller. For Admin::ArticlesController, Rails will create the following 7 routes by default:&lt;/p&gt;
+
+&lt;p&gt;The corresponding view - &lt;code class=&quot;highlighter-rouge&quot;&gt;welcome_emails.html.erb&lt;/code&gt; in &lt;code class=&quot;highlighter-rouge&quot;&gt;app/views/my_mailer&lt;/code&gt; may look like this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-html&quot; data-lang=&quot;html&quot;&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;!DOCTYPE html&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;html&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;head&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;meta&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;content=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'text/html; charset=UTF-8'&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;http-equiv=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'Content-Type'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;/head&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;body&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;h1&amp;gt;&lt;/span&gt;Welcome to example.com, &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @user.name %&amp;gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;/h1&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&lt;/span&gt;
+      You have successfully signed up to example.com,
+      your username is: &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @user.login %&amp;gt;.&lt;span class=&quot;nt&quot;&gt;&amp;lt;br&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/p&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&lt;/span&gt;
+      To login to the site, just follow this link: &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @url %&amp;gt;.
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/p&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&lt;/span&gt;Thanks for joining and have a great day!&lt;span class=&quot;nt&quot;&gt;&amp;lt;/p&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;/body&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/html&amp;gt;&lt;/span&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;!DOCTYPE html&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;html&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;head&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;meta&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;content=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'text/html; charset=UTF-8'&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;http-equiv=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'Content-Type'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;/head&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;body&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;h1&amp;gt;&lt;/span&gt;Welcome to example.com, &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @user.name %&amp;gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;/h1&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&lt;/span&gt;
+      You have successfully signed up to example.com,
+      your username is: &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @user.login %&amp;gt;.&lt;span class=&quot;nt&quot;&gt;&amp;lt;br&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/p&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&lt;/span&gt;
+      To login to the site, just follow this link: &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @url %&amp;gt;.
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/p&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&lt;/span&gt;Thanks for joining and have a great day!&lt;span class=&quot;nt&quot;&gt;&amp;lt;/p&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;/body&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/html&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p class=&quot;notice&quot;&gt;NOTE: Not all clients prefer HTML emails, so also creating a file called &lt;code class=&quot;highlighter-rouge&quot;&gt;welcome_email.text.erb&lt;/code&gt; in &lt;code class=&quot;highlighter-rouge&quot;&gt;app/views/user_mailer/&lt;/code&gt; is the best practice. **In this case, &lt;code class=&quot;highlighter-rouge&quot;&gt;ActionMailer&lt;/code&gt; will detect these two templates and automatically generate a &lt;code class=&quot;highlighter-rouge&quot;&gt;multipart/alternative&lt;/code&gt; email.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-html&quot; data-lang=&quot;html&quot;&gt;Welcome to example.com, &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @user.name %&amp;gt;
+===============================================
+ 
+You have successfully signed up to example.com,
+your username is: &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @user.login %&amp;gt;.
+ 
+To login to the site, just follow this link: &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @url %&amp;gt;.
+ 
+Thanks for joining and have a great day!&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;&lt;strong&gt;There’s all kinds of things you can do with Mailers, for more detailed information check: &lt;a href=&quot;http://guides.rubyonrails.org/action_mailer_basics.html&quot;&gt;THIS&lt;/a&gt; out.&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Sending multiple emails&lt;/li&gt;
+  &lt;li&gt;Attach files&lt;/li&gt;
+  &lt;li&gt;Insert Images&lt;/li&gt;
+  &lt;li&gt;Integrated with Gmail&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;##Configurations
+Usually, if you are using Gmail, in &lt;code class=&quot;highlighter-rouge&quot;&gt;config/environments/development.rb&lt;/code&gt;, it may looks like this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span class=&quot;no&quot;&gt;Rails&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;application&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;configure&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;
+  &lt;span class=&quot;nf&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;action_mailer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;smtp_settings&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;ss&quot;&gt;address: 		&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'smtp.gmail.com'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;ss&quot;&gt;port:				&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;587&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;ss&quot;&gt;domain:       	&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'my_app.com'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;ss&quot;&gt;user_name:		&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;ENV&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'GMAIL_USERNAME'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+    &lt;span class=&quot;ss&quot;&gt;password:         &lt;/span&gt;&lt;span class=&quot;no&quot;&gt;ENV&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'GMAIL_PASSWORD'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt;
+    &lt;span class=&quot;ss&quot;&gt;authentication:  &lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'plain'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;ss&quot;&gt;enable_starttls_auto: &lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;true&lt;/span&gt;  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;
+  &lt;span class=&quot;nf&quot;&gt;config&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;action_mailer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;delivery_method&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:test&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;But in &lt;code class=&quot;highlighter-rouge&quot;&gt;config/environments/production.rb&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;action_mailer.delivery_method&lt;/code&gt; will probably be &lt;code class=&quot;highlighter-rouge&quot;&gt;:smtp&lt;/code&gt; or &lt;code class=&quot;highlighter-rouge&quot;&gt;:sendmail&lt;/code&gt;. Also, we’d better set &lt;code class=&quot;highlighter-rouge&quot;&gt;config.action_mailer.perform_deliveries&lt;/code&gt; to &lt;code class=&quot;highlighter-rouge&quot;&gt;true&lt;/code&gt;.&lt;/p&gt;</content><category term="Ruby on Rails" /><summary>API reading notes...</summary></entry><entry><title>Using External APIs in Rails</title><link href="/Using-External-API-in-Ruby-on-Rails/" rel="alternate" type="text/html" title="Using External APIs in Rails" /><published>2017-10-15T00:00:00-07:00</published><updated>2017-10-15T00:00:00-07:00</updated><id>/Using External API in Ruby on Rails</id><content type="html" xml:base="/Using-External-API-in-Ruby-on-Rails/">&lt;p&gt;Audience1st uses &lt;a href=&quot;https://github.com/laserlemon/figaro&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;figaro&lt;/code&gt;&lt;/a&gt; to manage secrets. As mentioned in the &lt;a href=&quot;http://jackwan.win/Get-Started-with-Legacy-Project/&quot;&gt;Get Started with Legacy Project&lt;/a&gt;. And it uses &lt;a href=&quot;https://stripe.com/docs/api/ruby#intro&quot;&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;Stripe&lt;/code&gt;&lt;/a&gt; to deal with online payments.&lt;/p&gt;
 
 &lt;h2 id=&quot;figarohttpsgithubcomlaserlemonfigaro&quot;&gt;&lt;a href=&quot;https://github.com/laserlemon/figaro&quot;&gt;Figaro&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;figaro&lt;/code&gt; will generate a git-ignored file &lt;code class=&quot;highlighter-rouge&quot;&gt;config/application.yml&lt;/code&gt; for secrets management.
@@ -663,21 +765,4 @@ git commit -m 'update .gitignore'&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 &lt;hr /&gt;
 
 &lt;h1 id=&quot;section-3&quot;&gt;尾声&lt;/h1&gt;
-&lt;p&gt;最后如果有人做了，或者已经有了，可以通过各种途径告诉我，以后可以多多交流，刚好我也想加个&lt;code class=&quot;highlighter-rouge&quot;&gt;FRIENDS&lt;/code&gt;模块，里面列出友情链接，哈哈哈。&lt;/p&gt;</content><category term="blog" /><category term="about" /><category term="life" /><summary>Hello, My coming 2017. Hello, My life.</summary></entry><entry><title>Hello World</title><link href="/HelloWorld/" rel="alternate" type="text/html" title="Hello World" /><published>2016-10-02T00:00:00-07:00</published><updated>2016-10-02T00:00:00-07:00</updated><id>/HelloWorld</id><content type="html" xml:base="/HelloWorld/">&lt;h1 id=&quot;hello-world&quot;&gt;Hello World!&lt;/h1&gt;
-
-&lt;p&gt;网站基本配置完成，还有要搞的就是跨设备支持（那个返回顶端的小箭头在移动设备上显示不出来）和Disqus，话说iPhone的屏是真长啊。&lt;/p&gt;
-
-&lt;p&gt;原本想加个背景音乐，但在上个网站的配置过程中发现，只有Chrome支持自动播放，索性就不加了。&lt;/p&gt;
-
-&lt;p&gt;关于更多这个玩意是怎么弄出来的，请移步Projects.&lt;/p&gt;
-
-&lt;p&gt;把以前的文章拉出来凑数，以后&lt;b&gt;不定期&lt;/b&gt;应该会更新…&lt;/p&gt;
-
-&lt;p&gt;就这样吧，最后放个图&lt;/p&gt;
-
-&lt;figure&gt;
-    
-    &lt;a href=&quot;/assets/img/posts/4_0.JPG&quot;&gt;&lt;img src=&quot;/assets/img/posts/4_0.JPG&quot; alt=&quot;&quot; /&gt;&lt;/a&gt;
-    
-    &lt;figcaption&gt;Eh...&lt;/figcaption&gt;
-&lt;/figure&gt;</content><category term="life" /><summary>就这样吧</summary></entry></feed>
+&lt;p&gt;最后如果有人做了，或者已经有了，可以通过各种途径告诉我，以后可以多多交流，刚好我也想加个&lt;code class=&quot;highlighter-rouge&quot;&gt;FRIENDS&lt;/code&gt;模块，里面列出友情链接，哈哈哈。&lt;/p&gt;</content><category term="blog" /><category term="about" /><category term="life" /><summary>Hello, My coming 2017. Hello, My life.</summary></entry></feed>
