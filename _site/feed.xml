@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><generator uri="http://jekyllrb.com" version="3.2.1">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2017-10-17T00:49:33-07:00</updated><id>/</id><title>Running Jack</title><subtitle>Never Too Late.</subtitle><entry><title>Mailers in Rails</title><link href="/Mails-in-Rails/" rel="alternate" type="text/html" title="Mailers in Rails" /><published>2017-10-17T00:00:00-07:00</published><updated>2017-10-17T00:00:00-07:00</updated><id>/Mails in Rails</id><content type="html" xml:base="/Mails-in-Rails/">&lt;p&gt;Usually, a sophisticated app will send their users all kinds of e-mails including confirmation e-mails, verification e-mails and so on. In Rails, we can use &lt;code class=&quot;highlighter-rouge&quot;&gt;ActionMailer&lt;/code&gt; or External APIs. Here, I provide a solution using &lt;code class=&quot;highlighter-rouge&quot;&gt;ActionMailer&lt;/code&gt;. Below is part of the summary of the official tutorial.&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><generator uri="http://jekyllrb.com" version="3.2.1">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2017-10-17T00:53:33-07:00</updated><id>/</id><title>Running Jack</title><subtitle>Never Too Late.</subtitle><entry><title>Mailers in Rails</title><link href="/Mails-in-Rails/" rel="alternate" type="text/html" title="Mailers in Rails" /><published>2017-10-17T00:00:00-07:00</published><updated>2017-10-17T00:00:00-07:00</updated><id>/Mails in Rails</id><content type="html" xml:base="/Mails-in-Rails/">&lt;p&gt;Usually, a sophisticated app will send their users all kinds of e-mails including confirmation e-mails, verification e-mails and so on. In Rails, we can use &lt;code class=&quot;highlighter-rouge&quot;&gt;ActionMailer&lt;/code&gt; or External APIs. Here, I provide a solution using &lt;code class=&quot;highlighter-rouge&quot;&gt;ActionMailer&lt;/code&gt;. Below is part of the summary of the official tutorial.&lt;/p&gt;
 
 &lt;h2 id=&quot;create-a-mailer&quot;&gt;Create A Mailer&lt;/h2&gt;
 &lt;p&gt;You can use a &lt;code class=&quot;highlighter-rouge&quot;&gt;generator&lt;/code&gt; or create a file in the directory -  &lt;code class=&quot;highlighter-rouge&quot;&gt;app/mailers&lt;/code&gt;, &lt;strong&gt;just make sure that it inherit from &lt;code class=&quot;highlighter-rouge&quot;&gt;ActionMailer::Base&lt;/code&gt; and have associated views that appear in &lt;code class=&quot;highlighter-rouge&quot;&gt;app/views&lt;/code&gt;&lt;/strong&gt;.&lt;/p&gt;
@@ -29,35 +29,19 @@
 
 &lt;p&gt;The corresponding view - &lt;code class=&quot;highlighter-rouge&quot;&gt;welcome_emails.html.erb&lt;/code&gt; in &lt;code class=&quot;highlighter-rouge&quot;&gt;app/views/my_mailer&lt;/code&gt; may look like this:&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-html&quot; data-lang=&quot;html&quot;&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;!DOCTYPE html&amp;gt;&lt;/span&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-erb&quot; data-lang=&quot;erb&quot;&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;!DOCTYPE html&amp;gt;&lt;/span&gt;
 &lt;span class=&quot;nt&quot;&gt;&amp;lt;html&amp;gt;&lt;/span&gt;
   &lt;span class=&quot;nt&quot;&gt;&amp;lt;head&amp;gt;&lt;/span&gt;
     &lt;span class=&quot;nt&quot;&gt;&amp;lt;meta&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;content=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'text/html; charset=UTF-8'&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;http-equiv=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'Content-Type'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
   &lt;span class=&quot;nt&quot;&gt;&amp;lt;/head&amp;gt;&lt;/span&gt;
   &lt;span class=&quot;nt&quot;&gt;&amp;lt;body&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;lt;h1&amp;gt;&lt;/span&gt;Welcome to example.com, &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @user.name %&amp;gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;/h1&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;h1&amp;gt;&lt;/span&gt;Welcome to example.com, &lt;span class=&quot;cp&quot;&gt;&amp;lt;%=&lt;/span&gt; &lt;span class=&quot;vi&quot;&gt;@user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;cp&quot;&gt;%&amp;gt;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;/h1&amp;gt;&lt;/span&gt;
     &lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&lt;/span&gt;
       You have successfully signed up to example.com,
-      your username is: &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @user.login %&amp;gt;.&lt;span class=&quot;nt&quot;&gt;&amp;lt;br&amp;gt;&lt;/span&gt;
+      your username is: &lt;span class=&quot;cp&quot;&gt;&amp;lt;%=&lt;/span&gt; &lt;span class=&quot;vi&quot;&gt;@user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;login&lt;/span&gt; &lt;span class=&quot;cp&quot;&gt;%&amp;gt;&lt;/span&gt;.&lt;span class=&quot;nt&quot;&gt;&amp;lt;br&amp;gt;&lt;/span&gt;
     &lt;span class=&quot;nt&quot;&gt;&amp;lt;/p&amp;gt;&lt;/span&gt;
     &lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&lt;/span&gt;
-      To login to the site, just follow this link: &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @url %&amp;gt;.
-    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/p&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&lt;/span&gt;Thanks for joining and have a great day!&lt;span class=&quot;nt&quot;&gt;&amp;lt;/p&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;/body&amp;gt;&lt;/span&gt;
-&lt;span class=&quot;nt&quot;&gt;&amp;lt;/html&amp;gt;&lt;/span&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;!DOCTYPE html&amp;gt;&lt;/span&gt;
-&lt;span class=&quot;nt&quot;&gt;&amp;lt;html&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;head&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;lt;meta&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;content=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'text/html; charset=UTF-8'&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;http-equiv=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'Content-Type'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;/head&amp;gt;&lt;/span&gt;
-  &lt;span class=&quot;nt&quot;&gt;&amp;lt;body&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;lt;h1&amp;gt;&lt;/span&gt;Welcome to example.com, &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @user.name %&amp;gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;/h1&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&lt;/span&gt;
-      You have successfully signed up to example.com,
-      your username is: &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @user.login %&amp;gt;.&lt;span class=&quot;nt&quot;&gt;&amp;lt;br&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/p&amp;gt;&lt;/span&gt;
-    &lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&lt;/span&gt;
-      To login to the site, just follow this link: &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @url %&amp;gt;.
+      To login to the site, just follow this link: &lt;span class=&quot;cp&quot;&gt;&amp;lt;%=&lt;/span&gt; &lt;span class=&quot;vi&quot;&gt;@url&lt;/span&gt; &lt;span class=&quot;cp&quot;&gt;%&amp;gt;&lt;/span&gt;.
     &lt;span class=&quot;nt&quot;&gt;&amp;lt;/p&amp;gt;&lt;/span&gt;
     &lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&lt;/span&gt;Thanks for joining and have a great day!&lt;span class=&quot;nt&quot;&gt;&amp;lt;/p&amp;gt;&lt;/span&gt;
   &lt;span class=&quot;nt&quot;&gt;&amp;lt;/body&amp;gt;&lt;/span&gt;

@@ -39,24 +39,8 @@ end
 This will create a number of routes for each of the articles and comments controller. For Admin::ArticlesController, Rails will create the following 7 routes by default:
 
 The corresponding view - `welcome_emails.html.erb` in `app/views/my_mailer` may look like this:
-{% highlight html %}
+{% highlight erb %}
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta content='text/html; charset=UTF-8' http-equiv='Content-Type' />
-  </head>
-  <body>
-    <h1>Welcome to example.com, <%= @user.name %></h1>
-    <p>
-      You have successfully signed up to example.com,
-      your username is: <%= @user.login %>.<br>
-    </p>
-    <p>
-      To login to the site, just follow this link: <%= @url %>.
-    </p>
-    <p>Thanks for joining and have a great day!</p>
-  </body>
-</html><!DOCTYPE html>
 <html>
   <head>
     <meta content='text/html; charset=UTF-8' http-equiv='Content-Type' />

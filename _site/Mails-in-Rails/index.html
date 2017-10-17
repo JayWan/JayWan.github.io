@@ -15,35 +15,19 @@
   <span class="k">end</span>
 <span class="k">end</span></code></pre></figure> <ul> <li>
 <code class="highlighter-rouge">default</code> is a Hash contains all default values for any email you send from this mailer.</li> <li>
-<code class="highlighter-rouge">mail</code> is the actual email message</li> </ul> <p>This will create a number of routes for each of the articles and comments controller. For Admin::ArticlesController, Rails will create the following 7 routes by default:</p> <p>The corresponding view - <code class="highlighter-rouge">welcome_emails.html.erb</code> in <code class="highlighter-rouge">app/views/my_mailer</code> may look like this:</p> <figure class="highlight"><pre><code class="language-html" data-lang="html"><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<code class="highlighter-rouge">mail</code> is the actual email message</li> </ul> <p>This will create a number of routes for each of the articles and comments controller. For Admin::ArticlesController, Rails will create the following 7 routes by default:</p> <p>The corresponding view - <code class="highlighter-rouge">welcome_emails.html.erb</code> in <code class="highlighter-rouge">app/views/my_mailer</code> may look like this:</p> <figure class="highlight"><pre><code class="language-erb" data-lang="erb"><span class="cp">&lt;!DOCTYPE html&gt;</span>
 <span class="nt">&lt;html&gt;</span>
   <span class="nt">&lt;head&gt;</span>
     <span class="nt">&lt;meta</span> <span class="na">content=</span><span class="s">'text/html; charset=UTF-8'</span> <span class="na">http-equiv=</span><span class="s">'Content-Type'</span> <span class="nt">/&gt;</span>
   <span class="nt">&lt;/head&gt;</span>
   <span class="nt">&lt;body&gt;</span>
-    <span class="nt">&lt;h1&gt;</span>Welcome to example.com, <span class="err">&lt;</span>%= @user.name %&gt;<span class="nt">&lt;/h1&gt;</span>
+    <span class="nt">&lt;h1&gt;</span>Welcome to example.com, <span class="cp">&lt;%=</span> <span class="vi">@user</span><span class="p">.</span><span class="nf">name</span> <span class="cp">%&gt;</span><span class="nt">&lt;/h1&gt;</span>
     <span class="nt">&lt;p&gt;</span>
       You have successfully signed up to example.com,
-      your username is: <span class="err">&lt;</span>%= @user.login %&gt;.<span class="nt">&lt;br&gt;</span>
+      your username is: <span class="cp">&lt;%=</span> <span class="vi">@user</span><span class="p">.</span><span class="nf">login</span> <span class="cp">%&gt;</span>.<span class="nt">&lt;br&gt;</span>
     <span class="nt">&lt;/p&gt;</span>
     <span class="nt">&lt;p&gt;</span>
-      To login to the site, just follow this link: <span class="err">&lt;</span>%= @url %&gt;.
-    <span class="nt">&lt;/p&gt;</span>
-    <span class="nt">&lt;p&gt;</span>Thanks for joining and have a great day!<span class="nt">&lt;/p&gt;</span>
-  <span class="nt">&lt;/body&gt;</span>
-<span class="nt">&lt;/html&gt;</span><span class="cp">&lt;!DOCTYPE html&gt;</span>
-<span class="nt">&lt;html&gt;</span>
-  <span class="nt">&lt;head&gt;</span>
-    <span class="nt">&lt;meta</span> <span class="na">content=</span><span class="s">'text/html; charset=UTF-8'</span> <span class="na">http-equiv=</span><span class="s">'Content-Type'</span> <span class="nt">/&gt;</span>
-  <span class="nt">&lt;/head&gt;</span>
-  <span class="nt">&lt;body&gt;</span>
-    <span class="nt">&lt;h1&gt;</span>Welcome to example.com, <span class="err">&lt;</span>%= @user.name %&gt;<span class="nt">&lt;/h1&gt;</span>
-    <span class="nt">&lt;p&gt;</span>
-      You have successfully signed up to example.com,
-      your username is: <span class="err">&lt;</span>%= @user.login %&gt;.<span class="nt">&lt;br&gt;</span>
-    <span class="nt">&lt;/p&gt;</span>
-    <span class="nt">&lt;p&gt;</span>
-      To login to the site, just follow this link: <span class="err">&lt;</span>%= @url %&gt;.
+      To login to the site, just follow this link: <span class="cp">&lt;%=</span> <span class="vi">@url</span> <span class="cp">%&gt;</span>.
     <span class="nt">&lt;/p&gt;</span>
     <span class="nt">&lt;p&gt;</span>Thanks for joining and have a great day!<span class="nt">&lt;/p&gt;</span>
   <span class="nt">&lt;/body&gt;</span>
