@@ -94,6 +94,7 @@ const state_t orientState = {
 				loadOrientDir(),
 				drive()}},
 		// The other 4 triggers
+		...
 	}
 };
 
@@ -103,4 +104,5 @@ typedef struct {
 } action_t;
 {% endhighlight %}
 
-The whole point is to efficiently use `function pointer`s and `struct`s to decoupling the interdependent codes.
+**NOTE:** The whole point is to efficiently use `function pointer`s and `struct`s to decoupling the interdependent codes.
+{: .notice}
