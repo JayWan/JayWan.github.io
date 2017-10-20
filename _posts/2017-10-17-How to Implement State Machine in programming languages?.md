@@ -9,7 +9,7 @@ tag:
 - embedded system
 comments: true
 ---
-After talking about ["How to construct state machines in C efficiently?"](http://jackwan.win/Constructing-State-Machines-Using-C-Rohit/), I attended professor Lee's OH, where we talked a little more upon this topic.
+After talking about ["How to construct state machines in C efficiently?"](http://jackwan.win/Constructing-State-Machines-Using-C-Rohit/) with Rohit, I attended professor Lee's OH, where we talked a little more upon this topic.
 
 This conversation is broader than the former one, but I still learnt a lot.
 
