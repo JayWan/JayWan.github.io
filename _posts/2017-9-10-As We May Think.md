@@ -9,7 +9,7 @@ tag:
 feature: ../assets/img/readings/AsWeMayThink.jpg
 comments: true
 ---
-> *As We May Think* <br>
+> [*As We May Think*](https://en.wikipedia.org/wiki/As_We_May_Think) <br>
 > By Vannevar Bush, July, 1945
 
 The following notes may sometimes be very immature. They are just some intuitions thoughts emerged in my brain when I was reading the article.

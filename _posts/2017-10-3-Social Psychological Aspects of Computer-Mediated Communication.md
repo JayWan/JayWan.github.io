@@ -8,7 +8,7 @@ tag:
 - papers
 comments: true
 ---
-> *Social Psychological Aspects of Computer-Mediated Communication* <br>
+> [*Social Psychological Aspects of Computer-Mediated Communication*](https://pdfs.semanticscholar.org/3b2f/e281ae7bb3bf362db8e2ed7c045fe456da94.pdf)<br>
 > By Sara Kiesler, Jane Siegel, and Tomothy W. McGuire, 1984
 
 The following notes may sometimes be very immature. They are just some intuition thoughts emerged in my brain when I was reading the article.

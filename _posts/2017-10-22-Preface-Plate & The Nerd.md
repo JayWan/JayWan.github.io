@@ -10,7 +10,7 @@ comments: true
 ---
 > I began to read this book completely out of chance and out of my respect to Lee.
 
-Recently, I am reading a book wrote by my professor Edward A. Lee - *PLATO AND THE NERD*, which is subtitled by "The Creative Partnership of Humans and Technology".
+Recently, I am reading a book wrote by my professor Edward A. Lee - [*PLATO AND THE NERD*](http://platoandthenerd.org/index.html), which is subtitled by "The Creative Partnership of Humans and Technology".
 
 First I was amazed by the title of this book - "What the heck does Plato do here? I thought he was the ancient greek philosopher! And it turns out to be the famous philosopher himself, out of question. Why would a book talking about science, engineering, and technology has something to do with Plato? I began to read the book with that question.
 

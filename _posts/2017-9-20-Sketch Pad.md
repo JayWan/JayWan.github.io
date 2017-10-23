@@ -9,8 +9,8 @@ tag:
 feature: ../assets/img/readings/SketchPad.jpg
 comments: true
 ---
-> *SKETCHPAD - A MAN-MACHINE GRAPHICAL COMMUNICATION SYSTEM*
-> <br>By Ivan E. Sutherland,1963
+> [*SKETCHPAD - A MAN-MACHINE GRAPHICAL COMMUNICATION SYSTEM*](https://en.wikipedia.org/wiki/Sketchpad)
+> <br>By Ivan E. Sutherland, 1963
 
 The following notes may sometimes be very immature. They are just some intuitions thoughts emerged in my brain when I was reading the article.
 {: .notice}
