@@ -8,7 +8,7 @@ tag:
 - embedded system
 comments: true
 ---
-After talking about ["How to construct state machines in C efficiently?"](http://jackwan.win/Constructing-State-Machines-Using-C-Rohit/) with Rohit, I attended professor Lee's OH, where we talked a little more upon this topic.
+After talking about ["How to construct state machines in C efficiently?"](http://jackwan.win/Constructing-State-Machines-Using-C-Rohit/) with Rohit, I attended [professor Lee](http://edwardashfordlee.org/index.html)'s OH, where we talked a little more upon this topic.
 
 This conversation is broader than the former one, but I still learnt a lot.
 
@@ -22,7 +22,7 @@ This reminds me of a quote from Shimon Peres:
 
 When asked about whether we can use `Ptolemy2`(a open source software) in our project, he mentioned:
 
-> "Ptolemy2 is very sophisticated in modeling state machines, as I demonstrated at the first time, but relatively immature in specifications checking. You should decide whether to use it based on what part of the tool you are using."
+> "[Ptolemy2](http://ptolemy.eecs.berkeley.edu/ptolemyII/) is very sophisticated in modeling state machines, as I demonstrated at the first time, but relatively immature in specifications checking. You should decide whether to use it based on what part of the tool you are using."
 
 Here's some other advice of his:
 
