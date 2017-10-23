@@ -8,13 +8,13 @@ comments: false
 <center>This is <b>万年杰</b>, Jack Wan's About Page.</center>
 
 ## WHO AM I
-
+I would like to say that I'm a romantic nerd, but maybe I am not eligible for the title "NERD". Still on my way, though.
 
 ## I HAVE
-* A Girlfriend
-* Bike(Why did I get that involved?)
+* A Very Lovely Girlfriend
 * Very Good Roommates
 * Very Awesome Classmates
+* A Bike
 * Curiosity
 * Passion
 * Relatively Enough Time to Do ANYTHING

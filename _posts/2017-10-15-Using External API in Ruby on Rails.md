@@ -5,7 +5,6 @@ date:   2017-10-15
 excerpt: "Explain basic logic of online payment using the example of Figaro and Stripe..."
 project: true
 tag:
-- Tools
 - Ruby on Rails
 - Audience1st
 comments: true

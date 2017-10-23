@@ -6,7 +6,6 @@ excerpt: "A brief summary of how to use labVIEW state chart to construct state m
 project: true
 tag:
 - Embedded Systems
-- LabVIEW
 comments: true
 ---	
 

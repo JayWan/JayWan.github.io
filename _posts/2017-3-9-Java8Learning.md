@@ -5,7 +5,6 @@ date:   2017-3-9
 excerpt: "Java 8 Learning Notes"
 project: true
 tag:
-- coding
 - Java
 comments: true
 ---

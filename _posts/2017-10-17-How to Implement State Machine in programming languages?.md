@@ -5,7 +5,6 @@ date:   2017-10-17
 excerpt: "A brief conversation with professor Lee..."
 interview: true
 tag:
-- design
 - embedded system
 comments: true
 ---

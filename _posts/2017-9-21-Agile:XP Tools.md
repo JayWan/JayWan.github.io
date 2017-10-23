@@ -5,7 +5,6 @@ date:   2017-9-21
 excerpt: "A Introduction to Agile program Tools"
 project: true
 tag:
-- Agile
 - SE
 comments: true
 ---	

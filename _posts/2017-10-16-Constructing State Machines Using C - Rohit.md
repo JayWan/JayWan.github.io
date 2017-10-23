@@ -5,6 +5,7 @@ date:   2017-10-16
 excerpt: "A brief conversation with Rohit..."
 interview: true
 tag:
+- Embedded Systems
 - coding
 comments: true
 ---
