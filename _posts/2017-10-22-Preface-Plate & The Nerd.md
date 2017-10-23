@@ -5,7 +5,7 @@ date:   2017-10-20
 excerpt: "Serial reading notes by chapter..."
 reading: true
 tag:
-- books
+- Plato and the Nerd
 comments: true
 ---
 > I began to read this book completely out of chance and out of my respect to Lee.
