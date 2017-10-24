@@ -35,7 +35,7 @@ After a short discussion upon these questions, we managed to draw the following 
 2. The LEDs have to be sewable and addressable for we won't have enough pins to control those LEDs separately. [Neopixel](https://www.adafruit.com/product/1460) might be a good choice, which also has a reasonable price.
 3. 3-4 IMUs might be enough, for a IMU has every thing we need - 3-axes accelerometers, a gyroscope and even a magnetometer.
 4. Our sample rate must be twice the maximum frequency of interest, according to [Nyquist–Shannon sampling theorem](https://en.wikipedia.org/wiki/Nyquist%E2%80%93Shannon_sampling_theorem). So in this case, maybe 7000Hz is enough, for telephone networks work up to about 3400Hz(Although human can hear sounds up to 20kHz).
-5. One way to handle transferring the high dimensional signal into simple categories is Machine Learning. `[PCA](https://en.wikipedia.org/wiki/Principal_component_analysis)` plus `[Gaussian naive Bayes](https://en.wikipedia.org/wiki/Naive_Bayes_classifier)` will probably work for us. Alternatively, raw data window plus `[KNN](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm)` using either a [`dynamic time warping](https://en.wikipedia.org/wiki/Dynamic_time_warping)` or the `[skorokhod metric](https://www.encyclopediaofmath.org/index.php/Skorokhod_topology)`should work.
+5. One way to handle transferring the high dimensional signal into simple categories is Machine Learning. `[PCA](https://en.wikipedia.org/wiki/Principal_component_analysis)` plus `[Gaussian naive Bayes](https://en.wikipedia.org/wiki/Naive_Bayes_classifier)` will probably work for us. Alternatively, raw data window plus `[KNN](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm)` using a `[dynamic time warping](https://en.wikipedia.org/wiki/Dynamic_time_warping)`should work, too.
 6. The ability to take inputs from a serial port connected to a laptop will really help us to test/debug without really riding a bike. Also, if we wish to send back state/sensor information over the serial port, [protobufs](koti.kapsi.fi/jpa/nanopb/) is recommended by Marcell, one of our GSIs.
 7. Yes, we will probably mount those LEDs on a velcro.
 
@@ -43,12 +43,7 @@ After a short discussion upon these questions, we managed to draw the following 
 
 
 ## SCHEDULES
-1. Requirements Analysis and Specification
-2. Architecture design.
-3. Implementation and Integration
-4. Verification.
-5. Maintenance.
-It believes that "Earlier catch bug, cheaper it is". But it requires extensive documentations, which may be too heavy and even too “clumsy” sometimes.
+
 
 ## TOOLS
 * [Github](https://github.com/) to perform version control.
