@@ -13,7 +13,7 @@ comments: true
 > Hand signals are given by cyclists and some motorists to indicate their intentions to other traffic. Under the terms of the Vienna Convention on Traffic, bicycles are considered to be vehicles and cyclists are considered to be drivers. The traffic codes of most countries reflect this.<br>
 In some countries (such as in the Czech Republic, Canada, and the United States), hand signals are designated not only for cyclists, but for every vehicle that does not have signal lights or has damaged signal lights. For example, drivers of older cars and mopeds may be required to make hand signals.<br>
 Similar to automobile signaling, there are three primary signals: Left turn/overtaking, Right turn, and Stopping/braking.<br>
-- [Wiki Page Hand Signals](https://en.wikipedia.org/wiki/Hand_signals)
+From [Wiki Page Hand Signals](https://en.wikipedia.org/wiki/Hand_signals)
 
 Although these hand signals will probably work fine during daytime, they may be very hard to be recognized by car drivers during night, which is our innovation to create a LEDs system that can effectively protect cyclists' night safety. In addition, the LED matrix can also react to the music playing in its vicinity, from which "Wearable Dance Party" derives.
 
@@ -40,7 +40,7 @@ After a short discussion upon these questions, we managed to draw the following 
 7. Yes, we will probably mount those LEDs on a velcro.
 
 ## ALGORITHMS
- 
+
 
 ## SCHEDULES
 1. Requirements Analysis and Specification
