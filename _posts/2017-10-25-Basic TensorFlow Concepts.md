@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Basic TensorFlow Concepts"
-date:   2017-10-28
+date:   2017-10-24
 excerpt: "Learning to use TensorFlow..."
 project: true
 tag:
