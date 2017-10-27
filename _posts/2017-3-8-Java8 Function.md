@@ -3,7 +3,7 @@ layout: post
 title:  "Java 8 Function"
 date:   2017-3-8
 excerpt: "Java 8 Learning Notes"
-project: true
+note: true
 tag:
 - Java
 comments: true

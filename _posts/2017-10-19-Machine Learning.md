@@ -1,9 +1,9 @@
 ---
 layout: post
 title:  "Basic Concepts of Machine Learning"
-date:   2017-10-23
+date:   2017-10-22
 excerpt: "7 steps of ML..."
-project: true
+note: true
 tag:
 - Machine Learning
 comments: true

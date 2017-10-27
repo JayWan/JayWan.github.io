@@ -3,7 +3,7 @@ layout: post
 title: Ruby on Rails Framework
 date: 2017-10-14
 excerpt: "For future review..."
-project: ture
+note: ture
 tag:
 - Ruby on Rails
 comments: true

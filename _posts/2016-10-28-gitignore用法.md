@@ -3,7 +3,7 @@ layout: post
 title:  "The use of .gitignore"
 date:   2016-10-28
 excerpt: "用.gitignore忽略文件"
-project: true
+note: true
 tag:
 - coding
 comments: true

@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Using External APIs in Rails"
+title:  "[Audience1st]Using External APIs in Rails"
 date:   2017-10-15
 excerpt: "Explain basic logic of online payment using the example of Figaro and Stripe..."
 project: true

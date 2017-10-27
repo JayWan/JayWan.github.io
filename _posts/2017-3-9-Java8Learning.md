@@ -3,7 +3,7 @@ layout: post
 title:  "Java 8 Lambda Expression"
 date:   2017-3-9
 excerpt: "Java 8 Learning Notes"
-project: true
+note: true
 tag:
 - Java
 comments: true

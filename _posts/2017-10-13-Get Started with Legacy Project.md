@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Get Started with Legacy Projects"
+title:  "[Audience1st]Get Started with Legacy Projects"
 date:   2017-10-13
 excerpt: "Notes made when configure Audience1st..."
 project: true

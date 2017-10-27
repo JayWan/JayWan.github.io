@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Mailers in Rails
+title: "[Audience1st]Mailers in Rails"
 date: 2017-10-17
 excerpt: "API reading notes..."
 project: ture
