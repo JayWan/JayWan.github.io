@@ -1,5 +1,8 @@
 # Site navigation links
 
+- title: Notes
+  url: /notes/
+
 - title: Projects
   url: /projects/
 
