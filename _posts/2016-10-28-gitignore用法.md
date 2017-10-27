@@ -9,8 +9,6 @@ tag:
 comments: true
 ---
 
-
-
 # 大作业的痛苦
 最近在写大作业，用Github做版本控制，小组里就我一个人用的Mac，而且系统老是自动生成`.DS_Store`文件，在网上查了怎么取消掉的命令行，输入<b>Terminal</b>，无果。更痛苦的是，每次一修改源代码，就会有一堆`.class`文件的changes，随之而来的，还有一堆conflicts，简直迷醉啊有木有。于是乎，我找到了<b>Solution</b>。
 

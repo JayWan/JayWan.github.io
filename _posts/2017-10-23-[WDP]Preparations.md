@@ -22,33 +22,31 @@ There are hell lots of stuff to consider about when designing a embedded system,
 {: .notice}
 
 For Example:
-1. What microcontroller is suitable for our purpose?
-2. What kind of LEDs do we need, satisfying all the conditions? How complicated it will become if we don't have library support to control the LEDs?
-3. How many IMUs do we need, how to mount them?
-4. What microphone do we need?(According to )
-5. What algorithms should we use to classify those inputs(Presumably Machine Learning)? If we use Machine Learning, how to learn, how to test? How much resource does it require? Can the algorithm run on a microcontroller?
-6. How do we test/debug our product?
-7. Where do we mount those LEDs, on a Velcro? How should the wires be organized?
+1. What microcontroller is suitable for our purpose? What are its flash and RAM size? What is its clock rate and supply voltage? What ISA is it based on?
+2. What kind of LEDs do we need, satisfying all the conditions? How complicated it will become if we don't have library support to control the LEDs? Do they need to be addressable?
+3. How many IMUs do we need, how to mount them? What is the sample rate? What is the precision? What is the range?
+4. What kind of microphone do we need? What is the sample rate? What is the precision? What is the range?
+5. What algorithms should we use to classify those inputs(Presumably Machine Learning)? If we use Machine Learning, how to train the model, how to test them? How much resource does it require? Can the algorithm run on a microcontroller? Is the performance of the algorithm acceptable? **How long will the code take to execute?**(Time is central to embedded system design.)
+6. How do we test/debug our product without really riding a bike?
+7. Where do we mount those LEDs, on a Velcro? How should the wires be organized in order to be as concise as possible?
 
 After a short discussion upon these questions, we managed to draw the following conclusions:
-1. We will probably use [Arduino Nano](https://store.arduino.cc/usa/arduino-nano) as the microcontroller, for it has nice library support and it's open source.
+1. We thought we would probably use [Arduino Nano](https://store.arduino.cc/usa/arduino-nano) as the microcontroller, for it has nice library support and it's open source, but finally we chose [Feather M0](https://learn.adafruit.com/adafruit-feather-m0-basic-proto) for it's more portable(it also supports Arduino's library). It has **256KB of FLASH** and **32KB of RAM**. And it's based on a ATSAMD21G18 **[ARM Cortex M0](https://developer.arm.com/products/processors/cortex-m/cortex-m0)** processor(**32bits**), which is clocked at **48MHz** and at **3.3V** logic.
+
 2. The LEDs have to be sewable and addressable for we won't have enough pins to control those LEDs separately. [Neopixel](https://www.adafruit.com/product/1460) might be a good choice, which also has a reasonable price.
-3. 3-4 IMUs might be enough, for a IMU has every thing we need - 3-axes accelerometers, a gyroscope and even a magnetometer.
-4. Our sample rate must be twice the maximum frequency of interest, according to [Nyquist–Shannon sampling theorem](https://en.wikipedia.org/wiki/Nyquist%E2%80%93Shannon_sampling_theorem). So in this case, maybe 7000Hz is enough, for telephone networks work up to about 3400Hz(Although human can hear sounds up to 20kHz).
+
+3. We used [Adafruit 9-DOF Accel/Mag/Gyro+Temp Breakout Board](https://www.adafruit.com/product/3387). 5 of them might be enough, for a IMU has every thing we need - 3-axes accelerometers, a gyroscope and even a magnetometer. Its accelerometers has ±2/±4/±8/±16 g ranges. Its gyros have the same ±245/±500/±2000 dps ranges.
+
+4. Our sample rate must be twice the maximum frequency of interest, according to [Nyquist–Shannon sampling theorem](https://en.wikipedia.org/wiki/Nyquist%E2%80%93Shannon_sampling_theorem). So in this case, maybe 7000Hz is enough, for telephone networks work up to about 3400Hz(Although human can hear sounds up to 20kHz). Finally, we chose [Adafruit I2S MEMS Microphone](https://www.adafruit.com/product/3421), which has a range of about 50Hz - 15KHz.
+
 5. One way to handle transferring the high dimensional signal into simple categories is Machine Learning. `[PCA](https://en.wikipedia.org/wiki/Principal_component_analysis)` plus `[Gaussian naive Bayes](https://en.wikipedia.org/wiki/Naive_Bayes_classifier)` will probably work for us. Alternatively, raw data window plus `[KNN](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm)` using a `[dynamic time warping](https://en.wikipedia.org/wiki/Dynamic_time_warping)`should work, too.
+
 6. The ability to take inputs from a serial port connected to a laptop will really help us to test/debug without really riding a bike. Also, if we wish to send back state/sensor information over the serial port, [protobufs](koti.kapsi.fi/jpa/nanopb/) is recommended by Marcell, one of our GSIs.
-7. Yes, we will probably mount those LEDs on a velcro.
+
+7. Yes, we will probably mount those LEDs on a velcro. [VELCRO Brand Thin Fasteners Tape](https://www.amazon.com/VELCRO-Brand-Thin-Fasteners-Tape/dp/B0013AIAQ2/ref=pd_sim_229_13?_encoding=UTF8&psc=1&refRID=JYEME8QBZMPKE4HW1DJZ) is our choice.
 
 ## ALGORITHMS
 
+## MODELS
 
-## SCHEDULES
-
-
-## TOOLS
-* [Github](https://github.com/) to perform version control.
-* [Pivotal Tracker](http://pivotaltracker.com/) for project management. We can use points and velocity to track our current progress and to predict our future progress.
-* [Heroku](https://heroku.com/) for deploying our app. (This is only for those who don't have the access to a personal server. But it's indeed a perfect way to check your code structure and independency.)
-* [Travis CI](http://travis-ci.org/) for automatically running tests, which is called **continuous integration(CI)** by some people.
-* [Coveralls](http://coveralls.io/) for detailed test coverage measurements.
-* [CodeClimate](http://codeclimate.com/) for reporting on the quality and robustness of our source code. (Static Analysis.)
+## SOFTWARE ENGINEERING
