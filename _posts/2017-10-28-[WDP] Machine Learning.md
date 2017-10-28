@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "[WDP] Combining Machine Learning & Embedded Systems"
-date:   2017-10-22
+date:   2017-10-28
 excerpt: "Viewpoint: 7 steps of ML and their relationships with embedded systems..."
 project: true
 tag:
