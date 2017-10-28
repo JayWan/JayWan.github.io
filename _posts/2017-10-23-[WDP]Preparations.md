@@ -18,11 +18,11 @@ From [Wiki Page Hand Signals](https://en.wikipedia.org/wiki/Hand_signals)
 Although these hand signals will probably work fine during daytime, they may be very hard to be recognized by car drivers during night, which is our innovation to create a LEDs system that can effectively protect cyclists' night safety. In addition, the LED matrix can also react to the music playing in its vicinity, from which "Wearable Dance Party" derives.
 
 ## HARDWARES
-There are hell lots of stuff to consider about when designing a embedded system, for anything is not easy when it messes up with the physical world.
+There are hell lots of things to consider when designing an embedded system, for there's nothing easy when they mess up with the physical world.
 {: .notice}
 
 For Example:
-1. What microcontroller is suitable for our purpose? What are its flash and RAM size? What is its clock rate and supply voltage? What ISA is it based on?
+1. What microcontroller is suitable for our purpose? What are the flash and RAM sizes? What is the clock rate and supply voltage? What ISA is it based on?
 2. What kind of LEDs do we need, satisfying all the conditions? How complicated it will become if we don't have library support to control the LEDs? Do they need to be addressable?
 3. How many IMUs do we need, how to mount them? What is the sample rate? What is the precision? What is the range?
 4. What kind of microphone do we need? What is the sample rate? What is the precision? What is the range?
