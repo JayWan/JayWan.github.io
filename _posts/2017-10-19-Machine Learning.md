@@ -1,11 +1,12 @@
 ---
 layout: post
-title:  "Basic Concepts of Machine Learning"
+title:  "[WDP] Combining Machine Learning & Embedded Systems"
 date:   2017-10-22
-excerpt: "7 steps of ML..."
-note: true
+excerpt: "Viewpoint: 7 steps of ML and their relationships with embedded systems..."
+project: true
 tag:
 - Machine Learning
+- Wearable Dance Party
 comments: true
 ---
 

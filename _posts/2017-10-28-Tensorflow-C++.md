@@ -9,8 +9,6 @@ tag:
 - TensorFlow
 comments: true
 ---	
-`gcc -I/usr/local/include -L/usr/local/lib hello_tf.c -ltensorflow`
-
 # Graph Construction
 
 ## `Scope`
