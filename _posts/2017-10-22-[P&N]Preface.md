@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "Preface: Plato & The Nerd"
+title:  "[P&N] Preface"
 date:   2017-10-20
-excerpt: "Serial reading notes by chapter..."
+excerpt: "The creative partnership of humans and technology..."
 reading: true
 tag:
 - Plato and the Nerd
@@ -39,5 +39,3 @@ faith.
 > I argue that the goal of artificial intelligence to reproduce human cognitive functions in computers is **misguided**, is **unlikely to succeed**, and **vastly underestimates the potential of computers. Instead, technology is coevolving with humans, augmenting our own cognitive and physical capabilities, all the while enabling us to nurture, evolve, and propagate the technology. We are seeing the emergence of symbiotic coevolution, where the complementarity between humans and machines dominates over their competition.
 
 * I happened to read an article titled *[This computer took 40 minutes to simulate one second of brain activity](https://io9.gizmodo.com/this-computer-took-40-minutes-to-simulate-one-second-of-1043288954)*, whose authority remains unknown to me. Groundless as it might be, why this goal underestimates the computer instead of overestimating it, is that saying that the computers can do things human-beings can never achieve but not in a human way? I am also very much into this topic.
-
-Thanks to my english, I finally decided to read 10 pages each day from now on, which might be a little bit slow.
