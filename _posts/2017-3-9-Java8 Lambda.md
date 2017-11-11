@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "Java 8 Lambda Expression"
+title:  "Java 8 Lambda 表达式"
 date:   2017-3-9
-excerpt: "Java 8 Learning Notes"
+excerpt: "Java 8 Lambda Expression learning notes..."
 note: true
 tag:
 - Java

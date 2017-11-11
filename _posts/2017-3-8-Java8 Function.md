@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "Java 8 Function"
+title:  "Java 8 函数式编程"
 date:   2017-3-8
-excerpt: "Java 8 Learning Notes"
+excerpt: "Java 8 Function learning notes..."
 note: true
 tag:
 - Java
