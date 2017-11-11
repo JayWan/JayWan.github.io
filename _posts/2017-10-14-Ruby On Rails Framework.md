@@ -1,8 +1,8 @@
 ---
 layout: post
-title: Ruby on Rails Framework
+title: Ruby on Rails: Syntax Sugar
 date: 2017-10-14
-excerpt: "For future review..."
+excerpt: "About `Routes` and `Controller Filters` ..."
 note: ture
 tag:
 - Ruby on Rails
@@ -42,6 +42,7 @@ Notice the comment sections
 Rails.application.routes.draw do
   # :format => false means that this app only returns 'html'
   scope :format => false do
+    # Root Path
     root :to => 'customers#show'
 
     resources :bulk_downloads
