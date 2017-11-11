@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Ruby on Rails: Syntax Sugar
+title: RoR - Routes & Controllers
 date: 2017-10-14
 excerpt: "About `Routes` and `Controller Filters` ..."
 note: ture
@@ -65,7 +65,7 @@ end
 
 {% endhighlight ruby %}
 
-## Controller
+## Controllers
 {% highlight ruby %}
 class CustomersController < ApplicationController
 

@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Ruby on Rails: Basic Workflow
-date: 2017-9-29
+title:  RoR - Basic Workflow
+date:   2017-9-29
 excerpt: "Basic workflow and mechanisms when using RoR..."
 note: ture
 tag:
