@@ -44,9 +44,3 @@ After a short discussion upon these questions, we managed to draw the following 
 6. The ability to take inputs from a serial port connected to a laptop will really help us to test/debug without really riding a bike. Also, if we wish to send back state/sensor information over the serial port, [protobufs](koti.kapsi.fi/jpa/nanopb/) is recommended by Marcell, one of our GSIs.
 
 7. Yes, we will probably mount those LEDs on a velcro. [VELCRO Brand Thin Fasteners Tape](https://www.amazon.com/VELCRO-Brand-Thin-Fasteners-Tape/dp/B0013AIAQ2/ref=pd_sim_229_13?_encoding=UTF8&psc=1&refRID=JYEME8QBZMPKE4HW1DJZ) is our choice.
-
-## ALGORITHMS
-
-## MODELS
-
-## SOFTWARE ENGINEERING
