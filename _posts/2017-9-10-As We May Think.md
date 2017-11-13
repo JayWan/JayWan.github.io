@@ -5,7 +5,7 @@ date:   2017-09-10
 excerpt: "Some notes made when reading the paper - As We May Think..."
 reading: true
 tag:
-- papers
+- Papers
 feature: ../assets/img/readings/AsWeMayThink.jpg
 comments: true
 ---

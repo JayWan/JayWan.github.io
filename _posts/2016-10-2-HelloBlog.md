@@ -5,7 +5,7 @@ date:   2016-10-02
 excerpt: "Hello, My coming 2017. Hello, My life."
 project: true
 tag:
-- about
+- About
 comments: true
 ---
 {% capture images %}

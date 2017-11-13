@@ -5,7 +5,7 @@ date:   2016-10-28
 excerpt: "用.gitignore忽略文件"
 note: true
 tag:
-- coding
+- Git
 comments: true
 ---
 

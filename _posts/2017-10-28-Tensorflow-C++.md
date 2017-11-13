@@ -6,7 +6,7 @@ excerpt: "How to use tensorflow in C/C++... [First Things First]"
 note: true
 tag:
 - Machine Learning
-- TensorFlow
+- C/C++
 comments: true
 ---	
 # Graph Construction

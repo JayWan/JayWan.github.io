@@ -5,7 +5,7 @@ date:   2017-09-20
 excerpt: "Some notes made when reading the paper - Sketch Pad..."
 reading: true
 tag:
-- papers
+- Papers
 feature: ../assets/img/readings/SketchPad.jpg
 comments: true
 ---

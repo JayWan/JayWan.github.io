@@ -5,7 +5,7 @@ date:   2017-10-3
 excerpt: "Some notes made when reading the paper - Social Psychological Aspects of Computer-Mediated Communication..."
 reading: true
 tag:
-- papers
+- Papers
 comments: true
 ---
 > [*Social Psychological Aspects of Computer-Mediated Communication*](https://pdfs.semanticscholar.org/3b2f/e281ae7bb3bf362db8e2ed7c045fe456da94.pdf)<br>

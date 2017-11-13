@@ -5,7 +5,7 @@ date:   2017-10-10
 excerpt: "A brief summary of how to use labVIEW state chart to construct state machines..."
 note: true
 tag:
-- Embedded Systems
+- Embedded System
 comments: true
 ---	
 

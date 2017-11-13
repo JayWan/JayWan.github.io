@@ -5,14 +5,14 @@ date:   2017-10-17
 excerpt: "A brief conversation with professor Lee..."
 interview: true
 tag:
-- embedded system
+- Embedded System
 comments: true
 ---
 After talking about ["How to construct state machines in C efficiently?"](http://jackwan.win/Constructing-State-Machines-Using-C-Rohit/) with Rohit, I attended [professor Lee](http://edwardashfordlee.org/index.html)'s OH, where we talked a little more upon this topic.
 
 This conversation is broader than the former one, but I still learnt a lot.
 
-We talked about the `spaghetti code` issue first, and we reached a consensus on that `switch-case` is not a good practice in terms of software engineering. Actually, as far as I am concerned, maybe there is no `silver bullet` of the issue, just as what the book`The Mythical Man-Month` suggested.
+We talked about the `spaghetti code` issue first, and we reached a consensus on that `switch-case` is not a good practice in terms of software engineering. Actually, as far as I am concerned, maybe there is no `silver bullet` of the issue, just as what the book `The Mythical Man-Month` suggested.
 
 Frankly speaking, many very sophisticated tools are usually very expensive, for they are designed for industrial use. So as students, according to Lee, the best practice will probably become: "**Pick the languages designed to implementing state machines according to what parts you want from the tool. And then you will have the generated C code automatically.**"
 
