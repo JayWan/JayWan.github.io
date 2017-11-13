@@ -2,7 +2,7 @@
 layout: post
 title:  "Master of Science"
 date:   2017-11-9
-excerpt: "Some advice come from professor Lee..."
+excerpt: "Some advice from professor Lee..."
 interview: true
 tag:
 - Plato and the Nerd
