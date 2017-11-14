@@ -41,7 +41,7 @@ git help   	# Help! Help!
 
 git init     	# Create an empty Git repository or reinitialize an existing one
 git clone 	# Clone a repository into a new directory
-git remote  # Configure the remote settings 
+git remote  	# Configure the remote settings 
 
 git add 	# Add file contents to the index
 git rm  	# Remove files from the working tree and from the index
