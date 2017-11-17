@@ -29,7 +29,7 @@ But in practice, design patterns will usually not used until your code become ug
 3. **Liskov substitution** principle
 4. **Injection of Dependencies**
   * Traditionally, Interface Segregation principle
-5. Demeter principle
+5. **Demeter** principle
 
 For for informations and examples about `Design Patterns`, go to [this website](https://sourcemaking.com/).
 
