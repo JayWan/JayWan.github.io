@@ -92,7 +92,8 @@ Subtypes can substitute for base types.<br>
 A depends on B, but B interface & implementation can change, even if functionality stable.
 
 ### Patterns/Refactorings:
-  - **Adapter** / **Facade**
+  - **Adapter**: Rails example: **database “adapters”** for MySQL, Oracle, PostgreSQL ...
+  - **Facade**: Unify distinct underlying API’s into a single, simplified API. (like jQuery!)
 
 ## Demeter Principle
 Only talk to your friends, not strangers.
