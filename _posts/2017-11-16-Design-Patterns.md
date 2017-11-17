@@ -46,7 +46,7 @@ A class should have one and only one reason to change.
 
 ## Open/Closed Principle
 Classes should be open for extension, but closed for source modification.
-{: notice}
+{: .notice}
 
 ### Symptoms:
   - Lack of ability to extend (usually refers to adding new types or methods of doing the same thing) without changing the Base class. (E.G. PDF Exporter, HTML Exporter)
