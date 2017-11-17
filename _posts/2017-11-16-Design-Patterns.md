@@ -72,8 +72,7 @@ Classes should be open for extension, but closed for source modification.
 Can’t close against all types of changes, we have to choose.
 
 ## Liskov Substitution Principle
-Subtypes can substitute for base types.
-> "A method that works on an instance of type T, should also work on any subtype of T."
+Subtypes can substitute for base types.<br> "***A method that works on an instance of type T, should also work on any subtype of T.***"
 {: .notice}
 
 ### Symptoms:
