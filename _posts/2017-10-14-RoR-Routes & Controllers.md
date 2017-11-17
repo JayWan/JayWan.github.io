@@ -3,7 +3,7 @@ layout: post
 title: RoR - Routes & Controllers
 date: 2017-10-14
 excerpt: "About `Routes` and `Controller Filters` ..."
-note: ture
+note: true
 tag:
 - Ruby on Rails
 comments: true

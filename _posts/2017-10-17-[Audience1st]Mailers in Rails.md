@@ -3,9 +3,10 @@ layout: post
 title: "[Audience1st] Mailers in Rails"
 date: 2017-10-17
 excerpt: "API reading notes..."
-project: ture
+project: true
 tag:
 - Ruby on Rails
+- Audience1st
 comments: true
 ---
 Usually, a sophisticated app will send their users all kinds of e-mails including confirmation e-mails, verification e-mails and so on. In Rails, we can use `ActionMailer` or External APIs. Here, I provide a solution using `ActionMailer`. Below is part of the summary of the official tutorial.

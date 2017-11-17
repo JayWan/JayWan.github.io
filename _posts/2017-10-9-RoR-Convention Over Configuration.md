@@ -3,7 +3,7 @@ layout: post
 title:  RoR - Convention Over Configuration
 date:   2017-10-9
 excerpt: "Summaries of CoC principle when using RoR. Don't be confused about all of these..."
-note: ture
+note: true
 tag:
 - Ruby on Rails
 comments: true
