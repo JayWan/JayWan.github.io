@@ -4,6 +4,7 @@ title:  "[P&N] Preface"
 date:   2017-10-20
 excerpt: "The creative partnership of humans and technology..."
 reading: true
+hide: true
 tag:
 - Plato and the Nerd
 comments: true

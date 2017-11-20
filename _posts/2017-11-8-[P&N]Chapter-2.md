@@ -4,6 +4,7 @@ title:  "[P&N] Chapter 2: Inventing Laws of Nature"
 date:   2017-11-8
 excerpt: "Models are invented, not discovered; Engineers and scientists use models in complementary, almost opposite ways; All models are wrong, but some are useful..."
 reading: true
+hide: true
 tag:
 - Plato and the Nerd
 comments: true
