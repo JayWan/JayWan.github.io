@@ -4,11 +4,14 @@ title:  "[P&N] Preface"
 date:   2017-10-20
 excerpt: "The creative partnership of humans and technology..."
 reading: true
-hide: true
 tag:
 - Plato and the Nerd
 comments: true
 ---
+
+Citation: **Edward A. Lee, 2017: Plato and the Nerd - the creative partnership of humans and technology. MIT Press, Cambridge, MA**
+{: .notice}
+
 > I began to read this book completely out of chance and out of my respect to Lee.
 
 Recently, I am reading a book wrote by my professor [Edward A. Lee](http://edwardashfordlee.org/index.html) - [*PLATO AND THE NERD*](http://platoandthenerd.org/index.html), which is subtitled by "The Creative Partnership of Humans and Technology".

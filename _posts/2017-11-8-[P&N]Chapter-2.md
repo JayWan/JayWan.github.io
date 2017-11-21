@@ -4,11 +4,12 @@ title:  "[P&N] Chapter 2: Inventing Laws of Nature"
 date:   2017-11-8
 excerpt: "Models are invented, not discovered; Engineers and scientists use models in complementary, almost opposite ways; All models are wrong, but some are useful..."
 reading: true
-hide: true
 tag:
 - Plato and the Nerd
 comments: true
 ---
+Citation: **Edward A. Lee, 2017: Plato and the Nerd - the creative partnership of humans and technology. MIT Press, Cambridge, MA**
+{: .notice}
 
 This chapter literally blew my mind. Thanks to my ignorance, I tried to find the flaws in the logics of these astonishing statements but failed, and therefore accepted these great thoughts.
 
