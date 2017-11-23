@@ -1,0 +1,12 @@
+---
+layout: post
+title:  "ML strategy"
+date:   2017-11-20
+excerpt: "Tips for structuring ML projects learned from the Coursera course taught by Andrew Ng ..."
+tag:
+- Machine Learning
+comments: true
+---
+
+\\[ repeat { 
+} \\]
