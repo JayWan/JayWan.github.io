@@ -14,19 +14,23 @@ comments: true
 1. Fit training set well on cost function
   - Bigger Network
   - Better optimization algorithm
+  - Different NN architecture/hyperparameters searching
+
 2. Fit dev set well on cost function
   - Regularization
   - Bigger training set
+
 3. Fit test set well on cost function
   - Bigger dev set (Maybe over-tuned on dev set)
-3. Performs well in real world
+  
+4. Performs well in real world
   - Change *dev set* or *cost function*
 
 # Metrics for ML algorithm
 
 **Think outside of the box, don't be constricted to a single specific error metric, define the metric that well captures what you really want to do.**
 
-Apply orthogonalization to this problem: 
+Apply `orthogonalization` to this problem: 
 
 > Worry separately about how to do well on one metric.
 
@@ -69,14 +73,44 @@ But as for very large amount of data, the following distribution will become rea
 Set your test set to be big enough to give high confidence in the overall performance of your system.
 {: .notice
 
-# Comparing Human-level performance
+# Comparing Human-Level performance?
 
-### Bayes Optimal Error
-
-### Why?
+### Why `Human-Level`?
 
 As long as ML is worse than humans, you can:
 
 - Get labeled data from humans.
 - Gain insight from manual error analysis: why did a person get this right?
 - Better analysis of bias/variance.
+
+### Bayes Optimal Error
+
+Nothing can surpass Bayes error.
+
+** But we can think Human-level error as a proxy(estimate) for Bayes error.** Thus we can know what the `avoidable bias` is.
+
+Denote **avoidable bias** as \\( bias \\), **algorithm variance** as \\( variance \\), **human-level error** as \\( h \\), **current training error** as \\( etrain \\), **current dev error** as \\( edev \\):
+
+\\[ bias = etrain - h \\]
+\\[ variance = edev - etrain \\]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
