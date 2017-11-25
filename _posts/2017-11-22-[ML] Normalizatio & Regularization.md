@@ -16,7 +16,7 @@ Credits should go to [Enzo Tagliazucchi](https://www.quora.com/profile/Enzo-Tagl
 
 These two terms are pretty much the same thing and both relate to the issue of **`feature scaling`**. 
 
-If training an algorithm using different features and some of them are off the scale in their magnitude, then the results might be dominated by them instead of all the features. **This is a common problem in SVM**, for example. 
+If training an algorithm using different features and some of them are off the scale in their magnitude, then **the results might be dominated by them instead of all the features**. **This is a common problem in SVM**, for example. 
 
 One common way to normalize the data is called `Mean Normalization`, where **\\( \mu_i \\)** is the average of all the values for the feature i and **\\( s_i \\)** is the range(max - min) or the standard deviation of the values:
 
@@ -24,7 +24,7 @@ One common way to normalize the data is called `Mean Normalization`, where **\\(
 
 ## Regularization
 
-This is a technique to avoid overfitting when training machine learning algorithms.
+This is a technique to **avoid overfitting** when training machine learning algorithms.
 
 Overfitting is avoided by limiting the absolute value of the parameters in the model. This can be done by **adding a term to the cost function that imposes a penalty based on the magnitude of the model parameters**.
 
