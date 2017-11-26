@@ -17,6 +17,9 @@ In this post, I covered:
 - [Comparing Human-Level performance](#comparing-human-level-performance)
 - [Error Analysis](#error-analysis)
 - [Tips for Building a new ML system](#tips-for-building-a-new-Ml-system)
+- [Mismatched training and dev/test set](#mismatched-training-and-devtest-set)
+- [Transfer Learning](transfer=learning)
+- [End-to-End Deep Learning](end-to-end-deep-learning)
 
 
 # Chains of assumptions in ML
@@ -145,7 +148,7 @@ Build your first system quickly, then iterate. Don't over-think the problem and 
 2. Building initial system quickly.
 3. Use Bias/Variance analysis & Error analysis to prioritize next steps. 
 
-## Different distributions between train and dev/test sets.
+# Mismatched training and dev/test set
 
 For example, you are building a cat recognition system for mobile apps, and you have 200,000 images from the web and only 10,000 data from the mobile apps.
 
@@ -155,22 +158,30 @@ Options:
 
 - Good: Use those 200,000 web images plus 5,000 mobile images as training set with 2500 mobile images as dev set and another 2500 mobile images as test set.
 
+**Training-dev set**: Same distribution as training set, but not used for training, which can be used to determine whether we should focus on "**Avoidable Bias Problem**" or "**Variance Problem**" or "**Data Mismatch Problem**".
 
+We can use "**artificial data synthesis**" or "**data augmentation**" to generate more data than currently we have to train your algorithm, but be mindful of synthesizing only a tiny subset of the overall possible space, which can cause "overfitting" to the synthesis data.
 
+# Transfer Learning
 
+Transfer learning makes sense when:
 
+- Task A and B have the same input x.
+- You have a lot more data for Task A than Task B.
+- Low level features from A could be helpful for learning B.
 
+# End-to-End Deep Learning
 
+Instead of going through a pipeline, end-to-end deep learning bypass all the middle details and directly output the results, which requires a large amount of data.
 
+Concise as it is, sometimes it is better to use step-by-step pipeline method, which can make the problem more clear.
 
+Pros:
+- Let the data speak.
+- Less hand-designing of components needed.
 
+Cons:
+- May need large amount of data.
+- Excludes potentially useful hand-designed components.
 
-
-
-
-
-
-
-
-
-
+Sometimes the categories or so called steps are just a platonic form, which can somehow largely limit the possibilities of the output.(for the layering reduces your freedom of choice)
