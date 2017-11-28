@@ -11,16 +11,28 @@ comments: true
 
 In this post, I covered:
 
+- [How to spend your time](#how-to-spend-your-time)
 - [Chains of assumptions in ML](#chains-of-assumptions-in-ml)
+- [Data For Machine Learning](#data-for-machine-learning)
 - [Metrics for ML algorithm](#metrics-for-ml-algorithm)
 - [Setting up Train/Dev/Test distributions](#setting-up-traindevtest-distributions)
 - [Comparing Human-Level performance](#comparing-human-level-performance)
 - [Error Analysis](#error-analysis)
+- [Handling Skewed Classes](#handling-skewed-classes)
 - [Tips for Building a new ML system](#tips-for-building-a-new-Ml-system)
 - [Mismatched training and dev/test set](#mismatched-training-and-devtest-set)
 - [Transfer Learning](transfer=learning)
 - [End-to-End Deep Learning](end-to-end-deep-learning)
 
+# How to spend your time
+
+Let's say if you are designing a spam classifier, how could you spend your time to improve the accuracy of this classifier?
+
+- Collect lots of data
+- Develop sophisticated features (for example: using email header data in spam emails)
+- Develop algorithms to process your input in different ways (recognizing misspellings in spam).
+
+But it is difficult to tell which of the options will be most helpful.
 
 # Chains of assumptions in ML
 
@@ -38,6 +50,14 @@ In this post, I covered:
 
 4. Performs well in real world
   - Change *dev set* or *cost function*
+
+# Data For Machine Learning
+
+> It's not who has the best algorithm that wins. It's who has the most data.
+
+- Use a learning algorithm with many parameters. (e.g. logistic regression/linear regression with many features; neural network with many hidden units.)
+
+- Use a very large training set. (Unlikely to overfit.)
 
 # Metrics for ML algorithm
 
@@ -138,6 +158,22 @@ Once decide to correct the incorrect examples, remember to:
 - Apply **same process** to your dev and test sets to make sure they continue to come from the same distribution
 - Consider examining examples your algorithm got right as well as ones it got wrong.
 - Train and dev/test data may now come from slightly different distributions.
+
+# Handling Skewed Classes
+
+Take cancer diagnosis as a example, if we predict y = 1, we predict the patient has cancer:
+
+## Error Metrics for skewed classes
+
+**`Precision`**: Of all patients where we predicted \\( y = 1\\), what fraction actually has cancer.<br>
+**`Recall`**: Of all patients that actually have cancer, what fraction did we correctly detect as having cancer?
+{: .notice}
+
+## Trading off Precision and Recall
+
+For logistic regression, we can change the decision boundary to make the cancer diagnosis more confident(i.e. we only predict y = 1 when we are very confident.).
+
+In this case, [F1 score](#single-number-evaluation-metric) will become a option.
 
 # Tips for Building a new DL system
 
