@@ -24,4 +24,10 @@ Usually the data should be ***preprocessed*** by **Feature Scaling / Mean Normal
 
 3. Project the raw data onto the k-dimensional space.
 
+**But how to choose \\( k \\)?**
+
+  Typically, choose \\( k \\) to be the smallest value so that:
+
+  \\[ \frac{\frac{1}{m} \sum_{i=1}^{m} \parallel x^{(i)} - x_{approx}^{(i)} \parallel ^2 } {\frac{1}{m} \sum_{i=1}^{m} \parallel x^{(i)} \parallel^2 } \leq 0.01 \\]
+
 # LDA - Linear Discriminant Analysis
