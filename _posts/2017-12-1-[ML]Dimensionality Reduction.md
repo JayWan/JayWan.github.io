@@ -9,6 +9,10 @@ tag:
 comments: true
 ---
 
+Before implementing these dimensionality reduction algorithm, **try to do whatever you want with the raw data first**. In other words, please give yourself a good reason to add more complexity.
+{: .notice}
+
+
 # PCA - Principal Component Analysis
 
 **Problem formulation**:<br> Reduce from **n**-dimension to **k**-dimension: Find \\( k \\) vectors \\( u^{(1)}, u^{(2)}, ..., u^{(k)} \\) onto which to project the data, so as to minimize the **projection error**.
@@ -28,6 +32,12 @@ Usually the data should be ***preprocessed*** by **Feature Scaling / Mean Normal
 
   Typically, choose \\( k \\) to be the smallest value so that:
 
-  \\[ \frac{\frac{1}{m} \sum_{i=1}^{m} \parallel x^{(i)} - x_{approx}^{(i)} \parallel ^2 } {\frac{1}{m} \sum_{i=1}^{m} \parallel x^{(i)} \parallel^2 } \leq 0.01 \\]
+  \\[ \frac{\frac{1}{m} \sum_{i=1}^{m} \parallel x^{(i)} - x_{approx}^{(i)} \parallel ^2 } {\frac{1}{m} \sum_{i=1}^{m} \parallel x^{(i)} \parallel^2 } \leq 0.01 (0.05) \\]
+
+  In other words, **"99%/95% of the variance is retained."**
+
+**Note:**<br>
+**Run PCA just on your training data** and apply the mapping to the cross validation data set and test data set.<br>
+{: .notice}
 
 # LDA - Linear Discriminant Analysis
