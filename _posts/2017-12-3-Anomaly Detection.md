@@ -23,6 +23,20 @@ We think \\( x \\) is an anomalous example if the following inequality holds:
 **NOTE:** The best way to compute **\\( \mu_j \\)** **\\( \sigma_j \\)** is to **use only the normal data without anomaly data**. This requires to take advantage of the labels on the training set.
 {: .notice}
 
+# Multivariate Gaussian Distribution
+
+Single variable gaussian distribution is good, but not good enough. **If the features are correlated in some sense**, then the algorithm may fail to flag the anomalous example. So we can use **multivariate gaussian distribution** to develop a more robust algorithm:
+
+1. Parameters(mean, covariance matrix):
+  \\[ \mu, \Sigma \\]
+
+2. Formula:
+  \\[ p(x;\mu,\Sigma) = \frac{1}{(2\pi)^{\frac{n}{2}} |Sigma|^{\frac{1}{2}} } exp \biggl( -\frac{1}{2} (x - \mu)^T \Sigma^{-1} (x - \mu) \biggr) \\]
+
+Given training set \\( \\{ x^{(1)}, ..., x^{(m)} \\} \\), to **fit the parameters**:
+  - \\( \mu=\frac{1}{m}\sum_{i=1}^m x^{(i)} \\)
+  - \\( \Sigma=\frac{1}{m}\sum_{i=1}^m (x^{(i)} - \mu) (x^{(i)} - \mu)^T \\)
+
 # Develop a Anomaly Detection System
 
 First, we shall choose features that might take on unusually large or small values in the event of an anomaly, which pretty much depends on your intuition.
@@ -30,7 +44,7 @@ First, we shall choose features that might take on unusually large or small valu
 Then, taking advantage of labeled data and train them to a mature system to detect the anomalous examples.
 
 **For algorithm evaluation**:
-1. Fit model \\( p(x) \\) on training set \\( \{ x^{(1)}, ..., x^{(m)} \} )
+1. Fit model \\( p(x) \\) on training set \\( \\{ x^{(1)}, ..., x^{(m)} \\} \\)
 
 2. On a cross validation/test examples \\( x \\), predict:
   \\[ y = 
@@ -43,7 +57,7 @@ Then, taking advantage of labeled data and train them to a mature system to dete
 3. Possible evaluation metrics:
   - True positive, false positive, false negative, true negative
   - Precision / Recall
-  - \\( F_1-score \\)
+  - \\( F_1 \\)-score
 
 4. We can also use cross validation set to choose parameter \\( \varepsilon \\)
 
