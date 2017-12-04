@@ -37,6 +37,17 @@ Given training set \\( \\{ x^{(1)}, ..., x^{(m)} \\} \\), to **fit the parameter
   - \\( \mu=\frac{1}{m}\sum_{i=1}^m x^{(i)} \\)
   - \\( \Sigma=\frac{1}{m}\sum_{i=1}^m (x^{(i)} - \mu) (x^{(i)} - \mu)^T \\)
 
+When the following condition is satisfied, it is the same as the previous version:
+
+\\[ \Sigma = \begin{pmatrix}
+\sigma_1^2 & 0 & 0 & \cdots & 0 \\\
+0 & \sigma_2^2 & 0 & \cdots & 0 \\\
+0 & 0 & \sigma_3^2 & \cdots & 0 \\\
+\vdots & & & \ddots & \\\
+0 & 0 & 0 & \cdots & \sigma_n^2
+\end{pmatrix} \\]
+
+
 # Develop a Anomaly Detection System
 
 First, we shall choose features that might take on unusually large or small values in the event of an anomaly, which pretty much depends on your intuition.
