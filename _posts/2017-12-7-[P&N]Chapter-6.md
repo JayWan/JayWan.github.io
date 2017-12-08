@@ -87,4 +87,4 @@ Although the technology has vastly developed since the last 50 years. But the me
 {% capture images %}
 /assets/img/posts/ch6-2.jpg
 {% endcapture %}
-{% include gallery images=images caption="LIGO(Laser Interferometer Gravitational-Wave Observatory)" cols=1 %}
+{% include gallery images=images caption="Airbus Iron Wing Prototype A350" cols=1 %}
