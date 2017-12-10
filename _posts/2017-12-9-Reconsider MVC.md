@@ -59,5 +59,5 @@ When is comes to multiple MVCs working together, **one MVC always treat other MV
 
 ## My Understanding of MVC
 
-
+MVC is the same as layering methodology, which is also a platonic model of the code base on which we develop. There is no perfect model, MVC maybe suitable for mobile or web development, but not necessarily all the development. For example, in embedded system, I believe, MVC will introduce unnecessary complexity to the system for that the `View` component is not that important in most embedded systems. **In short, we need to choose whatever model accordingly more like a scientist than a engineer**.
 
