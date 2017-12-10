@@ -10,13 +10,16 @@ comments: false
 ## WHO AM I
 I would like to say that I'm a romantic nerd, but maybe I am not eligible for the title "[NERD](https://en.wikipedia.org/wiki/Nerd)". Still on my way, though.
 
-I major in software engineering and embedded system. I am still studying in [NJU](https://www.nju.edu.cn/EN/) for my bachelor's degree, during which I spent one semester in [UC Berkeley](http://www.berkeley.edu/) studying [EECS149](https://chess.eecs.berkeley.edu/eecs149/)(Introduction to Embedded System) and [CS169](http://cs169.saas-class.org/fall-2017-info).
+I major in software engineering and embedded systems. I am still studying in [NJU](https://www.nju.edu.cn/EN/) for my bachelor's degree, during which I spent one semester in [UC Berkeley](http://www.berkeley.edu/) studying [EECS149](https://chess.eecs.berkeley.edu/eecs149/)(Introduction to Embedded System) and [CS169](http://cs169.saas-class.org/fall-2017-info).
 
 I'm very interested in Artificial Intelligence, Machine Learning and Robotics. 
 
 
 ## PROJECTS
 
+* BuffTreasure
+* Audience1st
+* Wearable Dance Party
 
 ## SKILLS
 * C / C++
@@ -24,8 +27,9 @@ I'm very interested in Artificial Intelligence, Machine Learning and Robotics.
 * Ruby on Rails
 * Node.js
 * Python
-* HTML
-* Software Engineering
+* Matlab (A little)
+* Swift (In Progress)
+* Software Engineering Methodologies
 
 ## I HAVE
 * A Very Lovely Girlfriend
