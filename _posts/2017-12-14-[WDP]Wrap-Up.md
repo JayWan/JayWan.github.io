@@ -37,6 +37,8 @@ In terms of modeling, there are still several techniques that could have been ap
 
 2. We didn't consider the possible noise in the data when the cyclists are riding the bikes. Collecting the training data from a real bike can be difficult, but **we could have use `data augmentation` to add noise the the data artificially**.
 
+3. After `data augmentation` or `bike data collection`, we could probably **apply a low pass filter to the data** to get better results.
+
 ## Analysis
 
 1. All of the common techniques used when analyzing machine learning project can still be applied here, such as:
