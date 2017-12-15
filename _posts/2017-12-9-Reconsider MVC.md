@@ -10,7 +10,7 @@ comments: true
 ---
 
 > Model–view–controller (MVC) is a software architectural pattern for implementing user interfaces on computers. It **divides a given application into three interconnected parts**. This is done to **separate internal representations of information from the ways information is presented to, and accepted from, the user**. The MVC design pattern **decouples** these major components allowing for efficient code reuse and parallel development.<br>
-- Wikipedia
+-Wikipedia
 
 ## Languages and Frameworks using MVC
 
@@ -45,16 +45,12 @@ When is comes to multiple MVCs working together, **one MVC always treat other MV
 
 1. Advantages:
   - **High cohesion** - MVC enables logical grouping of related actions on a controller together. The views for a specific model are also grouped together.
-  
   - **Low coupling** - which is the nature of MVC design strategy.
-  
   - **Ease of modification** - The separation of responsibilities, future development or modification is easier. For example, we can easily develop multiple views for a model or a controller.
 
 2. Disadvantages:
   - **Code navigability** - Navigation in this framework can be complex and requires users to adapt to the decomposition criteria of MVC.
-
   - **Multi-artifact consistency** - Decomposing a feature into three artifacts causes scattering. Thus, requiring developers to maintain the consistency of multiple representations at once. But most IDEs provide developers the tool - "refactor" or "rename", which can solve this problem pretty well.
-
   - **Pronounced learning curve** - Efficiently taking advantage of this framework requires the developers skilling in multiple technologies, which is a higher norm.
 
 ## My Understanding of MVC
