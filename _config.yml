@@ -1,75 +1,53 @@
-# Site
-title:              Running Jack
-bio:                "Jack Wan's Personal Website."
-description:        "Never Too Late."
-reading_time:       true
-words_per_minute:   200
-logo:               'assets/img/logo.png'
-background:         'assets/img/bg.jpg'
-tiled_bg:           false   # Set this true if you want to tile your background image, otherwise it will be covered
-locale:             en_US
-url:                ""
-projects:           _projects
 
-# Jekyll
-permalink:          /:title/
-markdown:           kramdown
-highlighter:        rouge
-kramdown:
-  auto_ids:         true
-  footnote_nr:      1
-  entity_output:    as_char
-  toc_levels:       1..6
-  enable_coderay:   false
-mathjax:            true
-sass:
-  sass_dir:         _sass
-  style:            compressed
+# Syntax highlighting
+kramdown:          
+  input: GFM
+  syntax_highlighter: rouge
+# Permalinks
+permalink:           pretty
+future: true
+# relative_permalinks: true
 
-# Comments
-disqus_shortname:   jackwan
+# Setup
+# timezone:             # eg. Asia/Kathmandu
+locale:              your locale language # eg. en_us
+name:				         LoveStory
+title:               221 FOREVER
+tagline:             'LOVE'
+description:         'An website filled of stories of THE VERY TWO SOUL.'
+url:                 ''
+rss:                 ''
+baseurl:             ''
+baseurl_posts_img:   '/assets/images/posts/'
+baseurl_featured_img: '/assets/images/hero/'
+baseurl_featured_thumbnail: '/assets/images/thumbnail/'
+baseurl_javascripts: '/assets/javascripts/'
+icon:                '/assets/images/icon.png' # /assets/img/icon.png [best 300px X 300px]
+disqus:              disqus_shortname # get it on https://disqus.com/admin/
 
-# Social
-# if you don't have any of social below, comment the line.
-#google:
-  #plus:            #username
-  #analytics:
-  #verify:
-  #ad-client:
-  #ad-slot:
-#bing-verify:
-email:              omyjackwan@gmail.com
-# twitter:            username
-facebook:           wan.jack.507
-github:             WanNJ
-#stackoverflow:      6909140/jackwan   from a "http://stackoverflow.com/users/123456/username" link
-linkedin:           jack-wan
-#xing:              username
-#instagram:         username
-#lastfm:            username
-#tumblr:            username
-#pinterest:         username
-#foursquare:        username
-#steam:             username
-#dribbble:          WanNJ
-#youtube:           username
-#soundcloud:        username
-#weibo:             3625130591
-#flickr:            username
-#codepen:           username
-#keybase:           username
-#xmpp:              username@server.com
-#hackernews:        username
+author:
+  name:           	 WanNJ
+  url:            	 your site url
+  facebook:          username
+  twitter:           username
+  google_plus:       username
+  linkedin:          username
+  dribbble:          username
+  pinterest:         username
+  kiva:              username
 
-# Gems
-gems:
-  - jekyll-mentions
-  - jekyll-feed
-  - jekyll-sitemap
-  - jekyll-gist
+fb_admins:           your facebook profile id
+fb_appid:            your facebook app id
 
-jekyll-mentions:
-    base_url: https://github.com
+# Server
+destination:      	 ./_site
+exclude:          	 [".editorconfig", ".gitignore", "bower.json", "composer.json", "CONTRIBUTING.md", "CNAME", "LICENSE", "Gruntfile.js", "package.json", "node_modules", "README.md", "sass", "haml"]
+port:             	 7000
 
-# Exclude list
-exclude: [README.md, Gemfile, Gemfile.lock, node_modules, gulpfile.js, package.json, _site, src, vendor, CNAME, LICENSE, Rakefile]
+defaults:
+  -
+    scope:
+      path: "_posts"
+      type: "posts"
+    values:
+      layout: "default"
