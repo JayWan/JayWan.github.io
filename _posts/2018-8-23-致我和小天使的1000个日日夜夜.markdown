@@ -1,0 +1,18 @@
+---
+layout: post
+title:  "致: 我和小天使的1000个日日夜夜"
+date:   2018-8-23 00:00:00
+excerpt: "..."
+categories: Story
+tags:  mickey
+image: 
+  feature: 17.jpg
+  topPosition: 0px
+bgContrast: dark
+bgGradientOpacity: darker
+syntaxHighlighter: no
+bgm: 风.mp3
+---
+
+Yeah！
+ 
