@@ -1,12 +1,14 @@
-<svg width="700" height="100" xmlns="http://www.w3.org/2000/svg">
+<svg width="800.0000000000001" height="165" xmlns="http://www.w3.org/2000/svg">
  <!-- Created with Method Draw - http://github.com/duopixel/Method-Draw/ -->
-
  <g>
   <title>background</title>
-  <rect fill="none" id="canvas_background" height="102" width="602" y="-1" x="-1"/>
+  <rect fill="#fff" id="canvas_background" height="167" width="802" y="-1" x="-1"/>
+  <g display="none" overflow="visible" y="0" x="0" height="100%" width="100%" id="canvasGrid">
+   <rect fill="url(#gridpattern)" stroke-width="0" y="0" x="0" height="100%" width="100%"/>
+  </g>
  </g>
  <g>
   <title>Layer 1</title>
-  <text style="cursor: move;" stroke="#000" transform="matrix(3.984431427700496,0,0,4.107385377575697,45.82638996598163,-75.02017211411498) " xml:space="preserve" text-anchor="start" font-family="Junction, Arial" font-size="26" id="svg_1" y="40.881746" x="-10.315468" stroke-width="0" fill="#000000" font-weight="bold">221 FOREVER</text>
+  <text font-weight="bold" xml:space="preserve" text-anchor="start" font-family="'Palatino Linotype', 'Book Antiqua', Palatino, serif" font-size="122" id="svg_1" y="128.000701" x="0.001557" stroke-width="0" stroke="#000" fill="#000000">221 FOREVER</text>
  </g>
 </svg>

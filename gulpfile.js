@@ -24,6 +24,20 @@ gulp.task('jekyll-build', function (done) {
 });
 
 /**
+ * Compile files from sass into both assets/css (for live injecting) and site (for future jekyll builds)
+ */
+gulp.task('styles', function() {
+  return gulp.src('_scss/main.scss')
+    .pipe(sass({ outputStyle: 'expanded' }))
+    .pipe(autoprefixer({browsers: ['last 2 versions', 'Firefox ESR', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1']}))
+    .pipe(postcss([opacity]))
+    .pipe(gulp.dest('assets/css'))
+    .pipe(rename({suffix: '.min'}))
+    .pipe(minifycss())
+    .pipe(gulp.dest('assets/css'));
+});
+
+/**
  * Wait for jekyll-build, then launch the Server
  */
 gulp.task('browser-sync', ['styles', 'jekyll-build'], function() {
@@ -47,20 +61,6 @@ var opacity = function(css) {
     }
   });
 };
-
-/**
- * Compile files from sass into both assets/css (for live injecting) and site (for future jekyll builds)
- */
-gulp.task('styles', function() {
-  return gulp.src('_scss/main.scss')
-    .pipe(sass({ outputStyle: 'expanded' }))
-    .pipe(autoprefixer({browsers: ['last 2 versions', 'Firefox ESR', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1']}))
-    .pipe(postcss([opacity]))
-    .pipe(gulp.dest('assets/css'))
-    .pipe(rename({suffix: '.min'}))
-    .pipe(minifycss())
-    .pipe(gulp.dest('assets/css'));
-});
 
 /**
  * Automatically resize post feature images and turn them into thumbnails
