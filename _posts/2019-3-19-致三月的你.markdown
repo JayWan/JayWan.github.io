@@ -151,7 +151,7 @@ $.getJSON("{{ site.baseurl }}/assets/data/our-footprint.json", function (data) {
         series: series 
     });
 });
-;
+
 if (option && typeof option === "object") {
     myChart.setOption(option, true);
 }
