@@ -6,7 +6,7 @@ excerpt: "教小天使发布文章"
 categories: Story
 tags:  mickey
 image:
-  feature: 12.JPG
+  feature: 12.jpg
   topPosition: -300px
 bgContrast: dark
 bgGradientOpacity: darker
