@@ -5,13 +5,15 @@ date:   2019-3-19 00:00:00
 excerpt: "..."
 categories: Story
 tags:  mickey
-image: 
+image:
   feature: 21.jpg
   topPosition: -200px
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 特别的人.mp3
+jQuery: yes
+echarts: yes
 ---
 
 三月的范雅琪，你好呀。
@@ -20,6 +22,8 @@ bgm: 特别的人.mp3
 
 时间和空间，这两个东西，想来可真是神奇，神奇到不可言表。我好奇在三年的时光里，我们的足迹在地球仪上是怎样的形状。那么多地方，那么多人，对我们俩人生轨迹的影响到底有多少呢，须臾之差，会不会是天海相隔？你可能会说，管他那么多干嘛，反正我们现在是形影不离。也是，天天在一起的生活多了许多陪伴，甜蜜，但也少了很多独自的思考，就像我这么一个多愁善感的人和你天天混在一起都没机会感时伤怀了呢。我觉得我还是个蛮浪漫的人吧，我怕这样的如胶似漆会把所有的惊喜都变得平淡，我怕有一天我那张贱贱的脸和那张笨笨的嘴会让你反感，我怕我们对彼此的陪伴会因为长久而廉价。
 
+<div id="container" style="height: 600px"></div>
+
 <blockquote class="largeQuote">
 不为一段关系消磨和损耗，无论爱是多么值得歌颂的美德，都不值得你为此变成另一个人。答应我，要留住灵气，轻盈，要随时可以独自一人，暗夜里走路回家心里还哼着歌。答应我，要善待自己。
 </blockquote>
@@ -27,3 +31,128 @@ bgm: 特别的人.mp3
 我们最近老是一开始交流就吵，这不仅让我很失落，你也总是因为觉得没有压住我而不爽。我反思了自己的行为，也许是自己真的不会友好地交流，说话火药味太重，也许是我潜意识里并不是想要交流，而是想要输出自己的价值观。我不知道我的问题到底出在哪里，我也不知道该如何解决，如果说讨论一个问题不需要达成共识，那么我们只能就彼此的观点展开讨论，但是这样又难免会互相指出不足，而这里就是很容易失控的部分。我已经记不清楚我们有多久没有愉快地深入就一个问题交流过了，我不知道这意味着什么。
 
 眼下是时间越来越紧的毕设、搁置的健身以及即将开始的学车。我越来越期望三个月以后的毕业旅行，我希望那时候我们能真正有时间一起看一本书，躺在草地上看着满天的银河心平气和地聊一下星空，聊一下艺术，聊一下我们眸子中的彼此。我还没有找到适当的方法去面对生活的琐碎，但我希望你的眼里仍是曾经的浩瀚星辰。等我。
+
+<script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts-gl/echarts-gl.min.js"></script>
+<script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts-stat/ecStat.min.js"></script>
+<script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/extension/dataTool.min.js"></script>
+<script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/china.js"></script>
+<script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/world.js"></script>
+<script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/extension/bmap.min.js"></script>
+<script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/simplex.js"></script>
+<script type="text/javascript">
+var dom = document.getElementById("container");
+var myChart = echarts.init(dom);
+var app = {};
+option = null;
+
+$.getJSON("{{ site.baseurl }}/assets/data/our-footprint.json", function (data) {
+    var places = data.places.map(function (item) {
+        return {
+            coord: [item[3], item[4]]
+        }
+    });
+
+    function getPlaceCoord(idx) {
+        return [data.places[idx][3], data.places[idx][4]];
+    }
+
+    // Route: [date, sourcePlaceIndex, destinationPlaceIndex]
+    var pointsData = [];
+    data.routes.forEach(function (route) {
+        pointsData.push(getPlaceCoord(route[1])); // source place
+        pointsData.push(getPlaceCoord(route[2])); // destination place
+    });
+
+    var series = [
+      {
+            type: 'lines3D',
+            name: 'routes',
+
+            effect: {
+                show: true,
+                trailWidth: 4,
+                trailLength: 0.15,
+                trailOpacity: 1,
+                trailColor: 'rgb(30, 30, 60)'
+            },
+
+            lineStyle: {
+                width: 3,
+                color: 'rgb(50, 50, 150)',
+                // color: 'rgb(118, 233, 241)',
+                opacity: 0.7
+            },
+            blendMode: 'lighter',
+
+            data: data.routes.map(function (route) {
+                return [places[route[1]].coord, places[route[2]].coord];
+            })
+      },
+      {
+        type: 'scatter3D',
+        coordinateSystem: 'globe',
+        blendMode: 'lighter',
+        symbolSize: 2,
+        itemStyle: {
+            color: 'rgb(50, 50, 150)',
+            opacity: 0.2
+        },
+        data: pointsData
+      }
+    ]
+
+    myChart.setOption({
+        globe: {
+            environment: '{{ site.baseurl }}/assets/data/earth/starfield.jpg',
+
+            heightTexture: '{{ site.baseurl }}/assets/data/earth/bathymetry_bw_composite_4k.jpg',
+
+            displacementScale: 0.1,
+            displacementQuality: 'high',
+
+            baseColor: '#000',
+
+            shading: 'realistic',
+            realisticMaterial: {
+                roughness: 0.2,
+                metalness: 0
+            },
+
+            postEffect: {
+                enable: true,
+                depthOfField: {
+                    enable: false,
+                    focalDistance: 150
+                }
+            },
+            temporalSuperSampling: {
+                enable: true
+            },
+            light: {
+                ambient: {
+                    intensity: 0
+                },
+                main: {
+                    intensity: 0.1,
+                    shadow: false
+                },
+                ambientCubemap: {
+                    texture: '{{ site.baseurl }}/assets/data/earth/lake.hdr',
+                    exposure: 1,
+                    diffuseIntensity: 0.5,
+                    specularIntensity: 2
+                }
+            },
+            viewControl: {
+                autoRotate: false
+            },
+            silent: true
+        },
+        series: series 
+    });
+});
+;
+if (option && typeof option === "object") {
+    myChart.setOption(option, true);
+}
+</script>
