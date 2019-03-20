@@ -22,7 +22,7 @@ echarts: yes
 
 时间和空间，这两个东西，想来可真是神奇，神奇到不可言表。我好奇在三年的时光里，我们的足迹在地球仪上是怎样的形状。那么多地方，那么多人，对我们俩人生轨迹的影响到底有多少呢，须臾之差，会不会是天海相隔？你可能会说，管他那么多干嘛，反正我们现在是形影不离。也是，天天在一起的生活多了许多陪伴，甜蜜，但也少了很多独自的思考，就像我这么一个多愁善感的人和你天天混在一起都没机会感时伤怀了呢。我觉得我还是个蛮浪漫的人吧，我怕这样的如胶似漆会把所有的惊喜都变得平淡，我怕有一天我那张贱贱的脸和那张笨笨的嘴会让你反感，我怕我们对彼此的陪伴会因为长久而廉价。
 
-<div id="container" style="height: 600px"></div>
+<div id="container" style="height: 600px; margin-top: 20px"></div>
 
 <blockquote class="largeQuote">
 不为一段关系消磨和损耗，无论爱是多么值得歌颂的美德，都不值得你为此变成另一个人。答应我，要留住灵气，轻盈，要随时可以独自一人，暗夜里走路回家心里还哼着歌。答应我，要善待自己。
@@ -39,11 +39,10 @@ echarts: yes
 <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/world.js"></script>
 <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/extension/bmap.min.js"></script>
 <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/simplex.js"></script>
+
 <script type="text/javascript">
 var dom = document.getElementById("container");
 var myChart = echarts.init(dom);
-var app = {};
-option = null;
 
 $.getJSON("{{ site.baseurl }}/assets/data/our-footprint.json", function (data) {
     var places = data.places.map(function (item) {
@@ -104,20 +103,15 @@ $.getJSON("{{ site.baseurl }}/assets/data/our-footprint.json", function (data) {
     myChart.setOption({
         globe: {
             environment: '{{ site.baseurl }}/assets/data/earth/starfield.jpg',
-
             heightTexture: '{{ site.baseurl }}/assets/data/earth/bathymetry_bw_composite_4k.jpg',
-
             displacementScale: 0.1,
             displacementQuality: 'high',
-
             baseColor: '#000',
-
             shading: 'realistic',
             realisticMaterial: {
                 roughness: 0.2,
                 metalness: 0
             },
-
             postEffect: {
                 enable: true,
                 depthOfField: {
@@ -144,15 +138,11 @@ $.getJSON("{{ site.baseurl }}/assets/data/our-footprint.json", function (data) {
                 }
             },
             viewControl: {
-                autoRotate: false
+                autoRotate: true
             },
             silent: true
         },
         series: series 
     });
 });
-
-if (option && typeof option === "object") {
-    myChart.setOption(option, true);
-}
 </script>
