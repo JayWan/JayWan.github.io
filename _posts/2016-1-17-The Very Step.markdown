@@ -11,7 +11,7 @@ image:
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
-bgm: I still carry on.mp3
+bgm: I Still Carry On.mp3
 ---
 <blockquote class="u--startsWithDoubleQuote">“I know it’s far away.But I’ll still carry on.” <br/> - I still carry on</blockquote>
 
