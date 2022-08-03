@@ -2057,7 +2057,7 @@ body {
   filter: none;
 }
 
-.section--subscribe {
+.section--foot-note {
   width: 100%;
   background: #fff;
   padding: 1.5rem 0 0;
@@ -2065,7 +2065,7 @@ body {
   z-index: 400;
 }
 
-.section--subscribe h3 {
+.section--foot-note h3 {
   margin-top: 1.5rem;
 }
 

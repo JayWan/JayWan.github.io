@@ -6,11 +6,11 @@ layout: default
     <div class="section-backgroundImage">
 
       {% if page.image.feature %}
-        <img class="post-featuredImage" src="{{ page.image.feature | prepend: site.baseurl_featured_img }}" style="
-        {% if page.image.topPosition %}
-          top:{{ page.image.topPosition }};
-        {% endif %}
-        " alt="">
+        <img class="post-featuredImage"
+             src="{{ page.image.feature | prepend: site.baseurl_featured_img }}"
+             style="{% if page.image.topPosition %}
+                    top:{{ page.image.topPosition }};
+                    {% endif %}" alt="">
       {% endif %}
 
     </div>
@@ -19,8 +19,8 @@ layout: default
       section-gradient--darker
     {% elsif page.bgGradientOpacity == "lighter" %}
       section-gradient--lighter
-    {% endif %}
-    "></div>
+    {% endif %}">
+    </div>
     <div class="section-title is-darkBackgrounded u-tableCell u-verticalAlignMiddle">
       <div class="container">
         <h2>{{ page.title }}</h2>
@@ -42,14 +42,14 @@ layout: default
       </div>
     </div>
   </section>
-    
 
   <section class="section--last">
     <div class="container container--content">
+      <div class="u-alignCenter">
+        <audio autoplay loop src="{{ site.baseurl }}/assets/bgm/{{ page.bgm }}"></audio>
+      </div>
       <div class="content-body">
-
         {{ content }}
-
       </div>
     </div>
     <hr class="u-clearHr"/>
@@ -57,15 +57,10 @@ layout: default
     <hr/>
     <div class="container container--content">
       <div class="content-body">
-            <embed src="{{ site.baseurl }}/assets/bgm/{{ page.bgm }}" autostart="true" loop="-1" width=0 height=0 ></embed>
-        {% include subscribe.html %}
-        <!-- {% include comments.html %} -->
+        {% include foot-note.html %}
       </div>
     </div>
   </section>
-  
-
-
 
   <footer class="postFooter">
     {% if page.previous.url %}
@@ -84,7 +79,6 @@ layout: default
           section-gradient--lighter
         {% endif %}
         "></div>
-
 
         <div class="section-title u-tableCell u-verticalAlignMiddle">
           <div class="container">

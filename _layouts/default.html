@@ -7,7 +7,7 @@
     {% if page.url != '/index.html' %}
       <input type="checkbox" class="sidebar-checkbox" id="sidebar-checkbox">
       {% include sidebar-nav.html %}
-      {% include menu.html %}
+      {% include back-button.html %}
     {% endif %}
 
     {{ content }}
@@ -17,7 +17,7 @@
     {% endif %}
 
     {% if page.url == '/index.html' %}
-      {% include subscribe.html %}
+      {% include foot-note.html %}
       {% include footer.html %}
     {% endif %}
 
