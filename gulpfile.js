@@ -1,6 +1,6 @@
-var gulp = require('gulp'),
+const gulp = require('gulp'),
     browserSync = require('browser-sync').create(),
-    sass = require('gulp-sass'),
+    sass = require('gulp-sass')(require('sass')),
     autoprefixer = require('gulp-autoprefixer'),
     minifycss = require('gulp-minify-css'),
     rename = require('gulp-rename'),
@@ -10,48 +10,49 @@ var gulp = require('gulp'),
     os = require("os"),
     cp = require('child_process');
 
-var messages = {
+const messages = {
   jekyllBuild: '<span style="color: grey">Running:</span> $ jekyll build'
 };
 
 /**
  * Build the Jekyll Site
  */
-gulp.task('jekyll-build', function (done) {
+function jekyllBuildTask(done) {
     browserSync.notify(messages.jekyllBuild);
     return cp.spawn('jekyll', ['build', '--config=_config.yml'], {stdio: 'inherit'})
         .on('close', done);
-});
+};
 
 /**
  * Compile files from sass into both assets/css (for live injecting) and site (for future jekyll builds)
  */
-gulp.task('styles', function() {
-  return gulp.src('_scss/main.scss')
+function styles(done){
+  gulp.src('_scss/main.scss')
     .pipe(sass({ outputStyle: 'expanded' }))
-    .pipe(autoprefixer({browsers: ['last 2 versions', 'Firefox ESR', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1']}))
+    .pipe(autoprefixer())
     .pipe(postcss([opacity]))
     .pipe(gulp.dest('assets/css'))
     .pipe(rename({suffix: '.min'}))
     .pipe(minifycss())
     .pipe(gulp.dest('assets/css'));
-});
+  done();
+};
 
 /**
  * Wait for jekyll-build, then launch the Server
  */
-gulp.task('browser-sync', ['styles', 'jekyll-build'], function() {
+const browserSyncTask = gulp.series(styles, jekyllBuildTask, (done) => {
   browserSync.init({
     server: {
       baseDir: '_site'
     },
     startPath: "/index.html"
   });
+  done();
 });
 
 // To support opacity in IE 8
-
-var opacity = function(css) {
+const opacity = (css) => {
   css.eachDecl(function(decl, i) {
     if (decl.prop === 'opacity') {
       decl.parent.insertAfter(i, {
@@ -65,23 +66,24 @@ var opacity = function(css) {
 /**
  * Automatically resize post feature images and turn them into thumbnails
  */
-gulp.task("thumbnails", function () {
+function thumbnails(done){
   gulp.src("assets/images/hero/*.{jpg,png}")
     .pipe(parallel(
       imageResize({ width : 350 }),
       os.cpus().length
     ))
     .pipe(gulp.dest("assets/images/thumbnail"));
-});
+  done();
+};
 
 /**
  * Watch scss files for changes & recompile
  * Watch html/md files, run jekyll
  * Watch _site generation, reload BrowserSync
  */
-gulp.task('watch', function() {
-  gulp.watch('_scss/**/*.scss', ['styles']);
-  gulp.watch('assets/images/hero/*.{jpg,png}', ['thumbnails']);
+function watchTask(){
+  gulp.watch('_scss/**/*.scss', styles);
+  gulp.watch('assets/images/hero/*.{jpg,png}', thumbnails);
   gulp.watch(['*.html',
           '*.txt',
           'about/**',
@@ -93,12 +95,12 @@ gulp.task('watch', function() {
           '_includes/**',
           'assets/css/**'
         ],
-        ['jekyll-build']);
+        jekyllBuildTask);
   gulp.watch("_site/index.html").on('change', browserSync.reload);
-});
+};
 
 /**
  * Default task, running just `gulp` will compile the sass,
  * compile the jekyll site, launch BrowserSync & watch files.
  */
-gulp.task('default', ['thumbnails', 'browser-sync', 'watch']);
+ exports.default = gulp.series(thumbnails, browserSyncTask, watchTask);

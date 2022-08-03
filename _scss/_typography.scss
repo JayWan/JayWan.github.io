@@ -32,7 +32,7 @@ $title-secondary-font: 'Roboto', sans-serif;
 html {
   /* Change default typefaces here */
   font-family: $body-primary-font;
-  font-size: $baseFontSize / 16 * 100%; // 14px
+  font-size: calc($baseFontSize / 16 * 100%); // 14px
   font-weight: 400;
   color: $text-color;
   -webkit-font-smoothing: antialiased;
