@@ -13,6 +13,13 @@
 
 安装node.js和npm(包管理工具)，这个步骤是为了生成侧边栏文章的小图片，不是必须的。可以参考[Gulp的官方网站来安装](https://gulpjs.com/docs/en/getting-started/quick-start)。
 
+Gulp还依赖一个图像处理的库：
+
+1. 在Ubuntu上：`sudo apt install graphicsmagick`
+2. 在Mac OS X上: `brew install graphicsmagick`
+
+都安装完毕之后运行`gulp`，会自动build网站，生成缩略图等。如果用`gulp`的话就不要用`bundle exec jekyll serve`了。
+
 ## 写文章
 
 在`_posts`下用markdown就可以写文章，写好之后push到github上会自动触发pipeline发布到我们的网站上。
