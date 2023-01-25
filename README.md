@@ -11,7 +11,7 @@
 
 ### npm
 
-安装Node.JS和npm(包管理工具)，这个步骤是为了生成侧边栏文章的小图片，不是必须的。
+安装node.js和npm(包管理工具)，这个步骤是为了生成侧边栏文章的小图片，不是必须的。可以参考[Gulp的官方网站来安装](https://gulpjs.com/docs/en/getting-started/quick-start)。
 
 ## 写文章
 
