@@ -13,11 +13,11 @@
 
 安装Node.JS和npm(包管理工具)，这个步骤是为了生成侧边栏文章的小图片，不是必须的。
 
-# 写文章
+## 写文章
 
 在`_posts`下用markdown就可以写文章，写好之后push到github上会自动触发pipeline发布到我们的网站上。
 
-# License
+## License
 Open sourced under the [MIT license](LICENSE.md).
 - <https://github.com/vincentchan>
 - <https://twitter.com/vincentchan>
