@@ -1,10 +1,10 @@
 ---
 layout: post
-title:  "Happy 26th Birthday Pichakajay"
+title:  "Happy 26th Birthday Pikajay"
 date:   2023-2-6 00:00:00
 excerpt: ""
 categories: Story
-tags:  birthday
+tags:  mickey
 image:
   feature: 23.jpg
   topPosition: 0px
@@ -14,7 +14,7 @@ syntaxHighlighter: no
 bgm: 任我行.mp3
 ---
 
-Hey, 宝贝儿，AKA Pichajay, 生日快乐！按照往常我会在这里舒展舒展纸张，提笔写上一句，展信佳！但这一次我想用你一直温暖我的方式在键盘间敲下我想对26岁的你说的一些话。
+Hey, 宝贝儿，AKA Pikajay, 生日快乐！按照往常我会在这里舒展舒展纸张，提笔写上一句，展信佳！但这一次我想用你一直温暖我的方式在键盘间敲下我想对26岁的你说的一些话。
 
 > 不知此刻的你是忐忑的，欣喜的，悲伤的，亦或是平静的？<br>
  但不论怎么样，我希望你是有底气的，有背水一战和孤注一掷的底气，<br>
@@ -32,6 +32,7 @@ Hey, 宝贝儿，AKA Pichajay, 生日快乐！按照往常我会在这里舒展�
 马路戏院商店天空海阔 任你行<br>
 
 夜悄悄的深了，洗完澡的zion把自己埋在舒服的pillow里沉入梦乡，不知道你的梦是不是也很香甜呢。想到这里就想去抱住睡熟的宝贝儿，怎么会有我们这么幸福的一家人呢，冬天好像拖着最后的脚步马上就要离开了。我的男孩的春天也要来啦！26岁，生日快乐，永远热烈快乐！
+
 <div class="img img--fullContainer img--14xLeading" style="background-image: url({{ site.baseurl_posts_img }}23_1.gif);"></div>
 
-BTW，Pichajay小朋友虽然提前偷拆了生日礼物，但谁让我这么爱你呢，我的小寿星永远都会有礼物！但是要耐心等两天哦嘻嘻！
+BTW，Pikajay小朋友虽然提前偷拆了生日礼物，但谁让我这么爱你呢，我的小寿星永远都会有礼物！但是要耐心等两天哦嘻嘻！
