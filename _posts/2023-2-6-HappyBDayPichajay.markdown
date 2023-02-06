@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Happy 26th Birthday Pikajay"
-date:   2023-2-6 00:00:00
+date:   2023-2-6
 excerpt: ""
 categories: Story
 tags:  mickey
@@ -12,6 +12,7 @@ bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 任我行.mp3
+author: Pikachi
 ---
 
 Hey, 宝贝儿，AKA Pikajay, 生日快乐！按照往常我会在这里舒展舒展纸张，提笔写上一句，展信佳！但这一次我想用你一直温暖我的方式在键盘间敲下我想对26岁的你说的一些话。

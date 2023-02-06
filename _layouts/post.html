@@ -32,7 +32,11 @@ layout: default
               </time>
             </li>
             <li class="postMeta-author">
+            {% if page.author %}
+              By {{ page.author }}
+            {% else %}
               By {{ site.author.name }}
+            {% endif %}
             </li>
             <li class="postMeta-tags">
               {{ page.categories }}
