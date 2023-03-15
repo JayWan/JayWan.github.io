@@ -1,0 +1,10 @@
+{% assign audio = include.audio %}
+{% assign title = include.title %}
+
+
+<div>
+  <audio controls controls List="nodownload" preload="auto" style="width: 100%">
+    <source src="{{ site.baseurl }}/assets/bgm/{{ audio }}" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+</div>
