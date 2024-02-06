@@ -14,7 +14,7 @@
     "maintained node versions"
   ],
   "devDependencies": {
-    "browser-sync": "~2.27.12",
+    "browser-sync": "~3.0.2",
     "concurrent-transform": "^1.0.0",
     "gulp": "^4.0.2",
     "gulp-autoprefixer": "~8.0.0",
