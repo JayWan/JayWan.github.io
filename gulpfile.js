@@ -30,7 +30,6 @@ function styles(done){
   gulp.src('_scss/main.scss')
     .pipe(sass({ outputStyle: 'expanded' }))
     .pipe(autoprefixer())
-    .pipe(postcss([opacity]))
     .pipe(gulp.dest('assets/css'))
     .pipe(rename({suffix: '.min'}))
     .pipe(minifycss())
@@ -50,18 +49,6 @@ const browserSyncTask = gulp.series(styles, jekyllBuildTask, (done) => {
   });
   done();
 });
-
-// To support opacity in IE 8
-const opacity = (css) => {
-  css.eachDecl(function(decl, i) {
-    if (decl.prop === 'opacity') {
-      decl.parent.insertAfter(i, {
-        prop: '-ms-filter',
-        value: '"progid:DXImageTransform.Microsoft.Alpha(Opacity=' + (parseFloat(decl.value) * 100) + ')"'
-      });
-    }
-  });
-};
 
 /**
  * Automatically resize post feature images and turn them into thumbnails

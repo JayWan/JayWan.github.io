@@ -25,8 +25,11 @@ baseurl_javascripts: '/assets/javascripts/'
 icon:                '/assets/images/icon.png' # /assets/img/icon.png [best 300px X 300px]
 disqus:              disqus_shortname # get it on https://disqus.com/admin/
 
+exclude:
+  - .jekyll-cache
+
 author:
-  name:           	 WanNJ
+  name:           	 Pikajay
   url:            	 your site url
   facebook:          username
   twitter:           username

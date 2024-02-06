@@ -32,7 +32,11 @@ layout: default
               </time>
             </li>
             <li class="postMeta-author">
+            {% if page.author %}
+              By {{ page.author }}
+            {% else %}
               By {{ site.author.name }}
+            {% endif %}
             </li>
             <li class="postMeta-tags">
               {{ page.categories }}
@@ -45,9 +49,14 @@ layout: default
 
   <section class="section--last">
     <div class="container container--content">
-      <div class="u-alignCenter">
-        <audio autoplay loop src="{{ site.baseurl }}/assets/bgm/{{ page.bgm }}"></audio>
+      {% if page.bgm %}
+      <div>
+        <audio autoplay loop controls controlsList="nodownload" preload="auto" style="width: 100%">
+          <source src="{{ site.baseurl }}/assets/bgm/{{ page.bgm }}" type="audio/mpeg">
+          Your browser does not support the audio element.
+        </audio>
       </div>
+      {% endif %}
       <div class="content-body">
         {{ content }}
       </div>

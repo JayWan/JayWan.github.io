@@ -31,8 +31,15 @@ title: LoveStory
               <article class="postArticle postArticle--long">
                 {% if post.image.feature %}
                   <a href="{{ post.url }}">
-                    <div class="postArticle-image desaturate" style="background-image:url('{{ post.image.feature | prepend: site.baseurl_featured_img }}')">
-                    </div>
+                    {% if post.image.heroPosition %}
+                      <div class="postArticle-image desaturate"
+                          style="background-image:url('{{ post.image.feature | prepend: site.baseurl_featured_img }}'); background-position: {{ post.image.heroPosition }};">
+                      </div>
+                    {% else %}
+                      <div class="postArticle-image desaturate"
+                          style="background-image:url('{{ post.image.feature | prepend: site.baseurl_featured_img }}');">
+                      </div>
+                    {% endif %}
                   </a>
                 {% else %}
                 <a href="{{ post.url }}">
