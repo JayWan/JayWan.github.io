@@ -7,7 +7,7 @@ categories: Story
 tags:  HBD
 image:
   feature: 26.png
-  topPosition: 
+  topPosition: -300px
   heroPosition: "50% 40%"
 bgContrast: dark
 bgGradientOpacity: darker
