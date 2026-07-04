@@ -41,27 +41,12 @@ bgm: Best part of me.mp3
 <canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9998;display:none;"></canvas>
 
 <div class="gift-scene">
-  <div id="gift-container" onclick="openGiftBox()" title="点我拆礼物">
-    <div class="gift-wrap">
-      <div class="gift-lid">
-        <div class="gift-bow">
-          <div class="bow-loop bow-left"></div>
-          <div class="bow-loop bow-right"></div>
-          <div class="bow-knot"></div>
-          <div class="bow-tail bow-tail-left"></div>
-          <div class="bow-tail bow-tail-right"></div>
-        </div>
-        <div class="lid-ribbon"></div>
-      </div>
-      <div class="gift-body">
-        <div class="body-ribbon"></div>
-      </div>
-    </div>
-    <p class="gift-hint">点我拆礼物 ✨</p>
+  <div id="gift-container" onclick="openGiftBox()" title="礼物在这里！">
+    <img src="/assets/images/posts/gift-box-animation.svg" class="gift-anim" alt="礼物盒子">
   </div>
 
   <div id="gift-reveal" style="display:none; text-align:center;">
-    <img src="/assets/images/hero/31.png" alt="🎁" class="float-img">
+    <img src="/assets/images/posts/29bd-gift.png" alt="🎁" class="float-img">
     <p class="reveal-words">生日快乐，我的小天使！</p>
   </div>
 </div>
@@ -80,78 +65,15 @@ bgm: Best part of me.mp3
   cursor: pointer;
   transition: opacity 0.4s ease, transform 0.4s ease;
 }
-.gift-wrap {
-  position: relative;
-  width: 140px;
-  height: 140px;
+.gift-anim {
+  width: 300px;
+  height: 300px;
+  display: block;
   margin: 0 auto;
+  cursor: pointer;
 }
-.gift-body {
-  position: absolute;
-  bottom: 0; left: 0;
-  width: 140px; height: 90px;
-  background: #c0392b;
-  border-radius: 6px 6px 10px 10px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 2px 0 rgba(255,255,255,0.1);
-}
-.body-ribbon {
-  position: absolute;
-  left: 50%; transform: translateX(-50%);
-  width: 22px; height: 100%;
-  background: #f39c12;
-  border-radius: 0 0 6px 6px;
-}
-.gift-lid {
-  position: absolute;
-  top: 6px; left: -6px;
-  width: 152px; height: 48px;
-  background: #e74c3c;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25), inset 0 2px 0 rgba(255,255,255,0.15);
-  transform-origin: top center;
-  transition: transform 0.55s cubic-bezier(0.34,1.56,0.64,1), top 0.55s ease;
-  z-index: 3;
-}
-.lid-ribbon {
-  position: absolute;
-  left: 50%; transform: translateX(-50%);
-  width: 22px; height: 100%;
-  background: #f39c12;
-  border-radius: 4px 4px 0 0;
-}
-.gift-bow {
-  position: absolute;
-  top: -38px; left: 50%; transform: translateX(-50%);
-  width: 80px; height: 44px;
-}
-.bow-loop {
-  position: absolute;
-  width: 30px; height: 24px;
-  border: 9px solid #f39c12;
-  border-radius: 50%;
-  top: 4px;
-}
-.bow-left  { left: 0;  transform: rotate(-25deg); }
-.bow-right { right: 0; transform: rotate(25deg); }
-.bow-knot {
-  position: absolute;
-  width: 16px; height: 16px;
-  background: #f39c12;
-  border-radius: 50%;
-  top: 10px; left: 50%; transform: translateX(-50%);
-  z-index: 1;
-}
-.bow-tail {
-  position: absolute;
-  width: 4px; height: 20px;
-  background: #f39c12;
-  border-radius: 2px;
-  bottom: -8px;
-}
-.bow-tail-left  { left: 27px;  transform: rotate(-18deg); }
-.bow-tail-right { right: 27px; transform: rotate(18deg); }
 .gift-hint {
-  margin-top: 14px;
+  margin-top: 12px;
   color: rgba(255,255,255,0.55);
   font-size: 0.82rem;
   letter-spacing: 0.04em;
@@ -160,10 +82,6 @@ bgm: Best part of me.mp3
 @keyframes hint-pulse {
   0%, 100% { opacity: 0.55; }
   50% { opacity: 1; }
-}
-.gift-wrap.lid-open .gift-lid {
-  transform: rotate(-50deg) translateX(-10px);
-  top: -40px;
 }
 .float-img {
   max-width: min(320px, 90vw);
@@ -194,8 +112,7 @@ bgm: Best part of me.mp3
   window.openGiftBox = function () {
     if (opened) return;
     opened = true;
-    document.querySelector('.gift-wrap').classList.add('lid-open');
-    setTimeout(launchConfetti, 300);
+    launchConfetti();
     setTimeout(function () {
       var c = document.getElementById('gift-container');
       c.style.opacity = '0';
@@ -204,7 +121,7 @@ bgm: Best part of me.mp3
         c.style.display = 'none';
         document.getElementById('gift-reveal').style.display = 'block';
       }, 400);
-    }, 1600);
+    }, 1000);
     setTimeout(stopConfetti, 5500);
   };
 
@@ -237,7 +154,7 @@ bgm: Best part of me.mp3
       }
     }
 
-    var box = document.querySelector('.gift-wrap').getBoundingClientRect();
+    var box = document.querySelector('.gift-anim').getBoundingClientRect();
     var cx = box.left + box.width / 2;
     var cy = box.top + box.height / 3;
     burst(cx, cy, 120);
