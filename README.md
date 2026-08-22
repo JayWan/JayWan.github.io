@@ -1,30 +1,46 @@
 # 221Forever
 
-## 安装手册。
+## 本地开发
 
-### Jekyll
+### 前置依赖
 
-1. 安装Ruby和Gem，在cmd line中运行`gem -v`和`ruby -v`看一下自己的电脑上有没有安装，如果没有报找不到命令的错就说明已经安装了，可以直接进行下一步。如果没有的话就需要按照[Jekyll官方网站](https://jekyllrb.com/docs/installation/)上的Instructions安装。
-2. 进入到项目目录，在命令行中运行`gem install bundler`，这个命令安装了打包工具`bundler`（和pipenv类似）。
-3. `bundle install`，这个命令会安装所有在项目根目录下`Gemfile`(类似pipenv中的Pipfile)中说明的依赖并更新`Gemfile.lock`(类似pipenv中Pipfile.lock)，和python的`pipenv install`做的事情一样。
-3. 再运行`bundle exec jekyll serve`，应该就可以在本地看到网站。
+需要安装以下两样东西：
 
-### npm
+- **Ruby**：运行 `ruby -v` 确认已安装，否则参照 [Jekyll 官方文档](https://jekyllrb.com/docs/installation/) 安装。
+- **Node.js / npm**：运行 `node -v` 确认已安装，否则前往 [nodejs.org](https://nodejs.org/) 下载安装。
 
-安装node.js和npm(包管理工具)，这个步骤是为了生成侧边栏文章的小图片，不是必须的。可以参考[Gulp的官方网站来安装](https://gulpjs.com/docs/en/getting-started/quick-start)。
+### 第一次运行
 
-Gulp还依赖一个图像处理的库：
+```bash
+# 1. 安装 Ruby 依赖（Jekyll 等）
+bundle install
 
-1. 在Ubuntu上：`sudo apt install graphicsmagick`
-2. 在Mac OS X上: `brew install graphicsmagick`
+# 2. 安装 Node.js 依赖（Gulp、Sass、Sharp 等）
+npm install
+```
 
-都安装完毕之后运行`gulp`，会自动build网站，生成缩略图等。如果用`gulp`的话就不要用`bundle exec jekyll serve`了。
+### 启动开发服务器
+
+```bash
+npm start
+```
+
+这个命令会依次完成：生成缩略图 → 编译 SCSS 为 CSS → 启动 Jekyll 构建 → 启动 BrowserSync 热重载服务器（默认 http://localhost:3000）。
+
+> **注意**：`assets/css/` 已加入 `.gitignore`，CSS 文件不在仓库里。每次开发前必须先跑 `npm start` 或 `npm run styles` 编译出 CSS，直接用 `bundle exec jekyll serve` 会因为缺少样式文件导致页面无样式。
+
+### 只编译 CSS（不启动服务器）
+
+```bash
+npm run styles
+```
 
 ## 写文章
 
-在`_posts`下用markdown就可以写文章，写好之后push到github上会自动触发pipeline发布到我们的网站上。
+在 `_posts/` 目录下用 Markdown 写文章，文件名格式为 `YYYY-M-D-标题.markdown`。写好之后 push 到 `master` 分支，GitHub Actions 会自动触发构建并发布到网站。
+
+CSS 的编译也包含在 CI 流程里，push 前不需要手动提交编译产物。
 
 ## License
+
 Open sourced under the [MIT license](LICENSE.md).
-- <https://github.com/vincentchan>
-- <https://twitter.com/vincentchan>
