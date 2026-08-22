@@ -3,6 +3,7 @@ layout: post
 title:  "Happy 27th BD My Boy"
 date:   2024-2-6 00:00:00
 excerpt: ""
+author: Pikachi
 categories: Story
 tags:  mickey
 image:
