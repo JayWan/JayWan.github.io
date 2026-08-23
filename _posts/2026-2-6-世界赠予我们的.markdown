@@ -8,7 +8,7 @@ categories: Story
 tags:  HBD
 image:
   feature: 29.jpg
-  topPosition: -300px
+  topPosition: -1500px
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no

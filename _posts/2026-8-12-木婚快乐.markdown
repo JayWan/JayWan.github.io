@@ -1,0 +1,32 @@
+---
+layout: post
+title:  "木婚快乐"
+date:   2026-8-12 19:25:00
+excerpt: "没想到这么快就五周年了，要不是咱们听肥杰的博客提醒，会不会就这样错过了呢？"
+author: Pikajay
+categories: Story
+image:
+  feature: 32.jpg
+  topPosition: -700px
+bgContrast: dark
+bgGradientOpacity: darker
+syntaxHighlighter: no
+bgm: 风之诗.mp3
+---
+
+<div class="flip-card">
+  <div class="flip-card-inner">
+    <div class="flip-card-front">
+      <p>To 最后两个月的 Miss Fan,</p>
+      <p>木婚快乐！</p>
+      <p>没想到这么快就五周年了，要不是咱们听肥杰的博客提醒，会不会就这样错过了呢？</p>
+      <p>想到一个好爱好爱你的瞬间。三番的夜晚，慢慢悠悠地开到一个陌生的街区，生活气和危险气并存。看到那个出二手提篮的妈妈后，你很热情地和她打招呼，我礼貌又有防备地询问物件的细节。</p>
+      <p>城市的灯光好复杂，地上有脏脏的积水，巷尾有人影稀疏，我看着那处污渍，不知所想。你从始至终都对那个妈妈很友善，你的双眸明亮，可能是灯火，可能是月光。分别时你很有元气地和她道别，我看着你的脸，感觉好爱好爱你，善良热烈的你。</p>
+      <p>2026年8月12日 7:25 PM<br>Oak Creek 家中</p>
+      <span class="flip-card-hint">封面是我们和最大树的合影</span>
+    </div>
+    <div class="flip-card-back">
+      <img src="{{ site.baseurl }}/assets/images/hero/木婚快乐.JPG" alt="木婚快乐">
+    </div>
+  </div>
+</div>

@@ -1,0 +1,81 @@
+//
+// Flip Card
+// --------------------------------------------------
+// Front = default visible side. Back = revealed on click.
+// Height tracks the visible face via JS.
+
+.flip-card {
+  perspective: 1200px;
+  cursor: pointer;
+  width: 100%;
+  margin: $leading 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  transition: transform 0.7s cubic-bezier(0.4, 0.2, 0.2, 1),
+              height 0.4s ease;
+  transform-style: preserve-3d;
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+
+.flip-card.is-flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+// Front: paper card for text
+.flip-card-front {
+  background: #fafaf8;
+  border: 1px solid #e8e8e4;
+  padding: $leading * 2 $leading * 2.5;
+  box-sizing: border-box;
+  font-family: $body-primary-font;
+  line-height: $baseLineHeight;
+
+  @media (max-width: $screen-xs-max) {
+    padding: $leading * 1.5 $leading;
+  }
+}
+
+// Back: image in a photo frame
+.flip-card-back {
+  background: #f5f0e8;
+  padding: $leading * 1.5;
+  box-sizing: border-box;
+
+  @media (max-width: $screen-xs-max) {
+    padding: $leading;
+  }
+
+  img {
+    width: 100%;
+    display: block;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  }
+}
+
+.flip-card-hint {
+  display: block;
+  margin-top: $leading;
+  font-family: $title-secondary-font;
+  font-size: $font-XS;
+  color: rgba(0, 0, 0, 0.35);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+}

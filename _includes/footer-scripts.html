@@ -47,4 +47,29 @@
   $(document).scroll(function() {
     $('.modal-toggle-group').toggleClass('active', $(document).scrollTop() >= 300);
   });
+
+  // Flip card — height tracks the visible face
+  document.querySelectorAll('.flip-card').forEach(function(card) {
+    var inner = card.querySelector('.flip-card-inner');
+    var front = card.querySelector('.flip-card-front');
+    var back  = card.querySelector('.flip-card-back');
+
+    function syncHeight(face) {
+      inner.style.height = face.scrollHeight + 'px';
+    }
+
+    syncHeight(front);
+
+    var img = back.querySelector('img');
+    if (img && !img.complete) {
+      img.addEventListener('load', function() {
+        if (card.classList.contains('is-flipped')) syncHeight(back);
+      });
+    }
+
+    card.addEventListener('click', function() {
+      var flipped = card.classList.toggle('is-flipped');
+      syncHeight(flipped ? back : front);
+    });
+  });
 </script>

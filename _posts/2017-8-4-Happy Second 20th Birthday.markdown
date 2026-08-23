@@ -7,7 +7,7 @@ categories: Story
 tags:  mickey
 image: 
   feature: 15.jpg
-  topPosition: -300px
+  topPosition: -200px
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
