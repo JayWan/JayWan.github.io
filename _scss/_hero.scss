@@ -53,7 +53,7 @@
     min-height: 19 * $leading;
     width: auto;
     height: auto;
-    position: fixed;
+    position: absolute;
     left: 50%;
     transform: translateX(-50%);
     opacity: 0;
