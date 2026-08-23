@@ -26,7 +26,7 @@ bgm: 风之诗.mp3
       <span class="flip-card-hint">封面是我们和最大树的合影</span>
     </div>
     <div class="flip-card-back">
-      <img src="{{ site.baseurl }}/assets/images/hero/木婚快乐.JPG" alt="木婚快乐">
+      <img src="{{ site.baseurl_posts_img }}木婚快乐.jpg" alt="木婚快乐">
     </div>
   </div>
 </div>
