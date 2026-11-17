@@ -22,7 +22,7 @@ function svg(markup) {
   t.innerHTML = markup;
   return t.content.firstChild;
 }
-const I_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="sd-i-play" d="M8 5.5v13l11-6.5z"/><path class="sd-i-pause" d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/></svg>';
+const I_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="sd-i-play" d="M8 5.5v13l11-6.5z"/><path class="sd-i-pause" d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/><g class="sd-i-retry" transform="matrix(1.16 0 0 1.16 -1.9 -2.3)"><path d="M18.6 13.2a6.7 6.7 0 1 1-2.2-6" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M19.9 2.9v6.6h-6.6z"/></g></svg>';
 const I_PREV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2.2v12H6zM19 6v12l-9.5-6z"/></svg>';
 const I_NEXT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.8 6H18v12h-2.2zM5 6v12l9.5-6z"/></svg>';
 // 八分音符：自己画的，跟着文字颜色走（系统字体里的 ♪ 又细又歪）
@@ -182,17 +182,19 @@ export default {
     function paint(st = player.state) {
       const cur = cued();
       const on = Boolean(st.letter && (st.playing || st.loading));
+      const bad = Boolean(st.letter && st.error);            // 放不出来：播放钮换成「再来一次」的箭头，不写字
       const side = cur ? sideOf(cur) : 'a';
       P.el.dataset.side = side;
       P.el.classList.toggle('is-playing', on);
       P.play.classList.toggle('is-playing', on);
+      P.play.classList.toggle('is-error', bad);
       P.el.classList.toggle('is-idle', !st.letter);
-      P.play.setAttribute('aria-label', on ? '暂停' : '播放');
+      P.play.setAttribute('aria-label', bad ? '放不出来，再点一次' : on ? '暂停' : '播放');
       P.play.disabled = !cur;
       if (cur) {
         P.no.replaceChildren(...noEl(cur, '').childNodes);
         P.song.replaceChildren(...tx(cur.song.title));
-        P.sub.replaceChildren(...(st.letter && st.error ? ['放不出来，再点一次试试'] : tx(cur.title)));
+        P.sub.replaceChildren(...tx(cur.title));
         P.meta.href = cur.url;
         P.meta.setAttribute('aria-label', `《${cur.song.title}》是《${cur.title}》的歌，去读这封信`);
       }
@@ -206,6 +208,12 @@ export default {
         const mine = st.letter && b.dataset.play === String(st.letter.no);
         b.classList.toggle('is-playing', Boolean(mine && on));
         b.setAttribute('aria-pressed', String(Boolean(mine && on)));
+        const broke = Boolean(mine && bad);
+        if (broke !== b.classList.contains('is-error')) {      // 读屏听得到的那一句也跟着换
+          const l = letters.byNo(Number(b.dataset.play));
+          b.classList.toggle('is-error', broke);
+          if (l && l.song) b.setAttribute('aria-label', `${broke ? '放不出来，再点一次：' : ''}播放《${l.song.title}》`);
+        }
       });
       // 曲目表里的那一行
       if (home) home.cue(st.letter, on);
@@ -224,7 +232,6 @@ export default {
         const here = st.letter === band.letter;
         band.bar.style.width = ((here && st.duration ? Math.min(1, st.time / st.duration) : 0) * 100).toFixed(2) + '%';
         band.time.textContent = `${fmt.clock(here ? st.time : 0)} / ${fmt.clock(here ? st.duration : band.letter.song.duration || 0)}`;
-        band.err.hidden = !(here && st.error);
       }
     }
     player.on('change', paint);
@@ -475,8 +482,13 @@ export default {
     }
 
     function pnTile(l, label, rel) {
-      if (l === 'first') return h('div', { class: 'sd-pnt sd-pnt--none' }, h('span', { class: 'sd-pn-no' }, '00'), h('span', {}, h('p', { class: 'sd-pn-lbl sd-l' }, label), h('p', { class: 'sd-pn-title' }, '这是第一首'), h('p', { class: 'sd-pn-song' }, '前面没有了。')));
-      if (l === 'none') return h('div', { class: 'sd-pnt sd-pnt--none' }, h('span', { class: 'sd-pn-no' }, String(tracks.length + 1)), h('span', {}, h('p', { class: 'sd-pn-lbl sd-l' }, label), h('p', { class: 'sd-pn-title' }, '还没写'), h('p', { class: 'sd-pn-song' }, '不知道会是 A 面还是 B 面。')));
+      // 没有的那一首：曲号只有轮廓，没上油墨（第一首之前是 00，最后一首之后是还没写的那个曲号）。那句话只念给读屏听
+      if (l === 'first' || l === 'none') {
+        const say = l === 'first' ? '这是第一首' : `第 ${tracks.length + 1} 首还没写`;
+        return h('div', { class: 'sd-pnt sd-pnt--none' },
+          h('span', { class: 'sd-pn-no', role: 'img', 'aria-label': say }, l === 'first' ? '00' : pad2(tracks.length + 1)),
+          h('span', {}, h('p', { class: 'sd-pn-lbl sd-l' }, label)));
+      }
       const s = sideOf(l);
       const a = h('a', { class: 'sd-pnt', href: l.url, rel, 'data-side': s },
         noEl(l, 'sd-pn-no'),
@@ -511,13 +523,12 @@ export default {
       if (l.song) {
         const bar = h('i');
         const time = h('span', { class: 'sd-ltime' });
-        const err = h('span', { class: 'sd-lerr', hidden: true }, ' · 放不出来，再点一次试试');
         const btn = playBtn(l, 'sd-lplay');
         btn.addEventListener('click', () => player.toggle(l));
         songBox = h('div', { class: 'sd-sbox' }, btn,
-          h('div', {}, h('p', { class: 'sd-sname' }, tx(l.song.title)), h('p', { class: 'sd-sart' }, '这封信的歌', artistOf(l) ? ` · ${artistOf(l)}` : '', err)),
+          h('div', {}, h('p', { class: 'sd-sname' }, tx(l.song.title)), artistOf(l) ? h('p', { class: 'sd-sart' }, artistOf(l)) : null),
           time, h('div', { class: 'sd-lprog' }, bar));
-        band = { letter: l, bar, time, err };
+        band = { letter: l, bar, time };
       }
       const bandEl = h('div', { class: 'sd-band' }, h('div', { class: 'sd-in' },
         h('nav', { class: 'sd-nav sd-l', 'aria-label': '导航' },
@@ -572,10 +583,8 @@ export default {
     }
 
     const lostView = () => h('section', { class: 'sd-lost' },
-      h('div', { class: 'sd-cat sd-l' }, h('span', {}, '221–LP'), h('span', {}, '404')),
-      h('b', { class: 'sd-lost-no', 'aria-hidden': 'true' }, '404'),
-      h('h1', {}, '这张唱片里没有这一首。'),
-      h('p', {}, `曲目表上一共 ${tracks.length} 首，都还在。`),
+      h('div', { class: 'sd-cat sd-l' }, h('span', {}, '221–LP'), mark(), h('span', {}, '404')),
+      h('h1', { class: 'sd-lost-no', 'aria-label': '404 · 没有这一首' }, '404'),     // 没有的那一首：和「还没写」的曲号一样，只有轮廓
       h('p', { class: 'sd-lost-go' }, h('a', { href: '/' }, '← 回到曲目表'), newest && h('a', { href: newest.url }, `最新一封 · ${newest.title} →`)));
 
     // =====================================================================================
