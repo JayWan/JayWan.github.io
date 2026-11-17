@@ -8,7 +8,10 @@ permalink:           pretty
 future: true
 
 # Setup
-# timezone:             # eg. Asia/Hong_Kong
+# Letter dates are written without a zone and have always been published as UTC
+# (GitHub Actions builds in UTC). Pinning it here makes every machine produce the
+# same dates and the same URLs. Changing this value changes the URL of some letters.
+timezone:            UTC
 locale:              en_US
 name:                LoveStory
 title:               221 FOREVER
