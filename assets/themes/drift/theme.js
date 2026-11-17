@@ -535,6 +535,12 @@ export default {
       S.song.textContent = p.song ? p.song.title : '';
       dockPlay.classList.toggle('can', Boolean(p.song));
       S.body.replaceChildren(contentEl);           // the live node Jekyll rendered: moved, never cloned
+      // a picture that has not loaded yet keeps its place (its size is known from its attributes), so the letter
+      // has its full length from the start and nothing below a picture moves when it arrives
+      contentEl.querySelectorAll('.letter-figure > img[width][height]').forEach((im) => {
+        const w = +im.getAttribute('width'), hh = +im.getAttribute('height');
+        if (w > 0 && hh > 0) { im.style.setProperty('--w', w + 'px'); im.style.setProperty('--r', (w / hh).toFixed(4)); }
+      });
       S.sign.replaceChildren(h('b', {}, names(p).join(' 和 ')), `${dot(p.date)}${p.days.met != null && p.role !== 'guest' ? ` · 认识的第 ${p.days.met} 天` : ''}`);   // the count is the couple's: a guest signs with the date alone
       S.nav.replaceChildren(navCell(p.prev, 'sn-prev', '上一封', '没有了，这是第一封'), navCell(p.next, 'sn-next', '下一封', '还没写'));
     }
@@ -640,7 +646,8 @@ export default {
       else {
         // Back to the river, at the print of the letter just read (not wherever the reader set out from).
         const last = router.lastRead || lastRead || p, q = G.it[idx(last)], y = riverTop() + q.top, saved = route.scrollY || 0;
-        const seen = saved > 0 && y < saved + innerHeight - 90 && y + q.h > saved + 90;
+        const shown = Math.min(y + q.h, saved + innerHeight - (G.phone ? 64 : 20)) - Math.max(y, saved + 64);   // how much of that print the place the reader left would show
+        const seen = saved > 0 && shown >= Math.min(q.h * 0.6, innerHeight * 0.4);
         land(seen ? saved : Math.max(0, Math.round(y - innerHeight * 0.28)));
         const back = items[idx(last)];
         try { back.a.focus({ preventScroll: true }); } catch { /* old engines */ }
@@ -686,6 +693,13 @@ export default {
     addEventListener('keydown', (e) => {
       if (!openL || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
       const t = e.target;
+      if (e.key === 'Tab') {      // an open letter keeps the focus: Tab walks its own controls round and round, Esc leaves
+        if (root.classList.contains('walked')) return;   // (the next stop in the document is a print or the footer, screens away, and going there would close the letter)
+        const stops = [...sheet.querySelectorAll('a[href], button, summary, input, select, textarea, audio[controls], video[controls], iframe, [tabindex="0"]')].filter((n) => n.getClientRects().length && getComputedStyle(n).visibility !== 'hidden');
+        const at = stops.indexOf(document.activeElement), to = e.shiftKey ? stops.length - 1 : 0;
+        if (stops.length && (at < 0 || at === (e.shiftKey ? 0 : stops.length - 1))) { e.preventDefault(); stops[to].focus(); }
+        return;
+      }
       if (t && t.closest && t.closest('input, textarea, select, [contenteditable], [role="slider"]')) return;
       if (e.key === 'Escape') goHome();
       else if (e.key === 'Home' || e.key === 'End') {      // the open letter is the page: Home and End stay inside it

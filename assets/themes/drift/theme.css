@@ -385,6 +385,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 .letter-body img { display: block; max-width: 100%; width: auto; height: auto; max-height: min(78vh, 680px); margin: 2em auto; outline: 1px solid rgba(35, 31, 24, .14); outline-offset: -1px; filter: saturate(.92) sepia(.05); mix-blend-mode: darken; }
 .letter-body figure, .letter-body .letter-figure { margin: 2em 0; text-align: center; }
 .letter-body figure img { margin: 0 auto; }
+.letter-body .letter-figure > img[style*="--r"] { width: min(100%, var(--w), min(78vh, 680px) * var(--r)); }   /* its place is kept before it loads */
 .letter-body .letter-figure.is-small img { max-width: min(100%, 320px); }
 .letter-body .quote-by { display: block; margin-top: .4em; text-align: right; color: var(--ink-2); }
 .letter-body .letter-signoff { margin: .2em 0; text-align: right; font-size: .88em; color: var(--ink-2); }
