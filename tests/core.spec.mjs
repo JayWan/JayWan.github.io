@@ -129,31 +129,219 @@ test.describe('player', () => {
 });
 
 test.describe('router', () => {
-  test('letter → letter → Back → Back, starting from a letter page that was loaded directly', async ({ page, request, baseURL }) => {
+  test('letter → letter → home → Back, starting from a letter page that was loaded directly', async ({ page, request, baseURL }) => {
     const { letters } = await getIsland(request);
     const start = letters[4];
     const seen = watch(page, baseURL);
     await openProbe(page, start.url);
     await page.evaluate(() => { window.__sameDocument = true; document.querySelector('.content-body').dataset.mark = 'landed'; });
+    const length = await page.evaluate(() => history.length);
 
     await page.locator('#theme-root a[rel="next"]').click();              // the next letter, fetched
     await expect(page).toHaveURL(new URL(letters[5].url, baseURL).href);
     await expect(page.locator('#theme-root h1')).toHaveText(letters[5].title);
     expect(await page.evaluate(() => window.scrollY), 'a link lands at the top').toBe(0);
     expect(await ctx(page, (c) => [c.page.type, c.page.letter.no, c.router.current.letter.no])).toEqual(['letter', letters[5].no, letters[5].no]);
+    expect(await page.evaluate(() => history.length), 'from letter to letter the entry is replaced').toBe(length);
 
-    await page.locator('#theme-root a.p-logo').click();                   // home
-    await expect(page).toHaveURL(new URL('/', baseURL).href);
-    await expect(page.locator('#theme-root .p-list')).toBeVisible();
-
-    await page.goBack();
-    await expect(page.locator('#theme-root h1')).toHaveText(letters[5].title);
-    await page.goBack();                                                   // the page we landed on: the very same node again
+    await page.locator('#theme-root a[rel="prev"]').click();              // and back to the first one: the very same node again
     await expect(page.locator('#theme-root h1')).toHaveText(start.title);
     expect(await page.evaluate(() => document.querySelector('#theme-root .letter-body .content-body').dataset.mark)).toBe('landed');
+    await page.locator('#theme-root a[rel="next"]').click();
+    await expect(page.locator('#theme-root h1')).toHaveText(letters[5].title);
+
+    await page.locator('#theme-root a.p-logo').click();                   // home: a new entry
+    await expect(page).toHaveURL(new URL('/', baseURL).href);
+    await expect(page.locator('#theme-root .p-list')).toBeVisible();
+    expect(await page.evaluate(() => history.length)).toBe(length + 1);
+
+    await page.goBack();                                                   // the letter that was on screen last
+    await expect(page.locator('#theme-root h1')).toHaveText(letters[5].title);
     expect(await page.evaluate(() => window.__sameDocument), 'never reloaded').toBe(true);
     expect(seen.requests.filter((u) => u === new URL(letters[5].url, baseURL).href).length, 'a letter is fetched once').toBe(1);
     expect(seen.errors).toEqual([]);
+  });
+
+  test('previous / next replace the history entry: Back from any letter is the list, at the letter read last', async ({ page, request, baseURL }) => {
+    const { letters } = await getIsland(request);
+    const seen = watch(page, baseURL);
+    await openProbe(page);
+    await page.evaluate(() => { window.__sameDocument = true; });
+    expect(await ctx(page, (c) => c.router.lastRead), 'nothing read yet').toBe(null);
+
+    // a letter near the top of the list (newest first) with six ordinary letters before it
+    const opened = [...letters].reverse().find((l) => l.no > 7 && letters.slice(l.no - 7, l.no).every((x) => !x.standalone));
+    await page.locator(`#theme-root .p-list a[href="${opened.url}"]`).click();
+    await expect(page.locator('#theme-root h1')).toHaveText(opened.title);
+    const length = await page.evaluate(() => history.length);
+    expect(await ctx(page, (c) => c.router.lastRead.no)).toBe(opened.no);
+
+    // six letters towards the past, by the link at the end of each letter
+    let reading = opened;
+    for (let i = 0; i < 6; i++) {
+      reading = letters[reading.no - 2];
+      if (i % 2) await page.locator('#theme-root a[rel="prev"]').click();
+      else expect(await ctx(page, (c, url) => c.router.go(url), reading.url), 'go() without options follows the same rule').toBe(true);
+      await expect(page.locator('#theme-root h1')).toHaveText(reading.title);
+    }
+    expect(await page.evaluate(() => history.length), 'still one entry behind the list').toBe(length);
+    expect(await ctx(page, (c) => c.router.lastRead.no)).toBe(reading.no);
+
+    await page.goBack();                                                   // one step back: the list
+    await expect(page).toHaveURL(new URL('/', baseURL).href);
+    await expect(page.locator('#theme-root .p-list')).toBeVisible();
+    expect(await page.evaluate(() => window.__sameDocument)).toBe(true);
+    expect(await ctx(page, (c) => [c.page.type, c.router.lastRead.no])).toEqual(['home', reading.no]);
+    // …and the list shows the letter that was read last, not the place where the reading began
+    const link = page.locator(`#theme-root .p-list a[href="${reading.url}"]`);
+    await expect(link).toBeInViewport({ ratio: 0.9 });
+    await expect(page.locator('#theme-root .p-list li.is-last-read')).toHaveAttribute('data-no', String(reading.no));
+    expect(await page.evaluate(() => window.scrollY), 'which is further down than where the reader started').toBeGreaterThan(300);
+
+    await page.goForward();                                                // Forward: the letter read last, not the one opened first
+    await expect(page.locator('#theme-root h1')).toHaveText(reading.title);
+
+    // Esc is "back to the list" in the reference theme: router.home()
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#theme-root .p-list')).toBeVisible();
+    await expect(page).toHaveURL(new URL('/', baseURL).href);
+    expect(await page.evaluate(() => history.length), 'home() went back, it did not add an entry').toBe(length);
+    await expect(link).toBeInViewport({ ratio: 0.9 });
+    expect(seen.errors).toEqual([]);
+  });
+
+  test('go(url, { replace }): true replaces, false adds, left out it depends on where the reader is', async ({ page, request, baseURL }) => {
+    const { letters } = await getIsland(request);
+    const [a, b, c] = [letters[1], letters[2], letters[3]];
+    await openProbe(page);
+    const length = await page.evaluate(() => history.length);
+    const go = (url, options) => page.evaluate(([to, o]) => window.__theme.ctx.router.go(to, o), [url, options]);
+
+    expect(await go(a.url)).toBe(true);                                    // list → letter: a new entry
+    expect(await page.evaluate(() => history.length)).toBe(length + 1);
+    expect(await go(b.url)).toBe(true);                                    // letter → letter: the same entry
+    expect(await page.evaluate(() => history.length)).toBe(length + 1);
+    expect(await go(c.url, { replace: false })).toBe(true);                // unless the theme says otherwise
+    expect(await page.evaluate(() => history.length)).toBe(length + 2);
+    await page.goBack();
+    await expect(page.locator('#theme-root h1')).toHaveText(b.title);
+    await page.goBack();
+    await expect(page.locator('#theme-root .p-list')).toBeVisible();
+
+    expect(await go(a.url, { replace: true })).toBe(true);                 // the list itself replaced
+    await expect(page).toHaveURL(new URL(a.url, baseURL).href);
+    expect(await page.evaluate(() => history.length)).toBe(length + 2);    // (the two entries ahead are still there until something is added)
+    expect(await ctx(page, (x) => x.router.home())).toBe(true);            // no list behind this letter: home() is a link to it
+    await expect(page.locator('#theme-root .p-list')).toBeVisible();
+    await expect(page).toHaveURL(new URL('/', baseURL).href);
+    await expect(page.locator(`#theme-root .p-list a[href="${a.url}"]`), 'and the list shows the letter just read').toBeInViewport({ ratio: 0.9 });
+  });
+
+  test('next onto the letter that needs a page load: the load replaces too, and the list is still one step back', async ({ page, request, baseURL }) => {
+    const { letters } = await getIsland(request);
+    const gift = letters.find((l) => l.standalone);
+    const before = letters[gift.no - 2];
+    test.skip(!gift || !before || before.standalone, 'no standalone letter with an ordinary one before it');
+    await openProbe(page);
+    await page.locator(`#theme-root .p-list a[href="${before.url}"]`).click();
+    await expect(page.locator('#theme-root h1')).toHaveText(before.title);
+    const length = await page.evaluate(() => history.length);
+
+    await page.locator('#theme-root a[rel="next"]').click();              // a real page load
+    await page.waitForFunction((no) => document.documentElement.getAttribute('data-theme-ready') === 'probe' && window.__theme.ctx.page.letter && window.__theme.ctx.page.letter.no === no, gift.no);
+    expect(await page.evaluate(() => [history.length, history.state.from])).toEqual([length, '/']);
+
+    await page.locator('#theme-root a[rel="next"]').click();              // and on to the next one, softly again
+    const after = letters[gift.no];
+    await expect(page.locator('#theme-root h1')).toHaveText(after.title);
+    expect(await page.evaluate(() => [history.length, history.state.from])).toEqual([length, '/']);
+
+    await page.locator('#theme-root .p-near a[data-back]').click();       // "回到所有的信" at the end of the letter
+    await expect(page).toHaveURL(new URL('/', baseURL).href);
+    await expect(page.locator('#theme-root .p-list')).toBeVisible();
+    expect(await page.evaluate(() => history.length), 'it was the Back button').toBe(length);
+    expect(await ctx(page, (c) => c.router.lastRead.no), 'the letter read last is remembered across the page load').toBe(after.no);
+    await expect(page.locator('#theme-root .p-list li.is-last-read')).toHaveAttribute('data-no', String(after.no));
+  });
+
+  // Open a letter near the top of the list and walk `steps` letters towards the past with
+  // previous / next semantics. Returns the letter opened and the letter that is on screen now.
+  async function readOn(page, letters, steps) {
+    const opened = [...letters].reverse().find((l) => l.no > steps + 1 && letters.slice(l.no - steps - 1, l.no).every((x) => !x.standalone));
+    await page.locator(`#theme-root .p-list a.p-card[href="${opened.url}"]`).click();
+    await expect(page.locator('#theme-root h1')).toHaveText(opened.title);
+    let reading = opened;
+    for (let i = 0; i < steps; i++) {
+      reading = letters[reading.no - 2];
+      expect(await ctx(page, (c, url) => c.router.go(url), reading.url)).toBe(true);
+      await expect(page.locator('#theme-root h1')).toHaveText(reading.title);
+    }
+    return { opened, reading };
+  }
+
+  test('back on the list: a player bar that names the letter is not the list, and a list that was seen since stays put', async ({ page, request, baseURL }) => {
+    const { letters } = await getIsland(request);
+    await openProbe(page);
+    await page.evaluate(() => { window.__sameDocument = true; });
+    const { reading } = await readOn(page, letters, 8);
+
+    // The song of the letter being read is loaded: the bar at the bottom of the screen now links
+    // to this very letter, on every page. That link is on screen, but it is not the list.
+    await page.locator('#theme-root .p-song [data-play]').click();
+    await expect(page.locator('#theme-root .p-bar a.p-bar-title')).toHaveAttribute('href', reading.url);
+    await page.goBack();
+    await expect(page.locator('#theme-root .p-list')).toBeVisible();
+    await expect(page.locator('#theme-root .p-bar a.p-bar-title')).toBeVisible();
+    const row = page.locator(`#theme-root .p-list a.p-card[href="${reading.url}"]`);
+    await expect(row, 'the row of the letter read last was brought on screen').toBeInViewport({ ratio: 0.9 });
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(300);
+
+    // The reader walks back up the list, looks at the letter again (Forward) and comes back: the
+    // list has been seen since that letter was read, so it is where the reader left it.
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.goForward();
+    await expect(page.locator('#theme-root h1')).toHaveText(reading.title);
+    await page.goBack();
+    await expect(page.locator('#theme-root .p-list')).toBeVisible();
+    await expect(page).toHaveURL(new URL('/', baseURL).href);
+    await page.waitForTimeout(150);
+    expect(await page.evaluate(() => window.scrollY), 'Back returns to where the reader was').toBeLessThan(40);
+    expect(await page.evaluate(() => window.__sameDocument)).toBe(true);
+  });
+
+  test('a letter reloaded after previous / next: Back still shows the list at the letter read last', async ({ page, request, baseURL }) => {
+    const { letters } = await getIsland(request);
+    await openProbe(page);
+    const { reading } = await readOn(page, letters, 8);
+    const length = await page.evaluate(() => history.length);
+    await page.reload();
+    await page.waitForFunction((no) => document.documentElement.getAttribute('data-theme-ready') === 'probe' && window.__theme.ctx.page.letter && window.__theme.ctx.page.letter.no === no, reading.no);
+    expect(await page.evaluate(() => [history.length, history.state.from])).toEqual([length, '/']);
+
+    await page.goBack();                                                   // the list is another document now: a page load
+    await page.waitForFunction(() => document.documentElement.getAttribute('data-theme-ready') === 'probe' && window.__theme.ctx.page.type === 'home');
+    await expect(page).toHaveURL(new URL('/', baseURL).href);
+    expect(await ctx(page, (c) => c.router.lastRead.no)).toBe(reading.no);
+    await expect(page.locator('#theme-root .p-list li.is-last-read')).toHaveAttribute('data-no', String(reading.no));
+    await expect(page.locator(`#theme-root .p-list a.p-card[href="${reading.url}"]`)).toBeInViewport({ ratio: 0.9 });
+  });
+
+  test('a list the browser kept alive (back-forward cache) is shown again when a letter was read meanwhile', async ({ page, request }) => {
+    // Playwright's browsers do not keep pages in the back-forward cache, so the moment is made
+    // by hand: another page of this tab has read on, and this one is brought back as it was.
+    const { letters } = await getIsland(request);
+    const [began, last] = [letters[20], letters[12]];
+    await openProbe(page);
+    expect(await ctx(page, (c) => c.router.lastRead)).toBe(null);
+    await page.evaluate(([url, first]) => {
+      window.__sameDocument = true;
+      sessionStorage.setItem('f221:last', JSON.stringify([url, first]));
+      window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    }, [last.url, began.url]);
+    await expect(page.locator('#theme-root .p-list li.is-last-read')).toHaveAttribute('data-no', String(last.no));
+    await expect(page.locator(`#theme-root .p-list a.p-card[href="${last.url}"]`)).toBeInViewport({ ratio: 0.9 });
+    expect(await ctx(page, (c) => [c.router.lastRead.no, c.page.type])).toEqual([last.no, 'home']);
+    expect(await page.evaluate(() => window.__sameDocument)).toBe(true);
   });
 
   test('a letter reached by soft navigation has working widgets', async ({ page, request }) => {
@@ -389,7 +577,7 @@ test.describe('router: the corners', () => {
 
     // three quick clicks: only the last letter is shown, and only one history entry is added
     const length = await page.evaluate(() => history.length);
-    const results = await page.evaluate((urls) => Promise.all(urls.map((url) => window.__theme.ctx.router.go(url))), [letters[7].url, letters[8].url, letters[9].url]);
+    const results = await page.evaluate((urls) => Promise.all(urls.map((url) => window.__theme.ctx.router.go(url, { replace: false }))), [letters[7].url, letters[8].url, letters[9].url]);
     expect(results).toEqual([false, false, true]);
     await expect(page.locator(`#theme-root [data-view="letter:${letters[9].no}"]`)).toBeVisible();
     expect(await page.evaluate(() => history.length)).toBe(length + 1);
@@ -422,7 +610,7 @@ test.describe('router: the corners', () => {
     await expect(page).toHaveURL(new URL(url, baseURL).href);
     const length = await page.evaluate(() => history.length);
 
-    await page.locator('#theme-root a[data-back]').click();               // "← 所有的信"
+    await page.locator('#theme-root a.p-back').click();                   // "← 所有的信"
     await expect(page).toHaveURL(new URL('/', baseURL).href);
     await expect(page.locator('#theme-root .p-list')).toBeVisible();
     await expect.poll(() => page.evaluate(() => window.scrollY), 'the list is where the reader left it').toBeGreaterThanOrEqual(scrollAtHome - 80);
@@ -431,21 +619,22 @@ test.describe('router: the corners', () => {
     await page.goForward();                                               // so Forward still leads to the letter
     await expect(page).toHaveURL(new URL(url, baseURL).href);
 
-    // from one letter to the next and then "back to the list": the list is not where the reader came from
+    // from one letter to the next and then "back to the list": the list is still one step behind
     await expect(page.locator('#theme-root .letter-body .content-body')).toBeVisible();
     const before = await ctx(page, (c) => c.page.letter.prev.title);
     await page.locator('#theme-root a[rel="prev"]').click();
     await expect(page.locator('#theme-root h1')).toHaveText(before);
-    const deeper = await page.evaluate(() => history.length);
+    expect(await page.evaluate(() => history.length), 'previous / next do not add entries').toBe(length);
     expect(await ctx(page, (c) => c.router.back('/'))).toBe(true);
     await expect(page.locator('#theme-root .p-list')).toBeVisible();
-    expect(await page.evaluate(() => [history.length, window.scrollY])).toEqual([deeper + 1, 0]);
+    await expect(page).toHaveURL(new URL('/', baseURL).href);
+    expect(await page.evaluate(() => history.length)).toBe(length);
     expect(await page.evaluate(() => window.__sameDocument)).toBe(true);
 
     // a letter opened directly: there is no list to go back to, so the link is an ordinary link
     const fresh = await page.context().newPage();
     await openProbe(fresh, letters[4].url);
-    await fresh.locator('#theme-root a[data-back]').click();
+    await fresh.locator('#theme-root a.p-back').click();
     await expect(fresh).toHaveURL(new URL('/', baseURL).href);
     await expect(fresh.locator('#theme-root .p-list')).toBeVisible();
     await fresh.goBack();
@@ -493,7 +682,7 @@ test.describe('router: the corners', () => {
     await link.click();                                                   // a full page load
     await page.waitForFunction(() => document.documentElement.getAttribute('data-theme-ready') === 'probe' && window.__theme.ctx.page.type === 'letter');
     expect(await page.evaluate(() => history.state.from)).toBe('/');
-    await page.locator('#theme-root a[data-back]').click();
+    await page.locator('#theme-root a.p-back').click();
     await expect(page).toHaveURL(new URL('/', baseURL).href);
     await expect(page.locator('#theme-root .p-list')).toBeVisible();
     await expect.poll(() => page.evaluate(() => window.scrollY), 'the list is where the reader left it').toBe(scrollAtHome);
