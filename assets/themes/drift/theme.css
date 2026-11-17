@@ -56,6 +56,7 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
   display: inline-flex; align-items: center; min-height: 44px; white-space: nowrap; transition: opacity .4s;
 }
 .at-top .brand { opacity: 0; pointer-events: none; }
+.at-top .brand:focus-visible { opacity: 1; }
 .bar-nav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 .bar-link, .bar-toggle {
   font: 500 13px/1 var(--serif); letter-spacing: .12em; color: var(--text-2);
@@ -212,7 +213,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 @keyframes dr-wait { to { opacity: .55; } }
 
 .has-open .item { opacity: .26; }
-.has-open .item.is-open { visibility: hidden; }
+.item.is-open { visibility: hidden; }
 .has-open .axis, .has-open .note { opacity: .5; }
 
 /* idle drift + scroll parallax (motion only when the reader has not asked for less) */
@@ -252,7 +253,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 
 /* ───────── ruler (desktop: right edge) ───────── */
 .ruler {
-  position: fixed; right: 14px; top: 104px; bottom: 104px; width: 64px; z-index: 30;
+  position: fixed; right: max(14px, env(safe-area-inset-right, 0px)); top: 104px; bottom: 104px; width: 64px; z-index: 30;
   user-select: none; -webkit-user-select: none; transition: opacity .3s;
 }
 .ruler-year, .dock-play, .dock-song, .dock-close { display: none; }
@@ -525,6 +526,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
   .letter-body blockquote { padding-left: 1.1em; }
   .sheet-foot { padding: 24px 22px 48px; }
   .sheet-nav { margin-top: 40px; }
+  .sn-k { font-size: 12px; letter-spacing: 0; white-space: nowrap; }
   .sn-t { font-size: 15.5px; }
   .sn-prev { padding-right: 14px; } .sn-next { padding-left: 14px; }
 

@@ -208,7 +208,7 @@ export default {
     function solveDesk(W) {
       const ax = Math.round(W / 2), wide = W >= 1100;
       const wz = [clamp(W * 0.165, 168, 250), clamp(W * 0.262, 236, 384), clamp(W * 0.375, 310, 560)];
-      const xmin = wide ? 150 : 16, xmax = W - (wide ? 104 : 16);
+      const xmin = wide ? 150 : 16, xmax = W - (wide ? 104 : 88);      // the ruler keeps the right edge
       const geo = order.map((p, i) => {
         const c = p.cover, r = c ? c.w / c.h : 1.6;
         const w = Math.round(wz[LAYER[i]] * (r < 1.15 ? 0.7 : 1));
@@ -442,7 +442,7 @@ export default {
     track.addEventListener('pointerleave', () => { if (!arm) hideTip(0); });
 
     /* ───────── chrome that follows the scroll: year pin + ruler marker ───────── */
-    let raf = 0, curYear = 0;
+    let raf = 0, curYear = 0, lastScroll = 0;
     function chrome() {
       raf = 0; if (!G) return;
       const top = river.getBoundingClientRect().top;
@@ -458,7 +458,7 @@ export default {
       yearpin.classList.toggle('on', !openL && G.wide && window.scrollY > hero.offsetTop + hero.offsetHeight - 220 && innerHeight * 0.5 - top < G.end + 40);
     }
     const queueChrome = () => { if (!raf) raf = requestAnimationFrame(chrome); };
-    addEventListener('scroll', () => { if (pin && Math.abs(window.scrollY - pinY) > 4) pin = false; queueChrome(); }, { passive: true });
+    addEventListener('scroll', () => { lastScroll = performance.now(); if (pin && Math.abs(window.scrollY - pinY) > 4) pin = false; queueChrome(); }, { passive: true });
 
     /* only prints near the viewport drift */
     if ('IntersectionObserver' in window) {
@@ -581,7 +581,7 @@ export default {
       if (was) items[idx(was)].a.classList.remove('is-open');
       openL = p; lastRead = p;
       fillSheet(p, route.contentEl);
-      root.classList.add('has-open');
+      root.classList.add('has-open'); root.classList.remove('walked');
       it.a.classList.add('is-open');
       sheet.hidden = false;
       trackAway = false;
@@ -620,7 +620,7 @@ export default {
       const above = sheet.getBoundingClientRect().bottom <= 0, y0 = window.scrollY, pushed = shift;
       sheet.hidden = true;
       S.body.replaceChildren();
-      root.classList.remove('has-open');
+      root.classList.remove('has-open', 'walked');
       it.a.classList.remove('is-open');
       openL = null; pin = false;
       place();
@@ -639,19 +639,36 @@ export default {
       queueChrome();
     }
 
-    /* Scrolled past the end of an open letter (or back above it): the letter closes itself and the river is at full strength again. */
-    let away = 0;
+    /* Walked past the end of an open letter (or back above it). At once the river is at full strength again
+       (no dimmed dead zone). The sheet itself is taken away only when the scroll has come to rest and no finger
+       is down: that moves the page under the reader, and iOS does not keep a scroll position set mid-fling. */
+    let away = 0, rest = 0, touching = false;
+    const walked = (on) => { root.classList.toggle('walked', on); root.classList.toggle('has-open', Boolean(openL) && !on); };
+    const settle = () => {
+      clearTimeout(rest);
+      if (!openL || !root.classList.contains('walked')) return;
+      if (sheetInView()) { walked(false); return; }
+      if (touching || performance.now() - lastScroll < 140) { rest = setTimeout(settle, 150); return; }
+      closing = 'silent';
+      goHome();
+    };
     const leave = () => {
       clearTimeout(away);
       if (!openL || sheetInView()) return;
       const wait = 600 - (performance.now() - openedAt);
       if (wait > 0) { away = setTimeout(leave, wait); return; }
-      closing = 'silent';
-      goHome();
+      walked(true);
+      settle();
     };
     if ('IntersectionObserver' in window) {
-      new IntersectionObserver((es) => { clearTimeout(away); if (openL && !es[es.length - 1].isIntersecting) away = setTimeout(leave, 320); }).observe(sheet);
+      new IntersectionObserver((es) => {
+        clearTimeout(away);
+        if (!openL) return;
+        if (es[es.length - 1].isIntersecting) walked(false); else away = setTimeout(leave, 320);
+      }).observe(sheet);
     }
+    addEventListener('touchstart', () => { touching = true; }, { passive: true });
+    ['touchend', 'touchcancel'].forEach((t) => addEventListener(t, (e) => { touching = e.touches.length > 0; }, { passive: true }));
 
     addEventListener('keydown', (e) => {
       if (!openL || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
