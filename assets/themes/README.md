@@ -329,7 +329,7 @@ type Route =
 - `mount()` 不返回 `show` 也可以：所有链接都整页跳转，只是歌会在换页时停。
 - 换完视图后把焦点移到新内容上（`probe` 的做法：`main.focus({ preventScroll: true })`），键盘和读屏用户才知道页面换了。
 - `router.current` 始终是同一个对象，跳转时原地更新；传给 `show` 的 `route` 则每次都是新的。要记住「上一页是什么」就自己存需要的字段，不要存 `router.current` 本身。
-- 主题可以用 `history.pushState` / `replaceState` 记同一页里的状态（选中了哪一封、浮层开没开），路径没变时核心不会插手，`popstate` 由主题自己处理。写的时候把已有的状态带上：`history.replaceState({ ...history.state, sel: 12 }, '', '#12')`。
+- 主题可以用 `history.pushState` / `replaceState` 记同一页里的状态（选中了哪一封、浮层开没开），路径没变时核心不会插手，`popstate` 由主题自己处理。写的时候把已有的状态带上：`history.replaceState({ ...history.state, sel: 12 }, '', '#12')`。**不要在 `pagehide`、`beforeunload` 或页面变为不可见时调用 `replaceState`**：WebKit 会因此把这条历史记录的状态整个清空（回来时 `history.state` 是 `null`），Chrome 在刷新时则直接丢掉这次写入。要在离开时存东西，用 `sessionStorage`。
 
 ### `ctx.ui`
 
@@ -527,4 +527,5 @@ node tests/server.mjs --dir _site --port 4201 --theme classic    # 每个页面�
 12. **竖排**：`writing-mode` 不要设在 `<html>` 上，放在一个明确给了宽高的内部滚动容器里；纵中横用 `text-combine-upright: all`（数字要自己包一层元素）。
 13. **`backface-visibility` 要写 `-webkit-` 前缀**，并且父元素要有 `transform-style: preserve-3d`。（共用的翻转卡片已经处理好，并且在不支持背面剔除的环境里也不会穿帮。）
 14. **侧滑返回自带系统动画。** 自己再给后退加一段转场，会出现两段动画叠在一起。后退时的转场要短，或者干脆没有。
-15. **长按图片和链接会弹出系统菜单**，可拖动的元素上要考虑 `-webkit-touch-callout: none`；但信里的照片不要禁用，读者可能想存下来。
+15. **离开页面时不要写 `history.state`。** 在 `pagehide` 里调用 `history.replaceState`，WebKit 会把这条记录的状态清空。核心自己的滚动位置因此存在 `sessionStorage` 里；主题要在离开时记东西也用它。
+16. **长按图片和链接会弹出系统菜单**，可拖动的元素上要考虑 `-webkit-touch-callout: none`；但信里的照片不要禁用，读者可能想存下来。
