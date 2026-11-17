@@ -40,12 +40,15 @@ const latinOnly = (s) => /^[\x20-\x7e]+$/.test(s);
 // 键是封面文件名；新的封面不在表里时，特别宽（≥ 2.1:1）的也整幅放。
 const FIT = new Set(['9.png', '10.jpg', '11.jpg', '18.png', '19.png', '20.jpg', '23.jpg', '24.png']);
 const fits = (cover) => Boolean(cover && (FIT.has(cover.file) || (cover.w && cover.h && cover.w / cover.h >= 2.1)));
+// 整幅放的封面里，白底的插画和图表（平均色很亮）四周留纸色、加一圈细线；照片四周才是油墨。
+const light = (cover) => { const m = /^#([0-9a-f]{6})$/i.exec((cover && cover.color) || ''); const n = m ? parseInt(m[1], 16) : 0; return 0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) > 190; };
 
 export default {
   mount(ctx) {
     const { site, letters, root, player, router, ui } = ctx;
     const { fmt } = ui;
     const phone = window.matchMedia('(max-width: 860px)');
+    const hovers = window.matchMedia('(hover: hover) and (pointer: fine)');   // 触屏上点一下也会补发鼠标事件：那不算悬停
 
     // ---------- 面 ----------
     // him → A，her → B，both → A/B，其他人 → 附赠曲目（不占曲号）
@@ -90,7 +93,7 @@ export default {
       const fit = fits(l.cover);
       const pic = ctx.img(l.cover, opts);
       if (fit) { const im = pic.querySelector('img'); if (im) im.style.backgroundColor = ''; }
-      return h('span', { class: `sd-slv ${cls}`, 'data-side': sideOf(l), 'data-fit': fit || null }, pic);
+      return h('span', { class: `sd-slv ${cls}`, 'data-side': sideOf(l), 'data-fit': fit ? (light(l.cover) ? 'paper' : 'ink') : null }, pic);
     }
     /** 每个能开始放歌的控件都带 data-play */
     function playBtn(l, cls) {
@@ -335,7 +338,7 @@ export default {
         if (!bigs.has(l)) bigs.set(l, sleeve(l, { sizes: '400px', widths: [480, 800], lazy: false }));
         big.replaceChildren(bigs.get(l));
         cap.dataset.side = sideOf(l);
-        const d = l.days && l.days.met;
+        const d = sideOf(l) === 'x' ? null : l.days && l.days.met;     // 客人的信：那是他们的天数，不是写信人的
         cap.replaceChildren(
           h('div', { class: 'sd-cap-top' }, noEl(l, 'sd-cap-no', 'b'),
             h('div', {},
@@ -352,7 +355,7 @@ export default {
         if (!phone.matches) panel(l);
       }
       const letterOfRow = (node) => { const li = node.closest && node.closest('.sd-trk'); if (!li) return null; for (const [l, r] of rows) if (r === li) return l; return null; };
-      list.addEventListener('pointerover', (e) => { if (e.pointerType === 'mouse') { const l = letterOfRow(e.target); if (l) setOn(l); } });
+      list.addEventListener('pointerover', (e) => { if (e.pointerType === 'mouse' && hovers.matches) { const l = letterOfRow(e.target); if (l) setOn(l); } });
       list.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') setOn(null); });
       list.addEventListener('focusin', (e) => { const l = letterOfRow(e.target); if (l && !phone.matches && e.target.matches(':focus-visible')) setOn(l); });
       list.addEventListener('focusout', () => setOn(null));
@@ -459,11 +462,22 @@ export default {
       // 只有换行的空段落（作者用来空行）：留一行的空，不留三行
       el.querySelectorAll('p').forEach((p) => {
         if (!p.id && !p.textContent.trim() && !p.querySelector('img, picture, video, audio, iframe, svg, canvas, object')) p.classList.add('sd-gap');
+        else if (p.querySelector('br')) p.classList.add('sd-rag');       // 作者自己分了行的段落：不两端对齐，免得折行的那一句被撑开
       });
       // 整段英文：换用西文字体画引号和撇号
       el.querySelectorAll('p, li, .sd-ln, blockquote').forEach((n) => {
         const t = n.textContent;
         if (!n.id && t.length > 12 && !/[⺀-鿿＀-￯]/.test(t) && /[A-Za-z]{3}/.test(t)) n.setAttribute('lang', 'en');
+      });
+      // 中文段落里夹着的英文撇号（didn’t）：中文字体把它画成全角，后面空出半个字，换成西文字体的
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const found = [];
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) if (/[A-Za-z][‘’][A-Za-z]/.test(n.data) && !n.parentElement.closest('script, style, [lang="en"]')) found.push(n);
+      found.forEach((n) => {
+        const out = [];
+        let at = 0;
+        n.data.replace(/[A-Za-z]([‘’])(?=[A-Za-z])/g, (m, q, i) => { out.push(n.data.slice(at, i + 1), h('span', { lang: 'en' }, q)); at = i + 2; return m; });
+        n.replaceWith(...out, n.data.slice(at));
       });
     }
 
@@ -539,7 +553,7 @@ export default {
         if (l.cover.w && l.cover.h) {
           const ar = l.cover.w / l.cover.h;
           slv.style.setProperty('--ar', String(ar));                                    // 看原图时的比例
-          slv.style.setProperty('--strip', String(Math.min(2, Math.max(1.2, ar))));     // 手机上横幅的比例
+          slv.style.setProperty('--strip', String(Math.min(2.4, Math.max(1.2, ar))));   // 手机上横幅的比例
         }
         aside = h('aside', { class: 'sd-aside' }, h('div', { class: 'sd-pin' }, btn));
       }
@@ -593,8 +607,17 @@ export default {
 
     let first = true;
     let entered = null;                       // 从曲目表点开的是哪一封（之后可能翻到别的信去了）
+    let popHome = false;                      // 这一次回到曲目表是后退 / 前进带来的（核心取信要等一下，所以这个记号总在 show 之前）
+    let asked = false;                        // 读者点了「回到曲目表」或按了 Esc
+    window.addEventListener('popstate', () => { popHome = location.pathname === '/'; });
+    root.addEventListener('click', (e) => {
+      if (e.button === 0 && !(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) && e.target.closest && e.target.closest('a[data-back]')) asked = true;
+    });
     function show(route) {
       const from = view;
+      const pop = popHome;
+      const want = asked;
+      popHome = asked = false;
       let moved;
       if (route.type === 'letter') {
         if (from.type === 'home') entered = route.letter;
@@ -608,9 +631,10 @@ export default {
         main.replaceChildren(home.el);
         home.fit();
         view = { type: 'home', letter: null };
-        // 回到曲目表：刚读过的那一行做个记号（router.lastRead）。直接从点开的那封信回来，位置由核心原样恢复；
-        // 翻到别的信去了，或者这封信是直接打开的（后面没有曲目表），就把那一行带到眼前。
-        // （右栏的拼版里每封信都有链接，核心会以为「已经在屏幕上」，所以这一步主题自己做。）
+        // 回到曲目表：刚读过的那一行做个记号（router.lastRead）。后退回来、读的还是当初点开的那一封，位置由核心原样恢复；
+        // 翻到别的信去了，或者这条曲目表是「回到曲目表」新添的（信是直接打开的，后面没有曲目表），就把那一行带到眼前。
+        // 页眉的站名是普通链接，去曲目表的顶上，不动。
+        // （拼版里每封信都有链接，手机上它不是吸顶的，核心会以为「已经在屏幕上」，所以这一步主题自己做。）
         const last = lastRead();
         const li = last && home.rows.get(last);
         if (li && !li.hidden) {
@@ -618,7 +642,7 @@ export default {
           const top = li.getBoundingClientRect().top + window.scrollY;
           const vh = window.innerHeight - P.el.offsetHeight;
           const y = route.scrollY || 0;
-          if (from.type === 'letter' && last !== entered && (top < y + 8 || top + li.offsetHeight > y + vh - 8)) {
+          if (from.type === 'letter' && (pop ? last !== entered : want) && (top < y + 8 || top + li.offsetHeight > y + vh - 8)) {
             window.scrollTo(0, Math.max(0, Math.round(top - vh * 0.38)));
             moved = false;                                      // 滚动位置我们自己管了
           }
@@ -640,6 +664,7 @@ export default {
 
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape' || view.type !== 'letter' || e.defaultPrevented) return;
+      asked = true;
       if (router.home) router.home(); else router.back('/');
     });
 
