@@ -468,6 +468,12 @@ export default {
 
     // ───────────────────────── 首页 ─────────────────────────
     let home = null;
+    // 指针是不是真的动了。页面在不动的指针底下换了内容或滚动时，浏览器也会补发 pointerenter（WebKit 还补发坐标不变的
+    // pointermove）：那不算数，不然从信里回来时，碰巧停着指针的那一行会把刚读过的那封换掉。
+    let px, py, moved = false;
+    const track = (e) => { moved = e.clientX !== px || e.clientY !== py; px = e.clientX; py = e.clientY; };
+    document.addEventListener('pointermove', track, true);
+    document.addEventListener('pointerdown', track, true);
     function buildHome() {
       const chartHost = h('div', { class: 'chart' }), readout = h('div', { class: 'readout', 'aria-live': 'polite' }), eph = h('div', { class: 'eph' });
       const sort = h('button', { type: 'button', class: 'sort', onclick: () => { desc = !desc; table(); } });
@@ -561,8 +567,7 @@ export default {
                 h('span', { class: 'c-d' }, md(l.date)),
                 h('span', { class: 'c-t' }, h('span', { class: 'lbl' }, 'T+'), l.days.met),
                 h('span', { class: 'c-song', lang: l.song && latin(l.song.title) ? 'en' : null }, l.song && h('span', { class: 'lbl' }, '曲 '), l.song ? l.song.title : '')));
-            // 选中跟着「动了的」指针走（pointermove，见下面）：从信里回来时指针碰巧停在某一行上，不该把刚读过的那封换掉
-            a.addEventListener('pointerenter', () => router.prefetch(l.url));
+            a.addEventListener('pointerenter', () => router.prefetch(l.url));          // 选中跟着动了的指针走，见下面的 pointermove
             a.addEventListener('touchstart', () => router.prefetch(l.url), { passive: true });
             a.addEventListener('focus', () => setSel(l.no));
             rows.push(a);
@@ -573,7 +578,7 @@ export default {
         sort.setAttribute('aria-label', `排序：${desc ? '由近及远' : '由远及近'}，点一下反过来`);
         markRow();
       }
-      eph.addEventListener('pointermove', (e) => { const r = e.pointerType === 'mouse' && e.target.closest('.row'); if (r) setSel(+r.dataset.no); });
+      eph.addEventListener('pointermove', (e) => { const r = moved && e.pointerType === 'mouse' && e.target.closest('.row'); if (r) setSel(+r.dataset.no); });
       const rowOf = (no) => eph.querySelector(`.row[data-no="${no}"]`);
       function markRow() { eph.querySelectorAll('.row.is-sel').forEach((r) => r.classList.remove('is-sel')); if (sel) { const r = rowOf(sel); if (r) r.classList.add('is-sel'); } }
       function setSel(no, animate = true) {
@@ -592,7 +597,7 @@ export default {
         const svg = chart.svg;
         svg.addEventListener('pointerdown', (e) => { touch = e.pointerType !== 'mouse'; });
         svg.addEventListener('pointermove', (e) => {
-          if (e.pointerType !== 'mouse') return;
+          if (e.pointerType !== 'mouse' || !moved) return;
           const hit = chart.nearest(e.clientX, e.clientY);
           svg.style.cursor = hit.dist < 15 ? 'pointer' : '';
           if (hit.dist < 15) setSel(hit.no);

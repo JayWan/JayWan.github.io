@@ -127,6 +127,66 @@ test.describe('theme "orbit", its own promises', () => {
     await expectNoSidewaysScroll(page);
   });
 
+  test('the readout card shows every title and song name in full, inside the plate', async ({ page, request }) => {
+    test.skip(!wide(page), 'the fixed-height readout card is the desktop layout');
+    const { letters } = await getIsland(request);
+    const byLength = (text) => [...letters].filter((l) => text(l)).sort((a, b) => text(b).length - text(a).length)[0];
+    const picks = [byLength((l) => l.title), byLength((l) => l.song && l.song.title), letters.find((l) => (l.authors || []).length > 1)];
+    for (const size of [{ width: 1280, height: 720 }, { width: 1400, height: 900 }, { width: 1440, height: 900 }]) {
+      await page.setViewportSize(size);
+      await open(page, '/', THEME);
+      for (const letter of picks) {
+        await page.locator(`#theme-root .eph a.row[data-no="${letter.no}"]`).focus();
+        await expect(page.locator('#theme-root .readout .ro-title')).toHaveText(letter.title);
+        const found = await page.evaluate(() => {
+          const readout = document.querySelector('#theme-root .readout'), box = readout.getBoundingClientRect();
+          const cut = [...readout.querySelectorAll('.ro-title, .ro-song span')]
+            .filter((el) => el.scrollWidth > el.clientWidth + 1 || getComputedStyle(el).textOverflow === 'ellipsis').map((el) => el.textContent);
+          const spilt = [...readout.querySelectorAll('.ro-main > *, .ro-actions > *')].filter((el) => {
+            const b = el.getBoundingClientRect();
+            return b.height > 0 && (b.bottom > box.bottom - 2 || b.top < box.top);
+          }).map((el) => el.className);
+          return { cut, spilt };
+        });
+        expect(found, `${size.width}px, № ${letter.no}`).toEqual({ cut: [], spilt: [] });
+      }
+    }
+  });
+
+  test('back on the chart the letter just read stays selected, whatever the pointer happens to rest on', async ({ page, request }) => {
+    test.skip(!wide(page), 'needs a mouse over the table next to the chart');
+    const { letters } = await getIsland(request);
+    const read = letters.find((l) => l.date === '2024-11-19'), other = letters.find((l) => l.date === '2017-08-04');
+    await open(page, '/', THEME);
+    const at = await page.locator(`#theme-root .eph a.row[data-no="${other.no}"]`).boundingBox();
+    const x = at.x + at.width / 2, y = at.y + at.height / 2;
+    await page.locator(`#theme-root .eph a.row[data-no="${read.no}"]`).click();
+    await expect(page.locator('#theme-root .letter-body')).toBeVisible();
+    await page.mouse.move(x, y);                                           // parked where another row is about to appear
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#theme-root .eph')).toBeVisible();
+    await page.waitForTimeout(400);                                        // browsers send their own pointerenter once the page has settled
+    await expect(page.locator('#theme-root .eph a.row.is-sel')).toHaveAttribute('data-no', String(read.no));
+    await expect(page.locator('#theme-root .readout .ro-title')).toHaveText(read.title);
+    await page.mouse.move(x + 4, y + 2);                                   // a pointer that really moves is followed again
+    await expect(page.locator('#theme-root .eph a.row.is-sel')).toHaveAttribute('data-no', String(other.no));
+  });
+
+  test('keyboard: Enter opens the focused row, Esc returns, and no focus ring frames the whole view', async ({ page }) => {
+    await open(page, '/', THEME);
+    const ring = () => page.evaluate(() => getComputedStyle(document.querySelector('#theme-root main.view')).outlineStyle);
+    const row = page.locator('#theme-root .eph a.row').nth(3);
+    await row.focus();
+    expect(await row.evaluate((el) => getComputedStyle(el).outlineStyle), 'the row itself shows where the focus is').toBe('solid');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#theme-root .letter-body')).toBeVisible();
+    await expect(page.locator('#theme-root main.view')).toBeFocused();
+    expect(await ring()).toBe('none');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#theme-root .eph')).toBeVisible();
+    expect(await ring()).toBe('none');
+  });
+
   test('nothing moves under prefers-reduced-motion', async ({ browser, baseURL, request }) => {
     const context = await browser.newContext({ baseURL, reducedMotion: 'reduce', viewport: { width: 402, height: 874 } });
     const page = await context.newPage();
