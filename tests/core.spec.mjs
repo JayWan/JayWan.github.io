@@ -176,11 +176,12 @@ test.describe('router', () => {
     const length = await page.evaluate(() => history.length);
     expect(await ctx(page, (c) => c.router.lastRead.no)).toBe(opened.no);
 
-    // six letters towards the past, by the link at the end of each letter
+    // six letters towards the past: by the link at the end of each letter, by go(), by the ← key
     let reading = opened;
     for (let i = 0; i < 6; i++) {
       reading = letters[reading.no - 2];
-      if (i % 2) await page.locator('#theme-root a[rel="prev"]').click();
+      if (i % 3 === 1) await page.locator('#theme-root a[rel="prev"]').click();
+      else if (i % 3 === 2) await page.keyboard.press('ArrowLeft');       // the reference theme: go(url, { replace: true })
       else expect(await ctx(page, (c, url) => c.router.go(url), reading.url), 'go() without options follows the same rule').toBe(true);
       await expect(page.locator('#theme-root h1')).toHaveText(reading.title);
     }
