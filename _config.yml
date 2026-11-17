@@ -60,7 +60,7 @@ exclude:
   - playwright.config.js
   - test-results
   - playwright-report
-  - assets/themes/README.md
+  - "assets/themes/*.md"    # the theme author's guide and any notes kept next to a theme (at any depth)
   # CSS files the old gulp pipeline left in working copies (git-ignored). If Jekyll
   # copied them, they would overwrite the freshly compiled stylesheet.
   - assets/css/main.css
