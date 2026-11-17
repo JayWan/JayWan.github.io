@@ -305,14 +305,17 @@ export default {
       const byYear = letters.years
         ? letters.years.map((y) => ({ year: y.year, all: y.letters.length, list: y.letters.filter((l) => trackNo.has(l)) }))
         : years.length ? Array.from({ length: years[years.length - 1] - years[0] + 1 }, (_, i) => years[0] + i).map((y) => ({ year: y, all: 0, list: tracks.filter((l) => l.year === y) })) : [];
+      const yearRows = [];                                   // [年份行, 这一年的信, 写着「N 封」的那个元素]
       byYear.forEach(({ year, all, list: ofYear }) => {
-        if (ofYear.length) list.append(h('li', { class: 'sd-yr', 'data-y': year }, h('span', {}, String(year)), h('span', {}, `${ofYear.length} 封`)));
-        else if (!all) list.append(h('li', { class: 'sd-yr sd-yr--empty', 'data-y': year }, h('span', {}, String(year)), h('span', {}, '这一年没有信')));
+        if (ofYear.length) {
+          const n = h('span', {}, `${ofYear.length} 封`);
+          yearRows.push([list.appendChild(h('li', { class: 'sd-yr' }, h('span', {}, String(year)), n)), ofYear, n]);
+        } else if (!all) yearRows.push([list.appendChild(h('li', { class: 'sd-yr sd-yr--empty' }, h('span', {}, String(year)), h('span', {}, '这一年没有信'))), ofYear, null]);
         ofYear.forEach((l) => list.append(row(l)));
       });
       const extras = letters.filter((l) => !trackNo.has(l));
       if (extras.length) {
-        list.append(h('li', { class: 'sd-yr sd-yr--bonus' }, h('span', {}, '附'), h('span', {}, `Bonus track · ${[...new Set(extras.map((l) => l.author))].join('、')} 写的，不排曲号`)));
+        yearRows.push([list.appendChild(h('li', { class: 'sd-yr sd-yr--bonus' }, h('span', {}, '附'), h('span', {}, `Bonus track · ${[...new Set(extras.map((l) => l.author))].join('、')} 写的，不排曲号`))), [], null]);
         extras.forEach((l) => list.append(row(l)));
       }
 
@@ -391,9 +394,11 @@ export default {
         el.dataset.filter = f;
         rows.forEach((li, l) => { li.hidden = !shows(f, sideOf(l)); });
         mosaic.querySelectorAll('a').forEach((a) => a.classList.toggle('is-dim', !shows(f, a.dataset.side)));
-        list.querySelectorAll('.sd-yr').forEach((yr) => {
-          const y = Number(yr.dataset.y);
-          yr.hidden = f !== 'all' && !(y && tracks.some((l) => l.year === y && shows(f, sideOf(l))));
+        // 年份行：只数筛出来的那些；筛选时没有信的年份和附赠曲目不出现
+        yearRows.forEach(([li, ofYear, n]) => {
+          const k = ofYear.filter((l) => shows(f, sideOf(l))).length;
+          li.hidden = f !== 'all' && !k;
+          if (n) n.textContent = `${k} 封`;
         });
       });
 
