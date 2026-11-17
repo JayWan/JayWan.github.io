@@ -1,0 +1,153 @@
+{%- comment -%}
+  THEME BOOT. Included by head.html right after <meta charset> and the viewport meta, before
+  any stylesheet. It decides which theme this page shows before anything is painted.
+  (Liquid strips this comment; only the <style>, the <noscript> and the <script> reach the page.)
+
+  What the script does, in order
+    1. picks the theme id:
+         a. ?theme=<id> in the URL        forces it for this visit (?theme=random forces a new draw)
+         b. the theme of this visit       a visit lasts until the site has been off screen for
+                                          `idle` minutes; reloads, links, Back and new tabs keep it
+         c. a special date                `dates` in _data/themes.yml, visitor's local calendar
+         d. the night rule                between night[0]:00 and night[1]:00 only dark themes
+         e. the shuffle bag               every theme once per round, never the same twice in a row
+       Browsers without the baseline the new themes need (tested with `1lh`: Safari 16.4,
+       Chrome 109, Firefox 120) and pages that are not home / letter / 404 always get classic.
+       If storage is unavailable the pick comes from the clock (stable for 3 hours) instead of the bag.
+    2. sets <html data-theme>, and for a new theme also lang, color-scheme and the viewport
+    3. document.write()s the resources of that theme, so they are parser-inserted and block
+       rendering like any <link> in the HTML (no flash):
+         classic   the text of <noscript id="classic-head">: exactly the tags the site always had
+         others    assets/fonts/<name>.css for each font in the registry, shared/widgets.css,
+                   assets/themes/<id>/theme.css, and modulepreload hints for the core and the theme
+    4. defines __c(), used by _includes/classic-only.html to write classic-only markup
+    5. leaves window.__theme = { id, by, v, page, themes, fail() } for assets/js/core/main.js
+
+  fail(why) is the fallback: it remembers "classic" for this visit and reloads the page once
+  with ?theme=classic. It is called by main.js when a theme cannot be loaded, throws or renders
+  nothing in 5 s, and from here when main.js itself never starts.
+
+  Storage keys:  sessionStorage f221:now {id,t,by}   this tab's theme, t = when it was last on screen
+                 localStorage   f221:cur {id,t}      the latest theme shown in any tab
+                 localStorage   f221:bag [ids]       themes not yet shown in this round
+                 sessionStorage f221:err  "id: why"  last fallback reason (printed by main.js)
+
+  Keep it small (it is inline on every page) and ES5: a syntax error here would leave the page blank.
+  The script is squeezed at build time (see the filter chain at the bottom), so: no // comments,
+  every statement ends with a semicolon, and no string literal may contain a space next to an
+  operator, a bracket, a comma, a colon or a semicolon (the squeeze would eat it). Words separated
+  by single spaces are fine.
+  The JavaScript below must not contain the two-character sequences that open a Liquid tag or output.
+{%- endcomment -%}
+{%- include page-type.html -%}
+{%- assign boot_themes = '' -%}
+{%- assign boot_dates = '' -%}
+{%- for t in site.data.themes.themes -%}
+  {%- assign js = '/assets/themes/' | append: t.id | append: '/theme.js' -%}
+  {%- assign found = site.static_files | where: 'path', js | size -%}
+  {%- if t.id == 'classic' or found > 0 -%}
+    {%- assign draw = 1 -%}
+    {%- if t.enabled == false or t.hidden -%}{%- assign draw = 0 -%}{%- endif -%}
+    {%- assign dark = 0 -%}
+    {%- if t.dark -%}{%- assign dark = 1 -%}{%- endif -%}
+    {%- capture one -%},[{{ t.id | jsonify }},{{ t.name | jsonify }},{{ dark }},{{ draw }},{%- if t.fonts -%}{{ t.fonts | jsonify }}{%- else -%}[]{%- endif -%}]{%- endcapture -%}
+    {%- assign boot_themes = boot_themes | append: one -%}
+    {%- if draw == 1 -%}
+      {%- for d in t.dates -%}
+        {%- capture one -%},{{ d | jsonify }}:{{ t.id | jsonify }}{%- endcapture -%}
+        {%- assign boot_dates = boot_dates | append: one -%}
+      {%- endfor -%}
+    {%- endif -%}
+  {%- endif -%}
+{%- endfor -%}
+<style>
+{%- for t in site.data.themes.themes -%}
+{%- unless t.id == 'classic' -%}:where(html[data-theme="{{ t.id }}"]){background:{{ t.ground }}}{%- endunless -%}
+{%- endfor -%}
+html:not([data-theme="classic"]) body>:not(#theme-root):not(script):not(style){display:none!important}html[data-theme="classic"] #theme-root{display:none}</style>
+<noscript id="classic-head">
+  <!-- CSS -->
+  <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/main.css">
+
+  {% if page.syntaxHighlighter %}
+    <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/prism-okaidia.css">
+    <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/prism-line-numbers.css">
+  {% endif %}
+
+  <!-- Fonts -->
+  <link href='https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@400;700&display=swap' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Roboto:100,300' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=PT+Sans:700' rel='stylesheet' type='text/css'>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</noscript>
+{%- capture boot_cfg -%}
+{"v":"{{ site.time | date: '%s' }}","idle":{{ site.data.themes.idle | default: 30 }},"night":{{ site.data.themes.night | default: '[23,6]' | jsonify | remove: '"' }},"page":{{ page_type | jsonify }},"t":[{{ boot_themes | remove_first: ',' }}],"d":{ {{- boot_dates | remove_first: ',' -}} }}
+{%- endcapture -%}
+{%- capture boot_js -%}
+(function (w, d, C) {
+  var K = 'f221:', L = 'localStorage', S = 'sessionStorage', R = d.documentElement, T = C.t, M = Math, now = Date.now();
+  function find(id) { for (var i = 0; i < T.length; i++) if (T[i][0] === id) return T[i]; }
+  function get(s, k) { try { return JSON.parse(w[s].getItem(K + k)); } catch (e) { return null; } }
+  function set(s, k, v) { try { w[s].setItem(K + k, JSON.stringify(v)); return 1; } catch (e) { return 0; } }
+  function save(i, t, b) { set(S, 'now', { id: i, t: t, by: b }); set(L, 'cur', { id: i, t: t }); }
+  function pool(dark) { return T.filter(function (x) { return x[3] && (!dark || x[2]); }).map(function (x) { return x[0]; }); }
+  function fresh(a) { a = a.slice(); for (var i = a.length - 1, j, x; i > 0; i--) { j = M.floor(M.random() * (i + 1)); x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
+  function roll(avoid, p) {
+    var all = pool(), bag = get(L, 'bag'), k, c;
+    function pick() { for (var i = 0; i < bag.length; i++) if (bag[i] !== avoid && p.indexOf(bag[i]) > -1) return i; return -1; }
+    if (!(bag instanceof Array) || !bag.length || !bag.every(function (x) { return all.indexOf(x) > -1; })) bag = fresh(all);
+    k = pick();
+    if (k < 0 && p.length === all.length) { bag = fresh(all); k = pick(); }
+    if (k < 0) { c = p.filter(function (x) { return x !== avoid; }); if (!c.length) c = p; return c[M.floor(M.random() * c.length)]; }
+    c = bag.splice(k, 1)[0]; set(L, 'bag', bag); return c;
+  }
+
+  var q = null, t = new Date(), h = t.getHours(), n = C.night, md = ('0' + (t.getMonth() + 1)).slice(-2) + '-' + ('0' + t.getDate()).slice(-2), id, by, p;
+  try { q = new URL(location.href).searchParams.get('theme'); } catch (e) {}
+  var live = set(S, 'ok', 1) || set(L, 'ok', 1), s = get(S, 'now'), c = get(L, 'cur'), r = s && (!c || s.t >= c.t) ? s : c,
+    dark = pool(1), night = dark.length && (n[0] > n[1] ? h >= n[0] || h < n[1] : h >= n[0] && h < n[1]);
+
+  if (!(w.CSS && CSS.supports && CSS.supports('width', '1lh'))) { id = 'classic'; by = 'old'; }
+  else if (C.page === 'other') { id = 'classic'; by = 'page'; }
+  else if (q && find(q)) { id = q; by = 'url'; }
+  else if (q !== 'random' && r && find(r.id) && now - r.t < C.idle * 6e4) { id = r.id; by = 'visit'; }
+  else if (C.d[md]) { id = C.d[md]; by = 'date'; }
+  else if (!live) { p = night ? dark : pool(); id = p[M.floor(now / 108e5) % p.length]; by = 'clock'; }
+  else { id = roll(c && c.id, night ? dark : pool()); by = night ? 'night' : 'bag'; }
+  if (!id) id = 'classic';
+
+  R.setAttribute('data-theme', id);
+  if (by !== 'old' && by !== 'page') save(id, now, by);
+  function touch() { var x = get(S, 'now'); if (x) save(x.id, Date.now(), x.by); }
+  w.addEventListener('pagehide', touch);
+  d.addEventListener('visibilitychange', function () { if (d.visibilityState === 'hidden') touch(); });
+  w.addEventListener('pageshow', function (e) { var x = e.persisted && get(S, 'now'); if (x && x.id !== id && find(x.id)) location.reload(); });
+  if (q !== null) try { p = new URL(location.href); p.searchParams.delete('theme'); history.replaceState(history.state, '', p.pathname + p.search + p.hash); } catch (e) {}
+
+  var X = w.__theme = { id: id, by: by, v: C.v, page: C.page, themes: T };
+  X.fail = function (why) {
+    if (id === 'classic' || X.dead) return;
+    X.dead = 1; save('classic', Date.now(), 'fallback'); set(S, 'err', id + ' / ' + why);
+    p = new URL(location.href); p.searchParams.set('theme', 'classic'); location.replace(p.href);
+  };
+  w.__c = function () { var x = d.currentScript; x = x && x.previousElementSibling; if (id === 'classic' && x) d.write(x.textContent); };
+
+  if (id === 'classic') return w.__c();
+  d.addEventListener('DOMContentLoaded', function () { X.up || X.fail('core'); });
+  R.lang = 'zh-Hans'; R.style.colorScheme = find(id)[2] ? 'dark' : 'light';
+  var m = d.querySelector('meta[name=viewport]'), a = '/assets/', V = '?v=' + C.v, o = '';
+  function css(u, x) { o += '<link rel="stylesheet" href="' + a + u + '.css' + V + '"' + (x || '') + '>'; }
+  if (m) m.content = 'width=device-width,initial-scale=1,viewport-fit=cover';
+  find(id)[4].forEach(function (f) { css('fonts/' + f); });
+  css('themes/shared/widgets'); css('themes/' + id + '/theme', ' id="theme-css"');
+  function mod(u) { o += '<link rel="modulepreload" href="' + a + u + '">'; }
+  ('main.js' + V + ' data.js util.js eggs.js router.js player.js img.js widgets.js').split(' ').forEach(function (u) { mod('js/core/' + u); });
+  mod('themes/' + id + '/theme.js' + V);
+  d.write(o);
+})(window, document,
+{%- endcapture -%}
+{%- comment -%} Squeeze the script: one line, then drop the spaces around operators and brackets. The
+registry (boot_cfg) is added afterwards, untouched, because theme names may contain anything. {%- endcomment -%}
+{%- assign boot_js = boot_js | normalize_whitespace | replace: ' === ', '===' | replace: ' !== ', '!==' | replace: ' = ', '=' | replace: ' += ', '+=' | replace: ' && ', '&&' | replace: ' || ', '||' | replace: ' >= ', '>=' | replace: ' < ', '<' | replace: ' > ', '>' | replace: ' + ', '+' | replace: ' - ', '-' | replace: ' * ', '*' | replace: ' / ', '/' | replace: ' % ', '%' | replace: ' ? ', '?' | replace: ' : ', ':' | replace: ', ', ',' | replace: '; ', ';' | replace: ': ', ':' | replace: ' {', '{' | replace: '{ ', '{' | replace: ' }', '}' | replace: '} ', '}' | replace: ' (', '(' | replace: ') ', ')' -%}
+<script>{{ boot_js }}{{ boot_cfg }});</script>

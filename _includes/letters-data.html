@@ -1,0 +1,38 @@
+{%- comment -%}
+  The data island: everything a theme needs to draw the home page, the letter list and the
+  player without another request. One <script type="application/json"> on every page, read by
+  assets/js/core/data.js. Shape documented in assets/themes/README.md.
+
+  - letters are oldest first; `no` is the letter's number counted from the first one
+  - `url` is the readable form ("/story/2026/08/12/木婚快乐/"); song.src and cover.orig are
+    percent-encoded and can go straight into src=""
+  - every string goes through `jsonify`, and at the very end every "<" becomes <, so a
+    title or quote containing "</script>" or "<!--" can never close the element early
+  - `site.data.media` comes from `node scripts/images.mjs`; when it is missing, the fields
+    that depend on it are null / [] and the core falls back to the original image
+  - `chars` comes from _plugins/letter_chars.rb
+{%- endcomment -%}
+{%- include page-type.html -%}
+{%- assign media = site.data.media -%}
+{%- assign letters = site.posts | reverse -%}
+{%- capture island -%}
+{"site":{"title":{{ site.title | jsonify }},"name":{{ site.name | jsonify }},"met":{{ site.milestones.met | jsonify }},"together":{{ site.milestones.together | jsonify }},"married":{{ site.milestones.married | jsonify }},"born":{{ site.milestones.born | jsonify }},"built":{{ site.time | date: "%Y-%m-%dT%H:%M:%SZ" | jsonify }}},
+"page":{"type":{{ page_type | jsonify }},"url":{{ page.url | url_decode | jsonify }}},
+"letters":[
+{%- for post in letters -%}
+{%- assign cover = media.hero[post.image.feature] -%}
+{%- assign track = media.tracks[post.bgm] -%}
+{"no":{{ forloop.index }},"title":{{ post.title | jsonify }},"url":{{ post.url | url_decode | jsonify }},"date":{{ post.date | date: "%Y-%m-%d" | jsonify }},"time":{{ post.date | date: "%H:%M" | jsonify }},"author":{{ post.author | default: site.author.name | jsonify }},"quote":{{ post.quote | jsonify }},"place":{{ post.place | jsonify }},"song":
+{%- if post.bgm -%}
+{"title":{{ post.bgm | remove: ".mp3" | jsonify }},"src":{{ post.bgm | prepend: "/assets/bgm/" | uri_escape | jsonify }},"duration":{{ track.duration | jsonify }},"artist":{{ track.artist | jsonify }}}
+{%- else -%}null{%- endif -%}
+,"cover":
+{%- if post.image.feature -%}
+{"file":{{ post.image.feature | jsonify }},"orig":{{ post.image.feature | prepend: site.baseurl_featured_img | uri_escape | jsonify }},"w":{{ cover.w | jsonify }},"h":{{ cover.h | jsonify }},"color":{{ cover.color | jsonify }},"lqip":{{ cover.lqip | jsonify }},"focus":{{ post.image.focus | jsonify }},"base":{{ cover.base | jsonify }},"widths":{%- if cover.widths -%}{{ cover.widths | jsonify }}{%- else -%}[]{%- endif -%}}
+{%- else -%}null{%- endif -%}
+,"chars":{{ post.chars | default: 0 | jsonify }},"standalone":{%- if post.standalone -%}true{%- else -%}false{%- endif -%},"quiet":{%- if post.quiet -%}true{%- else -%}false{%- endif -%}}
+{%- unless forloop.last -%},{%- endunless -%}
+{%- endfor -%}
+]}
+{%- endcapture -%}
+<script type="application/json" id="letters-data">{{ island | replace: "<", "<" }}</script>

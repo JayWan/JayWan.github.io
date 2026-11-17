@@ -1,13 +1,27 @@
 <!DOCTYPE html>
-<html lang="en-us" class="no-js">
+<html lang="en-us" class="no-js" data-theme="classic">
 
   {% include head.html %}
 
   <body>
+    {% comment %}
+      How a page is put together (details: assets/themes/README.md)
+      - letters-data: the JSON every theme draws from
+      - #theme-root: where a new theme renders. Under the classic theme it stays empty and hidden.
+      - everything else is the classic page. Under a new theme it is hidden, and the parts that
+        would download something or need jQuery are wrapped in classic-only.html, so they
+        only exist when the theme is classic (or JavaScript is off).
+    {% endcomment %}
+    {% include letters-data.html %}
+    <div id="theme-root"></div>
+
     {% if page.url != '/index.html' %}
+      {% capture classic %}
       <input type="checkbox" class="sidebar-checkbox" id="sidebar-checkbox">
       {% include sidebar-nav.html %}
       {% include back-button.html %}
+      {% endcapture %}
+      {% include classic-only.html html=classic %}
     {% endif %}
 
     {{ content }}
@@ -20,6 +34,9 @@
       {% include footer.html %}
     {% endif %}
 
-    {% include footer-scripts.html %}
+    {% capture classic %}{% include footer-scripts.html %}{% endcapture %}
+    {% include classic-only.html html=classic %}
+
+    <script type="module" src="/assets/js/core/main.js?v={{ site.time | date: '%s' }}"></script>
   </body>
 </html>

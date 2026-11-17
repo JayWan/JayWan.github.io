@@ -2,6 +2,9 @@
 layout: default
 ---
 <article class="postWrapper">
+  {% comment %} The letter's own text (.content-body) is the only part every theme uses. The classic
+  page around it (cover, player, "next story") goes through classic-only.html. {% endcomment %}
+  {% capture classic %}
   <section class="section--first is-darkBackgrounded u-table">
     <div class="section-backgroundImage">
 
@@ -46,16 +49,21 @@ layout: default
       </div>
     </div>
   </section>
+  {% endcapture %}
+  {% include classic-only.html html=classic %}
 
   <section class="section--last">
     <div class="container container--content">
       {% if page.bgm %}
+      {% capture classic %}
       <div>
         <audio autoplay loop controls controlsList="nodownload" preload="auto" style="width: 100%">
           <source src="{{ site.baseurl }}/assets/bgm/{{ page.bgm }}" type="audio/mpeg">
           Your browser does not support the audio element.
         </audio>
       </div>
+      {% endcapture %}
+      {% include classic-only.html html=classic %}
       {% endif %}
       <div class="content-body">
         {{ content }}
@@ -63,6 +71,7 @@ layout: default
     </div>
   </section>
 
+  {% capture classic %}
   <footer class="postFooter">
     {% if page.previous.url %}
       <section class="section--prePost is-darkBackgrounded u-table">
@@ -92,6 +101,8 @@ layout: default
       </section>
     {% endif %}
   </footer>
+  {% endcapture %}
+  {% include classic-only.html html=classic %}
 </article>
 {% include footer.html %}
 {% include modal.html %}
