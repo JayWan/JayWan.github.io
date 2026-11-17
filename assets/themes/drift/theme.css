@@ -191,6 +191,7 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
 .item.L .cap-meta { justify-content: flex-end; }
 .cap-meta i { font-style: normal; margin: 0 .3em; }
 .cap-title { display: block; margin-top: 6px; font: 500 20px/1.45 var(--serif); letter-spacing: .02em; color: var(--text); text-wrap: balance; text-decoration: underline transparent 1px; text-underline-offset: .32em; transition: text-decoration-color .3s; }
+.nb { display: inline-block; text-decoration: inherit; }
 .cap-song { display: block; margin-top: 5px; font: 500 13px/1.6 var(--serif); letter-spacing: .04em; color: var(--dim); }
 .cap-quote { display: block; margin-top: 9px; max-width: 24em; font: 400 14.5px/1.8 var(--serif); color: var(--text-2); }
 .item.L .cap-quote { margin-left: auto; }
@@ -389,6 +390,12 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 .letter-body .letter-signoff { margin: .2em 0; text-align: right; font-size: .88em; color: var(--ink-2); }
 .letter-body .img { margin: 2em 0; background-color: #d9d2c2; outline: 1px solid rgba(35, 31, 24, .14); outline-offset: -1px; }
 .letter-body .flip-card-hint { font-family: var(--serif); font-size: 13px; }
+/* the card says that it turns: a quiet word in the corner of each face */
+.letter-body .flip-card-front, .letter-body .flip-card-back { padding-bottom: 50px; }
+.letter-body .flip-card-front::after, .letter-body .flip-card-back::after {
+  content: "转过来看 →"; position: absolute; right: 18px; bottom: 16px; font: 500 12.5px/1 var(--serif); letter-spacing: .18em; color: var(--ink-2); pointer-events: none;
+}
+.letter-body .flip-card-back::after { content: "← 转回正面"; right: 16px; }
 .letter-body .flip-card-back img { margin: 0; max-height: none; mix-blend-mode: normal; outline: 0; }
 .letter-body .flip-card-front { box-shadow: 0 1px 2px rgba(35, 31, 24, .2), 0 14px 30px -14px rgba(35, 31, 24, .4); }
 .letter-body .flip-card-back { box-shadow: 0 1px 2px rgba(35, 31, 24, .2), 0 14px 30px -14px rgba(35, 31, 24, .4); }

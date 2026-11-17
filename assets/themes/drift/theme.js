@@ -22,6 +22,9 @@ function h(tag, props = {}, ...children) {
   return node;
 }
 
+/* A title that has to break breaks after its own comma (「装修好了，／钥匙在门垫下面」, never 「钥／匙」). */
+const phrases = (s) => { const parts = String(s).match(/[^，、；：！？]+[，、；：！？]*|[，、；：！？]+/g) || [s]; return parts.length < 2 ? [String(s)] : parts.map((t) => h('span', { className: 'nb' }, t)); };
+
 /* 间距照时间来。step：相邻两封在轴上的距离（开方压缩）；clear：超过 180 天的空白里，两岸都空着的那一段，
    跟天数成正比，所以 838 天一定是整页最长的一段空白 */
 const SILENCE = 180;
@@ -145,10 +148,10 @@ export default {
       a.style.setProperty('--del', (-rnd(i, 4) * 16).toFixed(1) + 's');
       const ph = h('span', { className: 'ph' });
       if (c) { ph.style.aspectRatio = clamp(c.w / c.h, 0.8, 2).toFixed(3); if (c.color) ph.style.backgroundColor = c.color; }
-      const frame = h('span', { className: 'frame' }, c ? ph : [h('span', { className: 'blank-t' }, p.title), p.quote && h('span', { className: 'blank-q' }, p.quote)]);
+      const frame = h('span', { className: 'frame' }, c ? ph : [h('span', { className: 'blank-t' }, phrases(p.title)), p.quote && h('span', { className: 'blank-q' }, p.quote)]);
       const cap = h('span', { className: 'cap' },
         h('span', { className: 'cap-meta' }, h('span', {}, dot(p.date)), p.days.met != null && h('span', {}, '第', h('i', {}, String(p.days.met)), '天'), h('span', {}, capWho(p))),
-        c && h('span', { className: 'cap-title' }, p.title),
+        c && h('span', { className: 'cap-title' }, phrases(p.title)),
         p.song && h('span', { className: 'cap-song' }, `歌 · ${p.song.title}`),
         z === 2 && p.quote && h('span', { className: 'cap-quote' }, p.quote));
       a.append(h('span', { className: 'par' }, h('span', { className: 'bob' }, frame, cap)));
@@ -508,7 +511,7 @@ export default {
     function navCell(p, cls, k, none) {
       if (!p) return h('span', { className: `sn ${cls} none` }, h('span', { className: 'sn-k' }, k), h('span', { className: 'sn-t' }, none));
       const a = h('a', { className: `sn ${cls}`, href: p.url, rel: cls === 'sn-prev' ? 'prev' : 'next', onclick: walk(p) },
-        h('span', { className: 'sn-k' }, cls === 'sn-prev' ? `← ${k} · ${dot(p.date)}` : `${dot(p.date)} · ${k} →`), h('span', { className: 'sn-t' }, p.title));
+        h('span', { className: 'sn-k' }, cls === 'sn-prev' ? `← ${k} · ${dot(p.date)}` : `${dot(p.date)} · ${k} →`), h('span', { className: 'sn-t' }, phrases(p.title)));
       a.addEventListener('pointerenter', () => router.prefetch(a.href));
       a.addEventListener('touchstart', () => router.prefetch(a.href), { passive: true });
       return a;
@@ -524,7 +527,7 @@ export default {
       S.cover.replaceChildren(...(c ? [ctx.img(c, { sizes: c.own === false ? '(max-width: 759px) 70vw, 420px' : '(max-width: 759px) 100vw, 752px', lazy: false, lqip: true })] : []));
       const wd = fmt.date(p.date, 'weekday');
       S.meta.textContent = [dot(p.date), '周' + wd.slice(-1), season(p.date), p.place].filter(Boolean).join(' · ');
-      S.title.textContent = p.title;
+      S.title.replaceChildren(...phrases(p.title));
       S.by.textContent = byline(p);
       S.days.replaceChildren(...[['认识', p.days.met], ['在一起', p.days.together], ['结婚', p.days.married]].flatMap(([k, v]) => [
         h('dt', {}, k), v == null ? h('dd', { className: 'no' }, '还没有') : h('dd', {}, '第', h('b', {}, String(v)), '天')]));
@@ -532,7 +535,7 @@ export default {
       S.song.textContent = p.song ? p.song.title : '';
       dockPlay.classList.toggle('can', Boolean(p.song));
       S.body.replaceChildren(contentEl);           // the live node Jekyll rendered: moved, never cloned
-      S.sign.replaceChildren(h('b', {}, names(p).join(' 和 ')), `${dot(p.date)}${p.days.met != null ? ` · 认识的第 ${p.days.met} 天` : ''}`);
+      S.sign.replaceChildren(h('b', {}, names(p).join(' 和 ')), `${dot(p.date)}${p.days.met != null && p.role !== 'guest' ? ` · 认识的第 ${p.days.met} 天` : ''}`);   // the count is the couple's: a guest signs with the date alone
       S.nav.replaceChildren(navCell(p.prev, 'sn-prev', '上一封', '没有了，这是第一封'), navCell(p.next, 'sn-next', '下一封', '还没写'));
     }
 
@@ -596,7 +599,7 @@ export default {
       const restore = !first && route.scrollY > 0;   // Back / Forward into a letter: the place the reader left
       const animate = !first && !restore && motion() && typeof sheet.animate === 'function';
       const near = !was && fr.bottom > -200 && fr.top < innerHeight + 200;
-      if (restore) window.scrollTo(0, route.scrollY);
+      if (restore) window.scrollTo(0, route.scrollY < target - innerHeight * 0.5 || route.scrollY > target + sheet.offsetHeight - innerHeight * 0.45 ? target : route.scrollY);   // a letter left by walking past it is opened at its top
       else if (animate && near && !p.quiet) {
         const D = 680, sr = sheet.getBoundingClientRect(), img = S.cover.querySelector('img');
         if (img && pr.width && img.getBoundingClientRect().width > 8) {
@@ -629,13 +632,16 @@ export default {
       openL = null; pin = false;
       place();
       paint(player.state);
-      if (top) window.scrollTo(0, 0);
+      // Closed while the opening scroll was still gliding: Chrome lets that glide take one more step after an
+      // instant scroll, so the place is set once more on the next frame.
+      const land = (y) => { window.scrollTo(0, y); if (performance.now() - openedAt < 1200) requestAnimationFrame(() => { if (!openL) window.scrollTo(0, y); }); };
+      if (top) land(0);
       else if (mode === 'silent') window.scrollTo(0, above ? Math.max(0, y0 - pushed) : y0);   // the reader walked on: nothing may jump
       else {
         // Back to the river, at the print of the letter just read (not wherever the reader set out from).
         const last = router.lastRead || lastRead || p, q = G.it[idx(last)], y = riverTop() + q.top, saved = route.scrollY || 0;
         const seen = saved > 0 && y < saved + innerHeight - 90 && y + q.h > saved + 90;
-        window.scrollTo(0, seen ? saved : Math.max(0, Math.round(y - innerHeight * 0.28)));
+        land(seen ? saved : Math.max(0, Math.round(y - innerHeight * 0.28)));
         const back = items[idx(last)];
         try { back.a.focus({ preventScroll: true }); } catch { /* old engines */ }
         if (motion() && !last.quiet && back.frame.animate) back.frame.animate([{ opacity: 0.3, transform: 'scale(1.04)' }, { opacity: 1, transform: 'none' }], { duration: 520, easing: EASE });
