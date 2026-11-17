@@ -499,7 +499,7 @@ export default {
           eph));
 
       function today() {
-        const last = letters.latest, lp = lapOf(TODAY), d = site.today.date, away = Math.round((TODAY - geo[last.index].ms) / DAY);
+        const last = letters.latest, lp = lapOf(TODAY), d = site.today.date, away = Math.max(0, Math.round((TODAY - geo[last.index].ms) / DAY));
         readout.replaceChildren(h('div', { class: 'ro ro-today' },
           h('p', { class: 'ro-kicker' }, h('strong', {}, '今日读数'), h('span', {}, `${dots(d)} ${fmt.date(d, 'weekday')}`),
             h('span', { class: 'ro-tip' }, touch ? '点图上哪里都行，会落到最近的一封信上。' : '把指针移到图上的点或右表的行，在此读出那封信。')),
