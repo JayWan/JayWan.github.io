@@ -53,7 +53,7 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
 .bar > * { pointer-events: auto; }
 .brand {
   font: 500 14px/1 var(--serif); letter-spacing: .34em; text-decoration: none; color: var(--text);
-  padding: 15px 0; white-space: nowrap; transition: opacity .4s;
+  display: inline-flex; align-items: center; min-height: 44px; white-space: nowrap; transition: opacity .4s;
 }
 .at-top .brand { opacity: 0; pointer-events: none; }
 .bar-nav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
@@ -181,8 +181,8 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
 .blank-t { display: block; font: 600 19px/1.45 var(--serif); letter-spacing: .02em; }
 .blank-q { display: block; margin-top: 10px; font: 400 14px/1.8 var(--serif); color: var(--ink-2); }
 
-.cap { display: block; width: fit-content; max-width: 100%; margin-top: 15px; }
-.item.L .cap { margin-left: auto; text-align: right; }
+.cap { display: block; width: fit-content; max-width: calc(100% - var(--ci, 0px)); margin: 15px 0 0 var(--ci, 0px); }
+.item.L .cap { margin-left: auto; margin-right: var(--ci, 0px); text-align: right; }
 .cap-meta {
   display: flex; flex-wrap: wrap; gap: 0 1.1em; font: 400 12.5px/1.5 var(--mono); letter-spacing: .04em;
   color: var(--text-2); font-variant-numeric: tabular-nums;
@@ -205,6 +205,7 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
 }
 .item:active .frame { transform: scale(.988); transition-duration: .12s; }
 .item.quiet:active .frame { transform: none; }
+#theme-root .item:focus-visible { outline: 0; }
 .item:focus-visible .frame { outline: 2px solid var(--paper); outline-offset: 5px; }
 .item:focus-visible .cap-title { text-decoration-color: var(--paper); }
 html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-out .25s infinite alternate; }
@@ -467,7 +468,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
   .found { --b: 0px; }
   .z1 .frame { filter: none; }
   .cap { margin-top: 12px; }
-  #theme-root .item .cap { margin-left: 0; text-align: left; }
+  #theme-root .item .cap { margin-left: 0; margin-right: 0; max-width: 100%; text-align: left; }
   #theme-root .item .cap-meta { justify-content: flex-start; }
   .cap-title, .z2 .cap-title { font-size: 19px; }
   .z0 .cap-title { font-size: 17px; }
@@ -509,7 +510,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
   .sb-song { display: none; }
   .sb-close { padding: 0 14px; }
   .sheet-cover { margin: 10px 10px 0; }
-  .sheet-cover { --mh: 56svh; }
+  .sheet-cover { --mh: 48svh; }
   .sheet-cover.found { --mh: 30svh; }
   .sheet-head { padding: 26px 22px 0; display: block; }
   .sh-title { font-size: 28px; margin-top: 12px; }

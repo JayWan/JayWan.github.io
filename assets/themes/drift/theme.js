@@ -22,11 +22,13 @@ function h(tag, props = {}, ...children) {
   return node;
 }
 
-/* 间距照时间来（开方压缩）。step：相邻两封在轴上的距离；clear：超过 180 天的空白里，两岸都空着的那一段 */
+/* 间距照时间来。step：相邻两封在轴上的距离（开方压缩）；clear：超过 180 天的空白里，两岸都空着的那一段，
+   跟天数成正比，所以 838 天一定是整页最长的一段空白 */
 const SILENCE = 180;
 const step = (d) => 64 + 13 * Math.sqrt(Math.max(0, d));
-const clear = (d) => 40 + 16 * Math.sqrt(d) + (d > 400 ? (d - 400) * 0.4 : 0);
-const clearPhone = (d) => 24 + 10 * Math.sqrt(d) + (d > 400 ? (d - 400) * 0.25 : 0);
+const clear = (d) => (d <= 400 ? 53 + d : 453 + (d - 400) * 0.9);            // 207 天 → 260px … 838 天 → 847px
+const clearPhone = (d) => (d <= 400 ? 90 + d * 0.5 : 290 + (d - 400) * 0.65);  // 207 天 → 193px … 838 天 → 575px
+const CROSS = 30, KEEP = 22;      // a near print may reach this far over the axis; its caption keeps this far from it
 
 export default {
   mount(ctx) {
@@ -213,17 +215,24 @@ export default {
         setWidth(i, w);
         return { z: LAYER[i], w };
       });
-      geo.forEach((g, i) => { g.h = items[i].frame.offsetHeight; g.cw = items[i].cap.offsetWidth; g.ch = items[i].cap.offsetHeight; });
+      geo.forEach((g, i) => { const it = items[i]; it.a.style.removeProperty('--ci'); g.h = it.frame.offsetHeight; g.cw = it.cap.offsetWidth; g.ch = it.cap.offsetHeight; });
+      // a near print may reach over the axis; its caption then stays on its own bank, so it is measured that way too
+      geo.forEach((g, i) => { if (g.z !== 2) return; const it = items[i]; it.a.style.setProperty('--ci', CROSS + KEEP + 'px'); g.cwi = it.cap.offsetWidth; g.chi = it.cap.offsetHeight; it.a.style.removeProperty('--ci'); });
       const heroAbs = getComputedStyle(hero).position === 'absolute';
       const origin = heroAbs ? 176 : 84;
       const obstacles = [{ x: ax - 110, y: origin - 30, w: 220, h: 128 }];
       if (heroAbs) obstacles.push({ x: 0, y: -9999, w: hero.offsetLeft + hero.offsetWidth + 36, h: 9999 + hero.offsetTop + hero.offsetHeight + 44 });
       const placed = [];
 
+      const capBox = (g, x, side) => {
+        const over = g.z === 2 && (side === 'R' ? x < ax : x + g.w > ax);
+        const w = over ? g.cwi : g.cw;
+        return { over, w, h: over ? g.chi : g.ch, x: side === 'R' ? (over ? ax + KEEP : x) : (over ? ax - KEEP : x + g.w) - w };
+      };
       function settle(g, x, side, y) {
-        const capX = side === 'R' ? x : x + g.w - g.cw;
+        const cb = capBox(g, x, side);
         for (let n = 0; n < 60; n++) {
-          const P = { x, y, w: g.w, h: g.h }, C = { x: capX, y: y + g.h + 15, w: g.cw, h: g.ch };
+          const P = { x, y, w: g.w, h: g.h }, C = { x: cb.x, y: y + g.h + 15, w: cb.w, h: cb.h };
           let to = 0;
           for (const o of obstacles) if (hit(P, o, 0) || hit(C, o, 0)) to = Math.max(to, o.y + o.h);
           for (let j = placed.length - 1; j >= 0 && j >= placed.length - 10; j--) {
@@ -249,14 +258,14 @@ export default {
         const lampN = noteAt(i, 'lamp'), gapN = noteAt(i, 'gap'), yearN = wide ? null : noteAt(i, 'year');
         const top0 = maxBot;
         let want = tick + step(d) - g.h * 0.35;
-        if (gapN) want = Math.max(want, top0 + clear(d) + (lampN ? 130 : 0) + (yearN ? 120 : 0));
+        if (gapN) want = Math.max(want, top0 + Math.max(clear(d), 200 + (lampN ? 130 : 0) + (yearN ? 120 : 0)));   // a lamp or a year head stands inside the silence, it does not lengthen it
         else if (lampN || yearN) want = Math.max(want, top0 + 34 + (lampN ? 136 : 0) + (yearN ? 120 : 0));
-        if (!i) want = Math.max(want, origin + 100);
+        if (!i) want = Math.max(want, origin + (heroAbs ? -30 : 100));   // beside the masthead the first print starts level with 今天
         const sides = lastSide === 'L' ? ['R', 'L'] : ['L', 'R'];
         let best = null;
         for (const side of sides) {
           const room = (side === 'R' ? xmax - ax : ax - xmin) - g.w;
-          const guts = g.z === 2 ? [18 + rnd(i, 1) * 40, rnd(i, 9) > 0.5 ? -30 : 76]
+          const guts = g.z === 2 ? [18 + rnd(i, 1) * 40, rnd(i, 9) > 0.5 ? -CROSS : 76]
             : g.z === 1 ? [56 + rnd(i, 1) * 64, 150]
               : [120 + rnd(i, 1) * 90, room, (room + 150) / 2];
           guts.forEach((gut0, n) => {
@@ -268,8 +277,9 @@ export default {
           });
         }
         g.x = best.x; g.top = Math.round(best.y); g.side = best.side; g.tick = Math.round(best.y + g.h * 0.35);
-        const P = { x: g.x, y: g.top, w: g.w, h: g.h };
-        const C = { x: g.side === 'R' ? g.x : g.x + g.w - g.cw, y: g.top + g.h + 15, w: g.cw, h: g.ch };
+        const P = { x: g.x, y: g.top, w: g.w, h: g.h }, cb = capBox(g, g.x, g.side);
+        const C = { x: cb.x, y: g.top + g.h + 15, w: cb.w, h: cb.h };
+        g.over = cb.over;
         placed.push({ P, C, z: g.z, bot: C.y + C.h });
         // what stands in the empty band above this print
         let hi = g.top;
@@ -293,14 +303,16 @@ export default {
         setWidth(i, w);
         return { z: LAYER[i], w, side: 'R', x: far ? x0 + avail - w : x0 };
       });
-      geo.forEach((g, i) => { g.h = items[i].frame.offsetHeight; g.ch = items[i].cap.offsetHeight; });
-      const origin = 30;
+      geo.forEach((g, i) => { items[i].a.style.removeProperty('--ci'); g.h = items[i].frame.offsetHeight; g.ch = items[i].cap.offsetHeight; });
+      const origin = 44;
       notes[0].y = origin;
       let y = origin + 44;
       geo.forEach((g, i) => {
         const d = GAP[i];
         const lampN = noteAt(i, 'lamp'), gapN = noteAt(i, 'gap'), yearN = noteAt(i, 'year');
-        const band = gapN ? clearPhone(d) : i ? 22 + 5 * Math.sqrt(d) : 8;
+        // a measured silence is the whole empty band (a lamp or a year head stands inside its lower end), so it grows with the days alone
+        const inside = (lampN ? 54 : 0) + (yearN ? 84 : 0);
+        const band = gapN ? Math.max(110, clearPhone(d) - inside) : i ? 22 + 5 * Math.sqrt(d) : 8;
         if (gapN) gapN.y = y + band / 2;
         y += band;
         if (lampN) { lampN.y = y + 18; y += 54; }
@@ -340,6 +352,7 @@ export default {
         const it = items[i], s = it.a.style;
         s.left = q.x + 'px'; s.top = q.top + 'px';
         it.a.classList.toggle('L', q.side === 'L');
+        if (q.over) s.setProperty('--ci', CROSS + KEEP + 'px');
         it.tick.style.top = q.tick + 'px';
       });
       notes.forEach((n) => { n.e.style.top = Math.round(n.y) + 'px'; });
