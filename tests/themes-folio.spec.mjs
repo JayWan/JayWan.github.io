@@ -154,6 +154,58 @@ test.describe('theme "folio": a letter', () => {
     await expectNoSidewaysScroll(page);
   });
 
+  test('at desktop width the lines of a paragraph reach the right margin of the sheet', async ({ browser, request, baseURL }) => {
+    // WebKit's text-wrap: pretty broke every line of a justified Chinese paragraph three or four characters early.
+    // The WebKit project is a phone, so this opens its own desktop-sized window in whatever engine is running.
+    const { letters } = await getIsland(request);
+    const letter = letters.find((l) => l.date === '2024-11-19') || letters[letters.length - 1];
+    const context = await browser.newContext({ baseURL, viewport: { width: 1280, height: 800 } });
+    const page = await context.newPage();
+    await open(page, letter.url, THEME);
+    await page.evaluate(() => document.fonts.ready);
+    const report = await page.evaluate(() => {
+      const body = document.querySelector('#theme-root .letter-body');
+      const style = getComputedStyle(body);
+      const edge = body.getBoundingClientRect().right - parseFloat(style.paddingRight) - parseFloat(style.borderRightWidth);
+      let worst = 0, lines = 0;
+      for (const p of body.querySelectorAll('.content-body > p:not(.fo-sign):not(.fo-voice)')) {
+        const range = document.createRange();
+        range.selectNodeContents(p);
+        const ends = new Map();                                   // one entry per line: where its last character ends
+        for (const box of range.getClientRects()) if (box.width >= 1) ends.set(Math.round(box.top / 4), Math.max(ends.get(Math.round(box.top / 4)) || 0, box.right));
+        const rows = [...ends.keys()].sort((a, b) => a - b);
+        rows.pop();                                               // the last line of a paragraph is allowed to be short
+        for (const row of rows) { lines++; worst = Math.max(worst, edge - ends.get(row)); }
+      }
+      return { worst, lines, size: parseFloat(style.fontSize) };
+    });
+    expect(report.lines, 'the letter has paragraphs of more than one line').toBeGreaterThan(5);
+    expect(report.worst, `no line stops more than three characters short of the margin (font size ${report.size}px)`).toBeLessThan(report.size * 3);
+    await context.close();
+  });
+
+  test('a sign-off framed by long runs of dashes keeps its words and stays on one line each', async ({ page, request }) => {
+    const { letters } = await getIsland(request);
+    const letter = letters.find((l) => l.date === '2017-02-21');                    // One Year: 「------ 2月20日 小雨 下午六点半 ------」
+    test.skip(!letter, 'that letter is not in the archive');
+    await open(page, letter.url, THEME);
+    await page.evaluate(() => document.fonts.ready);
+    const report = await page.evaluate(() => {
+      const body = document.querySelector('#theme-root .letter-body');
+      const line = parseFloat(getComputedStyle(body).lineHeight);
+      return [...body.querySelectorAll('p.fo-sign')].filter((p) => p.querySelector('.fo-rule')).map((p) => ({
+        text: p.textContent, rules: p.querySelectorAll('.fo-rule').length, lines: Math.round(p.getBoundingClientRect().height / line),
+      }));
+    });
+    expect(report.length, 'the two closing lines are set as sign-offs').toBe(2);
+    expect(report[0].text, 'the words are the letter\'s own, dashes included').toMatch(/^[-–—]{4,}\s*2月20日 小雨 下午六点半\s*[-–—]{4,}$/);
+    for (const row of report) {
+      expect(row.rules, 'a rule on either side').toBe(2);
+      expect(row.lines, `「${row.text.replace(/[-–—]/g, '').trim()}」 fits on one line`).toBe(1);
+    }
+    await expectNoSidewaysScroll(page);
+  });
+
   test('the co-written letter names both writers, and the flip card turns without a transition', async ({ page, request }) => {
     const { letters } = await getIsland(request);
     const both = letters.find((l) => (l.authors || []).length > 1);
