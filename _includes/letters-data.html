@@ -5,7 +5,8 @@
 
   - letters are oldest first; `no` is the letter's number counted from the first one
   - `url` is the readable form ("/story/2026/08/12/木婚快乐/"); song.src and cover.orig are
-    percent-encoded and can go straight into src=""
+    percent-encoded and can go straight into src="". (url_decode would turn a "+" in a file
+    name into a space, hence the replace in front of it.)
   - every string goes through `jsonify`, and at the very end every "<" is replaced by its JSON
     escape (backslash, u003c), so a title or quote containing "</script>" or "<!--" can never
     close the element early
@@ -18,12 +19,12 @@
 {%- assign letters = site.posts | reverse -%}
 {%- capture island -%}
 {"site":{"title":{{ site.title | jsonify }},"name":{{ site.name | jsonify }},"met":{{ site.milestones.met | jsonify }},"together":{{ site.milestones.together | jsonify }},"married":{{ site.milestones.married | jsonify }},"born":{{ site.milestones.born | jsonify }},"built":{{ site.time | date: "%Y-%m-%dT%H:%M:%SZ" | jsonify }}},
-"page":{"type":{{ page_type | jsonify }},"url":{{ page.url | url_decode | jsonify }}},
+"page":{"type":{{ page_type | jsonify }},"url":{{ page.url | replace: "+", "%2B" | url_decode | jsonify }}},
 "letters":[
 {%- for post in letters -%}
 {%- assign cover = media.hero[post.image.feature] -%}
 {%- assign track = media.tracks[post.bgm] -%}
-{"no":{{ forloop.index }},"title":{{ post.title | jsonify }},"url":{{ post.url | url_decode | jsonify }},"date":{{ post.date | date: "%Y-%m-%d" | jsonify }},"time":{{ post.date | date: "%H:%M" | jsonify }},"author":{{ post.author | default: site.author.name | jsonify }},"quote":{{ post.quote | jsonify }},"place":{{ post.place | jsonify }},"song":
+{"no":{{ forloop.index }},"title":{{ post.title | jsonify }},"url":{{ post.url | replace: "+", "%2B" | url_decode | jsonify }},"date":{{ post.date | date: "%Y-%m-%d" | jsonify }},"time":{{ post.date | date: "%H:%M" | jsonify }},"author":{{ post.author | default: site.author.name | jsonify }},"quote":{{ post.quote | jsonify }},"place":{{ post.place | jsonify }},"song":
 {%- if post.bgm -%}
 {"title":{{ post.bgm | remove: ".mp3" | jsonify }},"src":{{ post.bgm | prepend: "/assets/bgm/" | uri_escape | jsonify }},"duration":{{ track.duration | jsonify }},"artist":{{ track.artist | jsonify }}}
 {%- else -%}null{%- endif -%}

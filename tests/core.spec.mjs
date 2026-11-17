@@ -257,6 +257,14 @@ test.describe('router: the corners', () => {
     expect(seen.errors).toEqual([]);
   });
 
+  test('a letter is found under every spelling of its address', async ({ page, request, baseURL }) => {
+    const { gift } = await samplePages(request);                         // "/story/2026/07/04/29,-28,-π/": a comma and a Greek letter
+    await openProbe(page);
+    const spellings = [gift, encodeURI(gift), gift.replace(/,/g, '%2C'), encodeURI(gift).replace(/,/g, '%2C'), new URL(gift, baseURL).href, `${gift}index.html`, gift.slice(0, -1), `${gift}?x=1#top`];
+    expect(await ctx(page, (c, urls) => urls.map((url) => (c.letters.byUrl(url) || {}).url), spellings)).toEqual(spellings.map(() => gift));
+    expect(await ctx(page, (c) => [c.letters.byUrl('/'), c.letters.byUrl('/story/nowhere/'), c.letters.byUrl('/%E0%A4%A/'), c.letters.byUrl(null)])).toEqual([null, null, null, null]);
+  });
+
   test('a link inside an SVG is a link too', async ({ page, request, baseURL }) => {
     const { letter } = await samplePages(request);
     await openProbe(page);

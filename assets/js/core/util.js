@@ -32,7 +32,9 @@ export function normPath(url) {
   let raw = url && url.href !== undefined ? url.href : url;
   if (raw && typeof raw === 'object' && 'baseVal' in raw) raw = raw.baseVal;
   try { path = new URL(String(raw), location.href).pathname; } catch { return null; }
-  try { path = decodeURI(path); } catch { /* keep the encoded form */ }
+  // Segment by segment, so "%2C" (some apps encode the comma when a link is shared) becomes ","
+  // again, which decodeURI would leave alone. A segment that is not valid UTF-8 stays as it is.
+  path = path.split('/').map((segment) => { try { return decodeURIComponent(segment); } catch { return segment; } }).join('/');
   path = path.replace(/\/index\.html$/, '/');
   return path.endsWith('/') ? path : path + '/';
 }
