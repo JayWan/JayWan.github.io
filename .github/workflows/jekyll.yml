@@ -41,7 +41,19 @@ jobs:
           cache: npm
       - name: Install npm dependencies
         run: npm ci
-      # Creates missing thumbnails, then runs `jekyll build` (HTML, CSS and letters.json) into _site/
+      # The cover derivatives in assets/m (about 240 AVIF and JPEG files) take minutes to encode and
+      # only change when a cover is added or replaced. scripts/images.mjs skips every cover whose
+      # bytes it has already processed (it keeps their hashes in assets/m/.manifest.json), so
+      # bringing back the files of an earlier run is enough: only new covers are encoded.
+      - name: Restore cover derivatives
+        uses: actions/cache@v5
+        with:
+          path: assets/m
+          key: covers-${{ hashFiles('scripts/images.mjs') }}-${{ hashFiles('assets/images/hero/**') }}
+          restore-keys: |
+            covers-${{ hashFiles('scripts/images.mjs') }}-
+      # Creates missing thumbnails and cover derivatives, then runs `jekyll build`
+      # (HTML, CSS, the themes and letters.json) into _site/
       - name: Build
         run: npm run build
       - name: Upload artifact

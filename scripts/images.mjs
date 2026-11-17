@@ -13,9 +13,16 @@
 // A full-size cover is 0.1 – 11 MB; the home page used to load all 31 of them (45 MB).
 // The 480px AVIFs of all covers together weigh about 0.4 MB.
 //
-//   node scripts/images.mjs            make whatever is missing or older than its source
+//   node scripts/images.mjs            make whatever is missing or out of date
 //   node scripts/images.mjs --force    regenerate everything
+//
+// "Out of date" is decided by content, not by file dates: assets/m/.manifest.json remembers a
+// hash of the cover each set of derivatives was made from. That is what lets GitHub Actions keep
+// assets/m in a cache between runs (a fresh checkout gives every file today's date, so dates
+// would say "everything changed" and all ~240 files would be encoded again, which takes minutes).
+// Covers the manifest has never seen fall back to the old rule: derivative newer than its source.
 
+import { createHash } from 'node:crypto';
 import { mkdir, readdir, readFile, writeFile, stat, open } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,6 +33,7 @@ const THUMB = path.join(root, 'assets/images/thumbnail');
 const OUT = path.join(root, 'assets/m/hero');
 const BGM = path.join(root, 'assets/bgm');
 const DATA = path.join(root, '_data/media.json');
+const MANIFEST = path.join(root, 'assets/m/.manifest.json');   // a dotfile: Jekyll does not publish it
 const WIDTHS = [480, 800, 1200, 1600];
 const force = process.argv.includes('--force');
 
@@ -42,12 +50,17 @@ async function covers() {
   await mkdir(THUMB, { recursive: true });
   const names = (await readdir(HERO)).filter(isImage).sort();
   const thumbs = new Set(await readdir(THUMB));
+  const seen = await readFile(MANIFEST, 'utf8').then(JSON.parse).catch(() => ({}));
+  const manifest = {};
   const hero = {};
   let made = 0;
 
   for (const name of names) {
     const src = path.join(HERO, name);
     const srcTime = await mtime(src);
+    // the cover's bytes plus the widths asked for: change either and its derivatives are redone
+    const signature = createHash('sha1').update(await readFile(src)).update(WIDTHS.join(',')).digest('hex');
+    const sameSource = name in seen ? seen[name] === signature : null;   // null: this cover was never recorded
     const slug = name.replace(/\.(\w+)$/, '-$1').toLowerCase();       // 24.jpg -> 24-jpg (24.png also exists)
     const meta = await (await sharp(src)).metadata();
     const [w, h] = (meta.orientation ?? 1) >= 5 ? [meta.height, meta.width] : [meta.width, meta.height];
@@ -63,7 +76,8 @@ async function covers() {
     for (const width of widths) {
       for (const ext of ['avif', 'jpg']) {
         const out = path.join(OUT, `${slug}-${width}.${ext}`);
-        if (!force && (await mtime(out)) > srcTime) continue;
+        const outTime = await mtime(out);
+        if (!force && outTime && (sameSource ?? outTime > srcTime)) continue;
         const img = (await sharp(src)).rotate().flatten({ background: '#ffffff' }).resize({ width, withoutEnlargement: true });
         if (ext === 'avif') await img.avif({ quality: 52, effort: 4 }).toFile(out);
         else await img.jpeg({ quality: 78, mozjpeg: true, progressive: true }).toFile(out);
@@ -82,7 +96,10 @@ async function covers() {
       base: `/assets/m/hero/${slug}`,
       widths,
     };
+    manifest[name] = signature;
   }
+  const json = JSON.stringify(manifest, null, 1) + '\n';
+  if ((await readFile(MANIFEST, 'utf8').catch(() => '')) !== json) await writeFile(MANIFEST, json);
   return { hero, made, count: names.length };
 }
 
