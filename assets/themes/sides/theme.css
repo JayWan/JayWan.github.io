@@ -202,12 +202,11 @@ body { margin: 0; }
 }
 
 /* ---- 页脚 ---- */
-/* 网站自己那句话只用已经在手里的那一片字体（首屏切片 a，同一个文件，不多下载）；
-   这片里没有的字（现在是 嗝、累、睡 三个）由系统黑体补上，字体重新切片之后就都在里面了。
-   不这样做的话，这一行字要多下 60 KB，首页就超了 700 KB。 */
-@font-face { font-family: "SD Sans A"; font-weight: 400 900; font-display: swap; src: url("../../fonts/sans-sc/a-vf.woff2") format("woff2"); }
+/* 网站自己那句话不为自己去下载字体：theme.js 只把「字体切片已经到手」的字换成主题的黑体（.sd-zh），
+   其余的字（现在是 嗝、累、睡 三个，要多下 60 KB，首页会超出 700 KB）由系统黑体画。字体重新切片之后就都是主题的字了。 */
 .sd-foot { margin-top: 72px; padding-bottom: 20px; color: var(--ink-2); }
-.sd-hunger { margin: 0; padding: 18px 0 14px; border-top: 1px solid var(--ink); font: 500 15px/1.7 "F221 Grotesk", "SD Sans A", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; color: var(--ink); }
+.sd-hunger { margin: 0; padding: 18px 0 14px; border-top: 1px solid var(--ink); font: 500 15px/1.7 "F221 Grotesk", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; color: var(--ink); }
+.sd-zh { font-family: var(--zh); }
 .sd-foot-row { display: flex; justify-content: space-between; align-items: center; gap: 8px 24px; flex-wrap: wrap; border-top: 1px solid var(--rule); font: 500 12px/1.4 var(--zh); letter-spacing: .06em; }
 .theme-switcher ul { display: flex; flex-wrap: wrap; margin: 0 -8px 0 0; padding: 0; list-style: none; }
 .theme-switcher a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0 8px; text-decoration: none; }
@@ -285,6 +284,7 @@ body { margin: 0; }
 .sd-prose :lang(en) { font-family: "F221 Grotesk En", "F221 Grotesk", "Helvetica Neue", Arial, sans-serif; text-align: left; }
 .sd-prose > .content-body > :first-child, .sd-prose > :first-child > :first-child { margin-top: 0; }
 .sd-prose p { margin: 0 0 1.95em; }
+.sd-prose .sd-gap { margin: 0; height: 1em; overflow: hidden; }
 .sd-prose b, .sd-prose strong { font-weight: 700; }
 .sd-prose em { font-style: normal; font-weight: 500; color: var(--side); }
 .sd-prose :is(h1, h2, h3, h4, h5, h6) { margin: 2.2em 0 .8em; font: 700 20px/1.5 var(--zh); text-align: left; }
@@ -482,7 +482,7 @@ html[data-navigating] .sd-player::after { content: ""; position: absolute; left:
   .sd-lbl span + span::before { content: none; }
   .sd-bigno { font-size: 148px; }
   .sd-letter[data-plain] .sd-bigno { font-size: 64px; }
-  .sd-letter[data-side="ab"] { --band-bg: linear-gradient(180deg, var(--sea) 204px, var(--forest) 204px); }
+  .sd-letter[data-side="ab"] { --cut: calc(194px + env(safe-area-inset-top, 0px)); --band-bg: linear-gradient(180deg, var(--sea) var(--cut), var(--forest) var(--cut)); }
   .sd-htx { padding-top: 22px; }
   .sd-letter[data-plain] .sd-htx { padding-top: 16px; }
   .sd-h1, .sd-letter[data-plain] .sd-h1 { font-size: 33px; line-height: 1.25; margin-bottom: 20px; }
@@ -534,6 +534,7 @@ html[data-navigating] .sd-player::after { content: ""; position: absolute; left:
   .sd-tab { gap: 6px; padding: 0 6px; font-size: 13px; }
   .sd-tab .sd-chip { width: 18px; height: 18px; font-size: 10px; }
   .sd-bigno { font-size: 120px; }
+  .sd-letter[data-side="ab"] { --cut: calc(172px + env(safe-area-inset-top, 0px)); }
 }
 
 @media (prefers-reduced-motion: reduce) {

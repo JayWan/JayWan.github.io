@@ -108,8 +108,26 @@ export default {
     // =====================================================================================
     const main = h('main', { class: 'sd-main', tabindex: '-1' });
 
+    // 网站自己那句话：不为它去下载字体。字体切片已经到手的字用主题的黑体，其余的先由系统黑体画
+    //（首页有 700 KB 的预算，现在这句话里有三个字在别的切片里，要多下 60 KB）。
+    const hunger = ui.hunger().text;
+    const hungerEl = h('p', { class: 'sd-hunger' }, hunger);
+    function inkHunger() {
+      if (!(document.fonts && document.fonts.check)) return;
+      const runs = [];
+      for (const ch of hunger) {
+        let ok = false;
+        try { ok = document.fonts.check('500 15px "F221 Sans"', ch); } catch { /* 查不了就留给系统字体 */ }
+        const last = runs[runs.length - 1];
+        if (last && last[0] === ok) last[1] += ch; else runs.push([ok, ch]);
+      }
+      hungerEl.replaceChildren(...runs.map(([ok, t]) => (ok ? h('span', { class: 'sd-zh' }, t) : t)));
+    }
+    // 每来一批字体就再看一遍（fonts.ready 在第一次排版之前就可能已经 resolve 了）
+    if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', inkHunger);
+
     const foot = h('footer', { class: 'sd-foot' },
-      h('p', { class: 'sd-hunger' }, ui.hunger().text),
+      hungerEl,
       h('div', { class: 'sd-foot-row' },
         h('span', {}, tx('© 2016 – 2026 Fan & Wan')),
         h('span', { class: 'sd-foot-mid' }, '建议按顺序听。也可以不按。'),
@@ -437,6 +455,10 @@ export default {
         im.style.setProperty('--w', im.getAttribute('width'));
         im.style.setProperty('--h', im.getAttribute('height'));
       });
+      // 只有换行的空段落（作者用来空行）：留一行的空，不留三行
+      el.querySelectorAll('p').forEach((p) => {
+        if (!p.id && !p.textContent.trim() && !p.querySelector('img, picture, video, audio, iframe, svg, canvas, object')) p.classList.add('sd-gap');
+      });
       // 整段英文：换用西文字体画引号和撇号
       el.querySelectorAll('p, li, .sd-ln, blockquote').forEach((n) => {
         const t = n.textContent;
@@ -604,6 +626,7 @@ export default {
       const el = main.firstElementChild;
       tint(getComputedStyle(view.type === 'letter' ? el.firstElementChild : document.documentElement).backgroundColor);
       paint();
+      inkHunger();
       if (!first) main.focus({ preventScroll: true });
       first = false;
       return moved;
