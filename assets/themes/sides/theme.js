@@ -416,7 +416,7 @@ export default {
         const hasBr = Boolean(q.querySelector('br'));
         // 每句都不长才算歌词；用 <br> 分行的长段落（第一封信的半文言）只分行，不上色、不悬挂
         const short = () => q.innerHTML.split(/<br\s*\/?>/i).every((line) => line.replace(/<[^>]+>/g, '').trim().length <= 60);
-        const lyric = cored ? q.classList.contains('lyrics') : hasBr && short();
+        const lyric = (cored ? q.classList.contains('lyrics') : hasBr) && short();
         if (lyric) q.classList.add('sd-lyrics');
         if (!hasBr) return;
         // 每句一行，折行时悬挂缩进：把 <br> 分开的每一句包成一行
@@ -427,6 +427,12 @@ export default {
           [...host.childNodes].forEach((n) => { if (n.nodeName === 'BR') lines.push([]); else lines[lines.length - 1].push(n); });
           host.replaceChildren(...lines.filter((ns) => ns.some((n) => n.textContent.trim())).map((ns) => h('span', { class: 'sd-ln' }, ns)));
         });
+      });
+      // 信里的图：把原图的宽高交给 CSS（--w / --h），加载之前就占好位置，竖图按屏幕高度收窄
+      el.querySelectorAll('.letter-figure > img[width][height]').forEach((im) => {
+        if (im.id) return;
+        im.style.setProperty('--w', im.getAttribute('width'));
+        im.style.setProperty('--h', im.getAttribute('height'));
       });
       // 整段英文：换用西文字体画引号和撇号
       el.querySelectorAll('p, li, .sd-ln, blockquote').forEach((n) => {

@@ -291,13 +291,17 @@ body { margin: 0; }
 .sd-prose code { font: 500 .9em var(--zh); background: var(--paper-2); padding: .15em .4em; }
 .sd-prose a { text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .sd-prose hr { border: 0; border-top: 1px solid var(--rule); margin: 2.4em 0; }
-/* 信里的图：一条规则。贴齐正文栏，不放大小图，竖图不高过一屏 */
-.sd-prose img { display: block; max-width: 100%; height: auto; max-height: calc(100vh - 160px); max-height: calc(100svh - 160px); object-fit: contain; margin: 35px auto; }
-.sd-prose figure, .sd-prose .letter-figure { margin: 35px 0; padding: 0; }
-.sd-prose figure img { margin: 0 auto; }
+/* 信里的图：一条规则。贴齐正文栏、不留边；小图不放大，居中；竖图整幅留在一屏之内。
+   --w / --h 是原图的宽高（theme.js 从 width / height 属性抄过来的），所以图还没到就占好了位置，正文不跳。 */
+.sd-prose .letter-figure { --max-h: calc(100vh - 160px); margin: 35px 0; padding: 0; }
+@supports (height: 1svh) { .sd-prose .letter-figure { --max-h: calc(100svh - 160px); } }
+.sd-prose .letter-figure > img {
+  display: block; margin: 0 auto; height: auto; max-width: 100%; max-height: none; object-fit: contain;
+  width: min(var(--fig-w, 100%), calc(var(--w, 9999) * 1px), calc(var(--max-h) * var(--w, 9999) / var(--h, 1)));
+}
 .sd-prose figcaption { margin-top: 8px; font: 400 13px/1.6 var(--zh); color: var(--ink-2); text-align: center; }
+.sd-prose img { max-width: 100%; height: auto; }
 .sd-prose .img { margin: 35px 0; }
-.sd-prose :is(p, div) > img:only-child { margin-top: 0; margin-bottom: 0; }
 /* 引文：不是歌词的用中性的墨色；歌词用这一面的油墨，每句一行，折行悬挂 */
 .sd-prose blockquote { margin: 2.1em 0; padding: 2px 0 2px 26px; border-left: 2px solid var(--ink); font-weight: 500; text-align: left; }
 .sd-prose blockquote p { margin: 0; }
@@ -305,6 +309,8 @@ body { margin: 0; }
 .sd-prose blockquote.sd-lyrics { border-left-color: var(--side); color: var(--side); }
 .sd-ln { display: block; }
 .sd-lyrics .sd-ln { padding-left: 1em; text-indent: -1em; }
+.sd-prose .quote-by { display: block; margin-top: .5em; font-size: .85em; font-weight: 400; color: var(--ink-2); }
+.sd-prose .letter-signoff { margin-bottom: 0; font-size: .88em; color: var(--ink-2); }
 .sd-prose blockquote.largeQuote { border: 0; padding: 0; color: var(--ink); font: 700 26px/1.55 var(--zh); }
 .sd-prose .flip-card-front, .sd-prose .flip-card-back { border-radius: 0; }
 .sd-prose .flip-card-hint { font: 500 12px/1 var(--zh); letter-spacing: .08em; }
@@ -501,8 +507,7 @@ html[data-navigating] .sd-player::after { content: ""; position: absolute; left:
   .sd-prose p, .sd-prose ol, .sd-prose ul { margin-bottom: 1.6em; }
   .sd-prose blockquote { padding-left: 18px; margin: 1.8em 0; }
   .sd-prose blockquote.largeQuote { font-size: 22px; }
-  .sd-prose img { margin: 28px auto; max-height: calc(100svh - 140px); }
-  .sd-prose figure, .sd-prose .letter-figure, .sd-prose .img { margin: 28px 0; }
+  .sd-prose .letter-figure, .sd-prose .img { margin: 28px 0; }
   .sd-pn { margin-top: 64px; }
   .sd-pn-in { grid-template-columns: 1fr; }
   .sd-pnt { padding: 20px 0 22px; min-height: 0; column-gap: 18px; }
