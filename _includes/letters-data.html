@@ -3,7 +3,16 @@
   player without another request. One <script type="application/json"> on every page, read by
   assets/js/core/data.js. Shape documented in assets/themes/README.md.
 
-  - letters are oldest first; `no` is the letter's number counted from the first one
+  - letters are oldest first by the day they were really written; `no` is the letter's number
+    counted from the first one. `written_on` in a letter's front matter is that real day when
+    `date` is not (「One Year」: its `date` is a typo that became its URL). Such a letter carries
+    the real day in `date` and null in `time`; its `url` is untouched.
+  - `days` is null, or the counts the letter states about itself ({"met":295}); core/data.js
+    computes the rest
+  - `authors` is `author` plus `coauthor` when the letter has one; cover.own is false for a
+    cover that is a picture found online, not a photo of their own
+  - `pictures`: every picture used inside a letter, file name → [w, h] or [w, h, base, widths]
+    (from `site.data.media.posts`); core/prose.js lays the letters' pictures out with them
   - `url` is the readable form ("/story/2026/08/12/木婚快乐/"); song.src and cover.orig are
     percent-encoded and can go straight into src="". (url_decode would turn a "+" in a file
     name into a space, hence the replace in front of it.)
@@ -16,21 +25,39 @@
 {%- endcomment -%}
 {%- include page-type.html -%}
 {%- assign media = site.data.media -%}
-{%- assign letters = site.posts | reverse -%}
+{%- comment -%} Oldest first by the real day. Liquid cannot sort documents by a computed value, so:
+one sortable key per post ("real date|9999 minus its position in site.posts", so two letters of
+the same minute keep their order), sort the keys, look the posts up again. {%- endcomment -%}
+{%- assign order = '' | split: '' -%}
+{%- for post in site.posts -%}
+  {%- assign real = post.written_on | default: post.date -%}
+  {%- capture key -%}{{ real | date: "%Y-%m-%dT%H:%M:%S" }}|{{ 9999 | minus: forloop.index0 }}{%- endcapture -%}
+  {%- assign order = order | push: key -%}
+{%- endfor -%}
+{%- assign order = order | sort -%}
 {%- capture island -%}
 {"site":{"title":{{ site.title | jsonify }},"name":{{ site.name | jsonify }},"met":{{ site.milestones.met | jsonify }},"together":{{ site.milestones.together | jsonify }},"married":{{ site.milestones.married | jsonify }},"born":{{ site.milestones.born | jsonify }},"built":{{ site.time | date: "%Y-%m-%dT%H:%M:%SZ" | jsonify }}},
 "page":{"type":{{ page_type | jsonify }},"url":{{ page.url | replace: "+", "%2B" | url_decode | jsonify }}},
+"pictures":{
+{%- for pic in media.posts -%}
+{{ pic[0] | jsonify }}:[{{ pic[1].w | jsonify }},{{ pic[1].h | jsonify }}{%- if pic[1].base -%},{{ pic[1].base | jsonify }},{{ pic[1].widths | jsonify }}{%- endif -%}]
+{%- unless forloop.last -%},{%- endunless -%}
+{%- endfor -%}
+},
 "letters":[
-{%- for post in letters -%}
+{%- for key in order -%}
+{%- assign at = key | split: "|" | last | plus: 0 -%}
+{%- assign at = 9999 | minus: at -%}
+{%- assign post = site.posts[at] -%}
 {%- assign cover = media.hero[post.image.feature] -%}
 {%- assign track = media.tracks[post.bgm] -%}
-{"no":{{ forloop.index }},"title":{{ post.title | jsonify }},"url":{{ post.url | replace: "+", "%2B" | url_decode | jsonify }},"date":{{ post.date | date: "%Y-%m-%d" | jsonify }},"time":{{ post.date | date: "%H:%M" | jsonify }},"author":{{ post.author | default: site.author.name | jsonify }},"quote":{{ post.quote | jsonify }},"place":{{ post.place | jsonify }},"song":
+{"no":{{ forloop.index }},"title":{{ post.title | jsonify }},"url":{{ post.url | replace: "+", "%2B" | url_decode | jsonify }},"date":{{ post.written_on | default: post.date | date: "%Y-%m-%d" | jsonify }},"time":{%- if post.written_on -%}null{%- else -%}{{ post.date | date: "%H:%M" | jsonify }}{%- endif -%},"days":{{ post.days | jsonify }},"author":{{ post.author | default: site.author.name | jsonify }},"authors":[{{ post.author | default: site.author.name | jsonify }}{%- if post.coauthor -%},{{ post.coauthor | jsonify }}{%- endif -%}],"quote":{{ post.quote | jsonify }},"place":{{ post.place | jsonify }},"song":
 {%- if post.bgm -%}
 {"title":{{ post.bgm | remove: ".mp3" | jsonify }},"src":{{ post.bgm | prepend: "/assets/bgm/" | uri_escape | jsonify }},"duration":{{ track.duration | jsonify }},"artist":{{ track.artist | jsonify }}}
 {%- else -%}null{%- endif -%}
 ,"cover":
 {%- if post.image.feature -%}
-{"file":{{ post.image.feature | jsonify }},"orig":{{ post.image.feature | prepend: site.baseurl_featured_img | uri_escape | jsonify }},"w":{{ cover.w | jsonify }},"h":{{ cover.h | jsonify }},"color":{{ cover.color | jsonify }},"lqip":{{ cover.lqip | jsonify }},"focus":{{ post.image.focus | jsonify }},"base":{{ cover.base | jsonify }},"widths":{%- if cover.widths -%}{{ cover.widths | jsonify }}{%- else -%}[]{%- endif -%}}
+{"file":{{ post.image.feature | jsonify }},"orig":{{ post.image.feature | prepend: site.baseurl_featured_img | uri_escape | jsonify }},"w":{{ cover.w | jsonify }},"h":{{ cover.h | jsonify }},"color":{{ cover.color | jsonify }},"lqip":{{ cover.lqip | jsonify }},"focus":{{ post.image.focus | jsonify }},"own":{%- if post.image.own == false -%}false{%- else -%}true{%- endif -%},"base":{{ cover.base | jsonify }},"widths":{%- if cover.widths -%}{{ cover.widths | jsonify }}{%- else -%}[]{%- endif -%}}
 {%- else -%}null{%- endif -%}
 ,"chars":{{ post.chars | default: 0 | jsonify }},"standalone":{%- if post.standalone -%}true{%- else -%}false{%- endif -%},"quiet":{%- if post.quiet -%}true{%- else -%}false{%- endif -%}}
 {%- unless forloop.last -%},{%- endunless -%}

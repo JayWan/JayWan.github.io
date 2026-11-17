@@ -161,7 +161,7 @@ html:not([data-theme="classic"]) body>:not(#theme-root):not(script):not(style){d
   find(id)[4].forEach(function (f) { css('fonts/' + f); });
   css('themes/shared/widgets'); css('themes/' + id + '/theme', ' id="theme-css"');
   function mod(u) { o += '<link rel="modulepreload" href="' + a + u + '">'; }
-  ('main.js' + V + ' data.js util.js eggs.js router.js player.js img.js widgets.js').split(' ').forEach(function (u) { mod('js/core/' + u); });
+  ('main.js' + V + ' data.js util.js eggs.js router.js player.js img.js widgets.js prose.js').split(' ').forEach(function (u) { mod('js/core/' + u); });
   mod('themes/' + id + '/theme.js' + V);
   d.write(o);
 })(window, document,

@@ -56,12 +56,15 @@ test('letters are oldest first and every field has the documented shape', () => 
     const where = `letter ${i + 1} (${letter.title})`;
     expect(letter.no, where).toBe(i + 1);
     expect(letter.date, where).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(letter.time, where).toMatch(/^\d{2}:\d{2}$/);
+    // a letter whose real day is not its `date` (written_on) carries no time
+    if (letter.time !== null) expect(letter.time, where).toMatch(/^\d{2}:\d{2}$/);
     if (i) expect(letter.date >= letters[i - 1].date, `${where}: oldest first`).toBe(true);
     expect(typeof letter.author, where).toBe('string');
+    expect(letter.authors[0], `${where}: authors starts with the author`).toBe(letter.author);
+    expect(letter.days === null || Object.values(letter.days).every((n) => Number.isInteger(n) && n > 0), `${where}: days is null or stated counts`).toBe(true);
     expect(letter.url, where).toMatch(/^\/(?:[^/]+\/)*\d{4}\/\d{2}\/\d{2}\/[^/]+\/$/);
     expect(existsSync(path.join(site, letter.url, 'index.html')), `${where}: url points at a built page`).toBe(true);
-    expect(letter.chars, where).toBeGreaterThan(50);
+    expect(letter.chars, `${where}: the letter has text`).toBeGreaterThan(10);   // the shortest so far is one line
     expect(typeof letter.standalone, where).toBe('boolean');
     expect(typeof letter.quiet, where).toBe('boolean');
 
@@ -78,6 +81,7 @@ test('letters are oldest first and every field has the documented shape', () => 
       expect(cover.color, where).toMatch(/^#[0-9a-f]{6}$/);
       expect(cover.lqip.startsWith('data:image/'), where).toBe(true);
       expect(cover.focus.length, where).toBe(2);
+      expect(typeof cover.own, `${where}: cover.own`).toBe('boolean');
       expect(cover.widths.length, where).toBeGreaterThan(0);
       for (const w of cover.widths) {
         expect(w, where).toBeLessThanOrEqual(cover.w);
@@ -87,6 +91,51 @@ test('letters are oldest first and every field has the documented shape', () => 
   });
   expect(letters.filter((l) => l.quiet).length, 'the quiet letter is marked').toBeGreaterThan(0);
   expect(letters.filter((l) => l.standalone).length, 'the standalone letter is marked').toBeGreaterThan(0);
+});
+
+test('the island carries what the front matter says: the real day, stated counts, co-author, borrowed covers, the guest', () => {
+  const { letters } = JSON.parse(islandOf(readFileSync(path.join(site, 'index.html'), 'utf8'))[1]);
+  const by = (title) => letters.find((l) => l.title === title);
+
+  // 「One Year」 was written on 2017-02-21; the typo in its `date` lives on in its URL only
+  const oneYear = by('One Year');
+  expect([oneYear.date, oneYear.time, oneYear.url]).toEqual(['2017-02-21', null, '/story/2017/01/21/One-Year/']);
+  expect(letters[oneYear.no - 2].date <= oneYear.date && oneYear.date <= letters[oneYear.no].date, 'it is numbered by its real day').toBe(true);
+
+  // letters that state their own count (they count inclusively)
+  expect(by('221 FOREVER').days).toEqual({ met: 295 });
+  expect(by('和小天使的三百天').days).toEqual({ together: 300 });
+  expect(letters.filter((l) => l.days).length).toBe(2);
+
+  // one letter was written by the two of them, and one by a guest
+  expect(by('教小天使发布文章').authors).toEqual(['Pikajay', 'Pikachi']);
+  expect(letters.filter((l) => l.authors.length > 1).length).toBe(1);
+  expect(letters[letters.length - 1].authors).toEqual(['Claude']);
+
+  // covers that are pictures found online
+  const borrowed = letters.filter((l) => l.cover && l.cover.own === false).map((l) => l.no);
+  expect(borrowed).toContain(1);
+  expect(borrowed.length).toBeGreaterThan(5);
+  expect(borrowed.length).toBeLessThan(letters.length / 2);
+});
+
+test('the island knows the size of every picture used inside a letter', () => {
+  const { pictures } = JSON.parse(islandOf(readFileSync(path.join(site, 'index.html'), 'utf8'))[1]);
+  const used = new Set();
+  for (const file of htmlFiles(site)) {
+    const body = readFileSync(file, 'utf8').split('class="content-body"')[1] || '';
+    for (const m of body.matchAll(/\/assets\/images\/posts\/([^"')\s]+?\.(?:jpe?g|png|gif|webp))/gi)) used.add(decodeURIComponent(m[1]));
+  }
+  expect(used.size, 'letters use pictures').toBeGreaterThan(20);
+  for (const name of used) {
+    const entry = pictures[name];
+    expect(entry, `pictures["${name}"]`).toBeTruthy();
+    expect(entry[0] > 0 && entry[1] > 0, `${name}: width and height`).toBe(true);
+    if (entry.length > 2) {
+      expect(entry[3].length, `${name}: derivative widths`).toBeGreaterThan(0);
+      for (const w of entry[3]) for (const ext of ['avif', 'jpg']) expect(existsSync(path.join(site, `${entry[2]}-${w}.${ext}`)), `${name}: ${entry[2]}-${w}.${ext}`).toBe(true);
+    }
+  }
 });
 
 test('the inline boot script stays small and knows exactly the themes that have files', () => {
