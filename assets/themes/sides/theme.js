@@ -1,0 +1,600 @@
+// sides — 「Side A / Side B」
+//
+// 这份档案是一张唱片：每封信是一首歌，首页是唱片背面的曲目表，信是这首歌的内页说明。
+// A 面是他写的（海蓝），B 面是她写的（森林绿），两个人合写的标 A/B，客人写的是附赠曲目（黑）。
+// 设计说明见同目录的 README.md。契约只有 ctx（assets/themes/README.md），不从核心引入任何东西。
+
+/** h('a', { class, href, 'data-x', onclick }, ...children) → element */
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (k === 'class') el.className = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  el.append(...kids.flat(3).filter((c) => c != null && c !== false));
+  return el;
+}
+/** 固定的图标字符串 → 元素（只用于写死在这里的 SVG，数据里的文字一律走 textContent） */
+function svg(markup) {
+  const t = document.createElement('template');
+  t.innerHTML = markup;
+  return t.content.firstChild;
+}
+const I_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="sd-i-play" d="M8 5.5v13l11-6.5z"/><path class="sd-i-pause" d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/></svg>';
+const I_PREV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2.2v12H6zM19 6v12l-9.5-6z"/></svg>';
+const I_NEXT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.8 6H18v12h-2.2zM5 6v12l9.5-6z"/></svg>';
+// 八分音符：自己画的，跟着文字颜色走（系统字体里的 ♪ 又细又歪）
+const I_NOTE = '<svg class="sd-note" viewBox="0 0 10 13" aria-hidden="true"><ellipse cx="2.9" cy="10.4" rx="2.9" ry="2.2" transform="rotate(-18 2.9 10.4)"/><path d="M4.6 0h1.2v10.4H4.6z"/><path d="M5.2 0c.5 2 1.5 2.7 2.9 3.7 1.3.9 1.9 2 1.5 3.7C9 5.9 7.6 5 5.2 4.4z"/></svg>';
+
+const pad2 = (n) => (n < 10 ? '0' : '') + n;
+const pad3 = (n) => String(n).padStart(3, '0');
+const ZH = '零一二三四五六七八九';
+const zhNum = (n) => (n < 10 ? ZH[n] : n < 20 ? '十' + (n % 10 ? ZH[n % 10] : '') : n < 100 ? ZH[Math.floor(n / 10)] + '十' + (n % 10 ? ZH[n % 10] : '') : String(n));
+const visualLen = (s) => { let n = 0; for (const c of s) n += c.codePointAt(0) > 0x2e7f ? 1 : 0.55; return n; };
+const latinOnly = (s) => /^[\x20-\x7e]+$/.test(s);
+
+// 封套怎么裁：默认按 cover.focus 裁成正方形。下面这些封面一裁就会把人或内容切掉
+// （两个人分站画面两头、拼贴、图表、插画），改成整幅放进方框，四周露出油墨底色。
+// 键是封面文件名；新的封面不在表里时，特别宽（≥ 2.1:1）的也整幅放。
+const FIT = new Set(['9.png', '10.jpg', '19.png', '20.jpg', '23.jpg', '24.png']);
+const fits = (cover) => Boolean(cover && (FIT.has(cover.file) || (cover.w && cover.h && cover.w / cover.h >= 2.1)));
+
+export default {
+  mount(ctx) {
+    const { site, letters, root, player, router, ui } = ctx;
+    const { fmt } = ui;
+    const phone = window.matchMedia('(max-width: 860px)');
+
+    // ---------- 面 ----------
+    // him → A，her → B，both → A/B，其他人 → 附赠曲目（不占曲号）
+    const sideOf = (l) => ({ him: 'a', her: 'b', both: 'ab' })[l.role] || 'x';
+    const SIDE_NAME = { a: 'A 面', b: 'B 面', ab: 'A / B 面', x: '附 · Bonus track' };
+    const tracks = letters.filter((l) => sideOf(l) !== 'x');
+    const trackNo = new Map(tracks.map((l, i) => [l, i + 1]));
+    const noText = (l) => (trackNo.has(l) ? pad2(trackNo.get(l)) : '+');
+    const latest = tracks[tracks.length - 1] || letters.latest;
+    const dot = (d) => fmt.date(d, 'dot');
+    const authorsOf = (l) => (Array.isArray(l.authors) && l.authors.length ? l.authors : [l.author]);
+    const byline = (l) => {
+      const who = authorsOf(l);
+      return sideOf(l) === 'ab' && who.length > 1 ? `${who[0]} 起头 · ${who.slice(1).join('、')} 写` : `${l.author} 写`;
+    };
+    const dayLines = (l) => {
+      const d = l.days || {};
+      return [d.met != null && `认识第 ${d.met} 天`, d.together != null && `相恋第 ${d.together} 天`, d.married != null && `结婚第 ${d.married} 天`].filter(Boolean);
+    };
+
+    /** 数据里的文字 → 节点。& 交给中文字体画（Archivo 的 & 像个 ε）。 */
+    const tx = (s) => String(s).split('&').flatMap((part, i) => (i ? [h('span', { class: 'sd-amp' }, '&'), part] : [part]));
+    const note = () => svg(I_NOTE);
+    /** 曲号。A/B 的两位数字一蓝一绿。 */
+    function noEl(l, cls, tag = 'span') {
+      const t = noText(l);
+      const el = h(tag, { class: cls, 'aria-hidden': 'true' });
+      if (sideOf(l) === 'ab' && t.length === 2) el.append(h('span', { class: 'sd-na' }, t[0]), h('span', { class: 'sd-nb' }, t[1]));
+      else el.textContent = t;
+      return el;
+    }
+    function chip(side) {
+      if (side === 'ab') return h('i', { class: 'sd-chip sd-chip-ab', title: 'A / B 面 · 两个人写的' }, h('span', {}, 'A'), h('span', {}, 'B'));
+      if (side === 'x') return h('i', { class: 'sd-chip sd-chip-x', title: '附赠曲目 · 客人写的' }, '附');
+      return h('i', { class: `sd-chip sd-chip-${side}`, title: side === 'a' ? 'A 面 · 他写的' : 'B 面 · 她写的' }, side.toUpperCase());
+    }
+    /** 方形封套：双色调由 CSS 的混合模式做（见 theme.css「封套」） */
+    function sleeve(l, opts, cls = '') {
+      const fit = fits(l.cover);
+      const pic = ctx.img(l.cover, opts);
+      if (fit) { const im = pic.querySelector('img'); if (im) im.style.backgroundColor = ''; }
+      return h('span', { class: `sd-slv ${cls}`, 'data-side': sideOf(l), 'data-fit': fit || null }, pic);
+    }
+    /** 每个能开始放歌的控件都带 data-play */
+    function playBtn(l, cls) {
+      if (!l.song) return null;
+      const b = h('button', { type: 'button', class: cls, 'data-play': l.no, 'aria-pressed': 'false', 'aria-label': `播放《${l.song.title}》` });
+      b.append(svg(I_PLAY));
+      return b;
+    }
+    const warm = (a) => {
+      a.addEventListener('pointerenter', () => router.prefetch(a.href));
+      a.addEventListener('touchstart', () => router.prefetch(a.href), { passive: true });
+    };
+
+    // =====================================================================================
+    // 外壳：视图 + 页脚 + 贴底的迷你播放器
+    // =====================================================================================
+    const main = h('main', { class: 'sd-main', tabindex: '-1' });
+
+    const foot = h('footer', { class: 'sd-foot' },
+      h('p', { class: 'sd-hunger' }, ui.hunger().text),
+      h('div', { class: 'sd-foot-row' },
+        h('span', {}, tx('© 2016 – 2026 Fan & Wan')),
+        h('span', { class: 'sd-foot-mid' }, '建议按顺序听。也可以不按。'),
+        ui.switcher()));
+
+    const P = {
+      el: h('div', { class: 'sd-player', role: 'region', 'aria-label': '播放器' }),
+      prog: h('div', { class: 'sd-pprog', role: 'slider', tabindex: '0', 'aria-label': '播放进度', 'aria-valuemin': '0' }, h('i')),
+      play: h('button', { type: 'button', class: 'sd-pbtn sd-pplay', 'data-play': '', 'aria-label': '播放' }),
+      meta: h('a', { class: 'sd-pmeta' }),
+      no: h('span', { class: 'sd-pno' }),
+      song: h('strong'),
+      sub: h('span'),
+      time: h('span', { class: 'sd-ptime' }),
+      prev: h('button', { type: 'button', class: 'sd-pbtn sd-pskip', 'aria-label': '上一首' }),
+      next: h('button', { type: 'button', class: 'sd-pbtn sd-pskip', 'aria-label': '下一首' }),
+    };
+    P.play.append(svg(I_PLAY)); P.prev.append(svg(I_PREV)); P.next.append(svg(I_NEXT));
+    P.meta.append(P.no, h('span', { class: 'sd-ptxt' }, P.song, P.sub));
+    P.el.append(P.prog, h('div', { class: 'sd-pwrap' }, P.play, P.meta, P.time, P.prev, P.next));
+
+    root.replaceChildren(main, foot, P.el);
+
+    // ---------- 播放器 ----------
+    const withSong = (l, step) => { for (let x = l && l[step]; x; x = x[step]) if (x.song) return x; return null; };
+    /** 迷你播放器上现在备着的那一首：正在放的 → 眼前这封信的 → 最新一首 */
+    const cued = () => player.state.letter || (ctx.page.letter && ctx.page.letter.song ? ctx.page.letter : null) || (latest && latest.song ? latest : withSong(latest, 'prev'));
+
+    P.play.addEventListener('click', () => { const l = cued(); if (l) player.toggle(l); });
+    P.prev.addEventListener('click', () => { const l = withSong(cued(), 'prev'); if (l) player.toggle(l); });
+    P.next.addEventListener('click', () => { const l = withSong(cued(), 'next'); if (l) player.toggle(l); });
+    P.prog.addEventListener('click', (e) => {
+      const st = player.state;
+      if (!st.letter || !st.duration) return;
+      const r = P.prog.getBoundingClientRect();
+      player.seek(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * st.duration);
+    });
+    P.prog.addEventListener('keydown', (e) => {
+      const st = player.state;
+      const step = e.key === 'ArrowRight' ? 5 : e.key === 'ArrowLeft' ? -5 : 0;
+      if (step && st.letter) { e.preventDefault(); player.seek(st.time + step); }
+    });
+    // 在一封信里点播放器上的歌名去另一封信：算「在信之间移动」，替换历史记录
+    P.meta.addEventListener('click', (e) => {
+      if (view.type !== 'letter' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
+      e.preventDefault();
+      router.go(P.meta.getAttribute('href'), { replace: true });
+    });
+
+    let view = { type: '', letter: null };   // 现在画着的是什么（自己记，不存 router.current）
+    let band = null;                          // 信页色带里跟着播放器走的几个元素
+    let home = null;                          // 首页只建一次
+
+    function paint(st = player.state) {
+      const cur = cued();
+      const on = Boolean(st.letter && (st.playing || st.loading));
+      const side = cur ? sideOf(cur) : 'a';
+      P.el.dataset.side = side;
+      P.el.classList.toggle('is-playing', on);
+      P.el.classList.toggle('is-idle', !st.letter);
+      P.play.setAttribute('aria-label', on ? '暂停' : '播放');
+      P.play.disabled = !cur;
+      if (cur) {
+        P.no.replaceChildren(...noEl(cur, '').childNodes);
+        P.song.textContent = cur.song.title;
+        P.sub.replaceChildren(...(st.letter && st.error ? ['放不出来，再点一次试试'] : tx(cur.title)));
+        P.meta.href = cur.url;
+        P.meta.setAttribute('aria-label', `《${cur.song.title}》是《${cur.title}》的歌，去读这封信`);
+      }
+      P.prev.disabled = !withSong(cur, 'prev');
+      P.next.disabled = !withSong(cur, 'next');
+      P.prog.setAttribute('aria-valuemax', String(Math.round(st.letter ? st.duration : 0)));
+
+      // 所有带 data-play 的钮
+      root.querySelectorAll('[data-play]').forEach((b) => {
+        if (b === P.play) return;
+        const mine = st.letter && b.dataset.play === String(st.letter.no);
+        b.classList.toggle('is-playing', Boolean(mine && on));
+        b.setAttribute('aria-pressed', String(Boolean(mine && on)));
+      });
+      // 曲目表里的那一行
+      if (home) home.cue(st.letter, on);
+      tick(st);
+    }
+    function tick(st = player.state) {
+      const cur = cued();
+      const mine = st.letter && st.letter === cur;
+      const d = mine ? st.duration : (cur && cur.song && cur.song.duration) || 0;
+      const t = mine ? st.time : 0;
+      const r = d ? Math.min(1, t / d) : 0;
+      P.prog.firstChild.style.width = (r * 100).toFixed(2) + '%';
+      P.prog.setAttribute('aria-valuenow', String(Math.round(t)));
+      P.time.textContent = `${fmt.clock(t)} / ${fmt.clock(d)}`;
+      if (band) {
+        const here = st.letter === band.letter;
+        band.bar.style.width = ((here && st.duration ? Math.min(1, st.time / st.duration) : 0) * 100).toFixed(2) + '%';
+        band.time.textContent = `${fmt.clock(here ? st.time : 0)} / ${fmt.clock(here ? st.duration : band.letter.song.duration || 0)}`;
+        band.err.hidden = !(here && st.error);
+      }
+    }
+    player.on('change', paint);
+    player.on('time', tick);
+
+    // =====================================================================================
+    // 首页：曲目表
+    // =====================================================================================
+    function buildHome() {
+      const years = [...new Set(tracks.map((l) => l.year))];
+      const total = letters.reduce((s, l) => s + ((l.song && l.song.duration) || 0), 0);
+      const totalText = `${Math.floor(total / 3600)}:${pad2(Math.floor((total % 3600) / 60))}:${pad2(Math.round(total % 60))}`;
+      const span = years.length ? `${Math.min(years[0], Number(site.met.slice(0, 4)))} – ${years[years.length - 1]}` : '';
+      const bonus = letters.length - tracks.length;
+      const count = { a: 0, b: 0 };
+      tracks.forEach((l) => { const s = sideOf(l); if (s !== 'b') count.a++; if (s !== 'a') count.b++; });
+
+      // ---- 刊头 ----
+      const title = h('h1', { class: 'sd-title', 'aria-label': site.title }, h('span', {}, '221'), ' ', h('span', {}, 'FOREVER'));
+      const info = h('div', { class: 'sd-info' },
+        h('div', {},
+          h('p', { class: 'sd-lede' }, `${zhNum(tracks.length)}封信，${zhNum(tracks.filter((l) => l.song).length)}首歌。`, h('br'), 'A 面是他写的，B 面是她写的，', h('span', { class: 'sd-nw' }, '哪面先放都行。')),
+          h('p', { class: 'sd-line sd-l', 'aria-hidden': 'true' }, `${tracks.length} 首 · ${span} · 全长 ${totalText}`)),
+        h('dl', { class: 'sd-facts' },
+          h('div', {}, h('dt', { class: 'sd-l' }, '曲目'), h('dd', {}, String(tracks.length), bonus ? h('small', {}, ` + ${bonus}`) : null)),
+          h('div', {}, h('dt', { class: 'sd-l' }, '年份'), h('dd', {}, span)),
+          h('div', {}, h('dt', { class: 'sd-l' }, '全长'), h('dd', {}, totalText))));
+      const latestLink = latest && h('a', { class: 'sd-latest', href: latest.url, 'data-side': sideOf(latest) },
+        h('span', {}, '最新一封'), noEl(latest, 'sd-latest-no', 'b'), h('u', {}, tx(latest.title)), h('i', { 'aria-hidden': 'true' }, '→'));
+      if (latestLink) warm(latestLink);
+      const tab = (f, label, n, c) => h('button', { type: 'button', class: 'sd-tab' + (f === 'all' ? ' is-on' : ''), 'data-filter': f, 'aria-pressed': String(f === 'all') }, c, h('span', {}, label), h('b', {}, String(n)));
+      const tabs = h('div', { class: 'sd-tabs', role: 'group', 'aria-label': '按 A 面 / B 面筛选' },
+        tab('all', '全部', tracks.length),
+        tab('a', '他写的', count.a, h('i', { class: 'sd-chip sd-chip-a', 'aria-hidden': 'true' }, 'A')),
+        tab('b', '她写的', count.b, h('i', { class: 'sd-chip sd-chip-b', 'aria-hidden': 'true' }, 'B')));
+
+      // ---- 封套栏：拼版 ----
+      const cells = Math.max(36, Math.ceil((tracks.length + 1) / 6) * 6);
+      const mosaic = h('div', { class: 'sd-mosaic' });
+      tracks.forEach((l, i) => {
+        const a = h('a', { href: l.url, 'data-side': sideOf(l), 'aria-label': `${noText(l)} ${l.title}` },
+          sleeve(l, { sizes: '(max-width: 860px) 12vw, 64px', widths: [480], lazy: i > 23 }));
+        mosaic.append(a);
+      });
+      for (let k = tracks.length + 1; k <= cells; k++) mosaic.append(h('span', { class: 'sd-slot' }, String(k)));
+      const big = h('div', { class: 'sd-big' });
+      const cap = h('div', { class: 'sd-cap' });
+      const sq = h('div', { class: 'sd-sq' }, mosaic, big);
+      sq.style.setProperty('--mr', String(cells / 6));
+      sq.style.setProperty('--mp', String(Math.ceil((tracks.length + 1) / 8)));
+      const restCap = [
+        h('p', { class: 'sd-cap-lbl sd-l' }, `封套 · ${tracks.length} / ${cells} 格`),
+        h('p', { class: 'sd-cap-big' }, '蓝的是他写的，绿的是她写的。'),
+        h('p', { class: 'sd-cap-note' }, `第 ${tracks.length + 1} 首还没写。`),
+        latest && latest.quote && h('div', { class: 'sd-cap-now', 'data-side': sideOf(latest) },
+          h('p', { class: 'sd-cap-lbl sd-l' }, `最新一封 · ${noText(latest)} · ${dot(latest.date)}`),
+          h('p', { class: 'sd-cap-quote' }, latest.quote)),
+      ];
+
+      // ---- 曲目表 ----
+      const list = h('ol', { class: 'sd-list' });
+      const rows = new Map();
+      function row(l) {
+        const s = sideOf(l);
+        const a = h('a', { class: 'sd-ttl', href: l.url }, tx(l.title));
+        warm(a);
+        const li = h('li', { class: 'sd-trk', 'data-side': s, 'data-quiet': l.quiet || null },
+          noEl(l, 'sd-no'), a,
+          h('span', { class: 'sd-song' }, l.song ? [note(), l.song.title] : null),
+          h('time', { class: 'sd-date', datetime: l.date }, l.date.slice(5).replace('-', '.')),
+          h('span', { class: 'sd-len' }, l.song && l.song.duration ? fmt.clock(l.song.duration) : ''),
+          chip(s),
+          playBtn(l, 'sd-play'));
+        rows.set(l, li);
+        return li;
+      }
+      let year = null;
+      tracks.forEach((l) => {
+        if (l.year !== year) {
+          if (year !== null) for (let y = year + 1; y < l.year; y++) list.append(h('li', { class: 'sd-yr sd-yr--empty', 'data-y': y }, h('span', {}, String(y)), h('span', {}, '这一年没有信')));
+          year = l.year;
+          list.append(h('li', { class: 'sd-yr', 'data-y': year }, h('span', {}, String(year)), h('span', {}, `${tracks.filter((q) => q.year === year).length} 封`)));
+        }
+        list.append(row(l));
+      });
+      const extras = letters.filter((l) => !trackNo.has(l));
+      if (extras.length) {
+        list.append(h('li', { class: 'sd-yr sd-yr--bonus' }, h('span', {}, '附'), h('span', {}, 'Bonus track · 客人写的，不占曲号')));
+        extras.forEach((l) => list.append(row(l)));
+      }
+
+      const el = h('div', { class: 'sd-home', 'data-filter': 'all' },
+        h('div', { class: 'sd-cat sd-l' }, h('span', {}, '221–LP'), h('span', { class: 'sd-cat-mid' }, '书信集 · 每首歌附信一封'), h('span', {}, 'Stereo · 双声道')),
+        h('header', { class: 'sd-mast' }, title, info, latestLink, h('div', { class: 'sd-ctl' }, tabs)),
+        h('aside', { class: 'sd-panel', 'aria-label': '封套' }, h('div', { class: 'sd-stick' }, sq, cap)),
+        h('section', { class: 'sd-tracks', 'aria-label': '曲目表' }, list));
+
+      // ---- 悬停 / 键盘聚焦：整行换成这一面的油墨色，右栏换成这封信的封套 ----
+      let onLetter = null;
+      const bigs = new Map();
+      function panel(l) {
+        big.classList.toggle('is-show', Boolean(l));
+        if (!l) { cap.removeAttribute('data-side'); cap.replaceChildren(...restCap.filter(Boolean)); return; }
+        if (!bigs.has(l)) bigs.set(l, sleeve(l, { sizes: '400px', widths: [480, 800], lazy: false }));
+        big.replaceChildren(bigs.get(l));
+        cap.dataset.side = sideOf(l);
+        const d = l.days && l.days.met;
+        cap.replaceChildren(
+          h('div', { class: 'sd-cap-top' }, noEl(l, 'sd-cap-no', 'b'),
+            h('div', {},
+              h('p', { class: 'sd-cap-lbl sd-l' }, `${SIDE_NAME[sideOf(l)]} · ${dot(l.date)}`, d != null && h('span', { class: 'sd-cap-day' }, ` · 认识第 ${d} 天`)),
+              h('h2', { class: 'sd-cap-title' }, tx(l.title)),
+              l.song && h('p', { class: 'sd-cap-song' }, note(), l.song.title, l.song.artist ? ` · ${l.song.artist}` : ''))),
+          l.quote && h('p', { class: 'sd-cap-quote' }, l.quote));
+      }
+      function setOn(l) {
+        if (l === onLetter) return;
+        if (onLetter && rows.get(onLetter)) rows.get(onLetter).classList.remove('is-on');
+        onLetter = l;
+        if (l) rows.get(l).classList.add('is-on');
+        if (!phone.matches) panel(l);
+      }
+      const letterOfRow = (node) => { const li = node.closest && node.closest('.sd-trk'); if (!li) return null; for (const [l, r] of rows) if (r === li) return l; return null; };
+      list.addEventListener('pointerover', (e) => { if (e.pointerType === 'mouse') { const l = letterOfRow(e.target); if (l) setOn(l); } });
+      list.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') setOn(null); });
+      list.addEventListener('focusin', (e) => { const l = letterOfRow(e.target); if (l && !phone.matches && e.target.matches(':focus-visible')) setOn(l); });
+      list.addEventListener('focusout', () => setOn(null));
+      panel(null);
+
+      // ---- 行内播放钮：不离开曲目表就开始放；手机上这一行自己展开 ----
+      list.addEventListener('click', (e) => {
+        const b = e.target.closest && e.target.closest('[data-play]');
+        if (!b) return;
+        e.preventDefault();
+        const l = letters.byNo(Number(b.dataset.play));
+        const li = rows.get(l);
+        const before = li.getBoundingClientRect().top;
+        player.toggle(l);
+        paint();
+        const d = li.getBoundingClientRect().top - before;      // 上面的行收起时，手指下的这一行不跳
+        if (Math.abs(d) > 1) window.scrollBy(0, d);
+      });
+      let cuedRow = null;
+      function cue(l, on) {
+        if (cuedRow && cuedRow !== rows.get(l)) cuedRow.classList.remove('is-cued', 'is-playing', 'is-open');
+        cuedRow = (l && rows.get(l)) || null;
+        if (!cuedRow) return;
+        if (!cuedRow.querySelector('.sd-more')) {
+          cuedRow.append(h('div', { class: 'sd-more' }, sleeve(l, { sizes: '92px', widths: [480] }),
+            h('div', {}, l.quote && h('p', {}, l.quote), h('small', {}, '读这封信 →'))));
+        }
+        cuedRow.classList.add('is-cued', 'is-open');
+        cuedRow.classList.toggle('is-playing', on);
+      }
+
+      // ---- 筛选 ----
+      const shows = (f, s) => f === 'all' || s === f || s === 'ab';
+      tabs.addEventListener('click', (e) => {
+        const b = e.target.closest('.sd-tab');
+        if (!b) return;
+        const f = b.dataset.filter;
+        tabs.querySelectorAll('.sd-tab').forEach((x) => { x.classList.toggle('is-on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+        el.dataset.filter = f;
+        rows.forEach((li, l) => { li.hidden = !shows(f, sideOf(l)); });
+        mosaic.querySelectorAll('a').forEach((a) => a.classList.toggle('is-dim', !shows(f, a.dataset.side)));
+        list.querySelectorAll('.sd-yr').forEach((yr) => {
+          const y = Number(yr.dataset.y);
+          yr.hidden = f !== 'all' && !(y && tracks.some((l) => l.year === y && shows(f, sideOf(l))));
+        });
+      });
+
+      // ---- 刊头大字：按栏宽撑满（桌面一行，手机两行） ----
+      const spans = [...title.querySelectorAll('span')];
+      const textW = (s) => { const r = document.createRange(); r.selectNodeContents(s); return r.getBoundingClientRect().width; };
+      function fit() {
+        const box = info.getBoundingClientRect().width;
+        if (!box) return;
+        title.style.setProperty('--ts', '100px');
+        const w = phone.matches ? Math.max(...spans.map(textW)) : spans[1].getBoundingClientRect().right - spans[0].getBoundingClientRect().left;
+        if (w > 0) title.style.setProperty('--ts', Math.floor((box / w) * 1000) / 10 + 'px');
+      }
+      if (typeof ResizeObserver === 'function') new ResizeObserver(fit).observe(info);
+      else window.addEventListener('resize', fit);
+      // 窄体字到之前先不显示大字（后备字体不是窄体，会撑破一行）；最多等 1.2 秒
+      const ready = () => { fit(); title.classList.add('is-set'); };
+      if (document.fonts && document.fonts.load) {
+        Promise.race([document.fonts.load('800 10px "F221 Grotesk"', '221 FOREVER'), new Promise((r) => setTimeout(r, 1200))]).then(ready, ready);
+        document.fonts.ready.then(fit);
+      } else ready();
+
+      return { el, cue, fit, rows, clear: () => setOn(null) };
+    }
+
+    // =====================================================================================
+    // 信：内页说明
+    // =====================================================================================
+    /** 给正文做的几件小事，可以重复执行（同一个节点在本次到访里会被反复交给 show） */
+    function dress(el) {
+      if (el.hasAttribute('data-sd')) return;
+      el.setAttribute('data-sd', '');
+      const cored = Boolean(ctx.prose);                       // 核心已经给引文分过类了吗
+      el.querySelectorAll('blockquote').forEach((q) => {
+        if (q.classList.contains('largeQuote')) return;
+        const lyric = cored ? q.classList.contains('lyrics') : Boolean(q.querySelector('br'));
+        if (!lyric) return;
+        q.classList.add('sd-lyrics');
+        // 每句一行，折行时悬挂缩进：把 <br> 分开的每一句包成一行
+        const hosts = q.querySelectorAll('p').length ? [...q.querySelectorAll('p')] : [q];
+        hosts.forEach((host) => {
+          if (![...host.childNodes].some((n) => n.nodeName === 'BR')) return;
+          const lines = [[]];
+          [...host.childNodes].forEach((n) => { if (n.nodeName === 'BR') lines.push([]); else lines[lines.length - 1].push(n); });
+          host.replaceChildren(...lines.filter((ns) => ns.some((n) => n.textContent.trim())).map((ns) => h('span', { class: 'sd-ln' }, ns)));
+        });
+      });
+      // 整段英文：换用西文字体画引号和撇号
+      el.querySelectorAll('p, li, .sd-ln, blockquote').forEach((n) => {
+        const t = n.textContent;
+        if (!n.id && t.length > 12 && !/[⺀-鿿＀-￯]/.test(t) && /[A-Za-z]{3}/.test(t)) n.setAttribute('lang', 'en');
+      });
+    }
+
+    function pnTile(l, label, rel) {
+      if (l === 'first') return h('div', { class: 'sd-pnt sd-pnt--none' }, h('span', { class: 'sd-pn-no' }, '00'), h('span', {}, h('p', { class: 'sd-pn-lbl sd-l' }, label), h('p', { class: 'sd-pn-title' }, '这是第一首'), h('p', { class: 'sd-pn-song' }, '前面没有了。')));
+      if (l === 'none') return h('div', { class: 'sd-pnt sd-pnt--none' }, h('span', { class: 'sd-pn-no' }, String(tracks.length + 1)), h('span', {}, h('p', { class: 'sd-pn-lbl sd-l' }, label), h('p', { class: 'sd-pn-title' }, '还没写'), h('p', { class: 'sd-pn-song' }, '不知道会是 A 面还是 B 面。')));
+      const s = sideOf(l);
+      const a = h('a', { class: 'sd-pnt', href: l.url, rel, 'data-side': s, 'data-step': '' },
+        noEl(l, 'sd-pn-no'),
+        h('span', {},
+          h('p', { class: 'sd-pn-lbl sd-l' }, `${label} · ${SIDE_NAME[s]} · ${dot(l.date)}`),
+          h('p', { class: 'sd-pn-title' }, tx(l.title)),
+          l.song && h('p', { class: 'sd-pn-song' }, note(), l.song.title)));
+      warm(a);
+      return a;
+    }
+
+    function letterView({ letter: l, contentEl }) {
+      const s = sideOf(l);
+      const guest = s === 'x';
+      const season = fmt.season ? fmt.season(l.date) : '';
+      const who = authorsOf(l);
+      const credits = [
+        ['写信', s === 'ab' && who.length > 1 ? [`${who[0]} 起头`, h('span', {}, `${who.slice(1).join('、')} 写`), h('small', {}, 'A / B 面 · 两个人写的')]
+          : [l.author, h('small', {}, s === 'a' ? 'A 面 · 他写的' : s === 'b' ? 'B 面 · 她写的' : s === 'ab' ? 'A / B 面 · 两个人写的' : '附赠曲目 · 客人写的')]],
+        ['日期', [dot(l.date), h('small', {}, [season, fmt.date(l.date, 'weekday')].filter(Boolean).join(' · '))]],
+        l.place && ['地点', [l.place]],
+        dayLines(l).length && ['天数', dayLines(l).map((t) => h('span', {}, t))],
+        l.song && ['歌', [l.song.title, h('small', {}, [l.song.artist, l.song.duration && fmt.clock(l.song.duration)].filter(Boolean).join(' · '))]],
+        l.chars ? ['篇幅', [`${l.chars} 字`]] : null,
+        ['编号', [guest ? '221–附' : `221–${pad3(trackNo.get(l))}`]],
+      ].filter(Boolean);
+
+      // ---- 色带 ----
+      const metDay = l.days && l.days.met != null ? `认识第 ${l.days.met} 天` : '';
+      const h1 = h('h1', { class: 'sd-h1' + (visualLen(l.title) > 12 ? ' is-long' : '') + (latinOnly(l.title) ? ' is-lat' : '') }, tx(l.title));
+      let songBox = null;
+      band = null;
+      if (l.song) {
+        const bar = h('i');
+        const time = h('span', { class: 'sd-ltime' });
+        const err = h('span', { class: 'sd-lerr', hidden: true }, ' · 放不出来，再点一次试试');
+        const btn = playBtn(l, 'sd-lplay');
+        btn.addEventListener('click', () => player.toggle(l));
+        songBox = h('div', { class: 'sd-sbox' }, btn,
+          h('div', {}, h('p', { class: 'sd-sname' }, l.song.title), h('p', { class: 'sd-sart' }, '这封信的歌', l.song.artist ? ` · ${l.song.artist}` : '', err)),
+          time, h('div', { class: 'sd-lprog' }, bar));
+        band = { letter: l, bar, time, err };
+      }
+      const bandEl = h('div', { class: 'sd-band' }, h('div', { class: 'sd-in' },
+        h('nav', { class: 'sd-nav sd-l', 'aria-label': '导航' },
+          h('a', { href: '/', 'data-back': '' }, h('span', { 'aria-hidden': 'true' }, '←'), ' 曲目表'),
+          h('a', { href: '/', class: 'sd-brand' }, site.title),
+          h('span', { class: 'sd-pos' }, guest ? `附 · ${tracks.length} + ${letters.length - tracks.length}` : `${noText(l)} / ${tracks.length}`)),
+        h('header', { class: 'sd-head' },
+          noEl(l, 'sd-bigno', 'b'),
+          h('div', { class: 'sd-lbls' },
+            h('p', { class: 'sd-lbl sd-l' }, guest ? SIDE_NAME.x : `${SIDE_NAME[s]} · 第 ${trackNo.get(l)} 首`),
+            h('p', { class: 'sd-lbl sd-l' }, h('span', {}, byline(l)), h('span', {}, dot(l.date)), metDay && h('span', {}, metDay))),
+          h('div', { class: 'sd-htx' }, h1, songBox))));
+
+      // ---- 封套（点一下看原图：同一张缩略图，去掉双色调，不裁切） ----
+      let aside = null;
+      if (l.cover) {
+        const slv = sleeve(l, { sizes: '(max-width: 860px) 100vw, 400px', lazy: false, lqip: false });
+        const tag = h('span', { class: 'sd-slvtag' }, '看原图');
+        const btn = h('button', { type: 'button', class: 'sd-slvbtn', 'aria-pressed': 'false', 'aria-label': '在双色封套和原图之间切换' }, slv, tag);
+        btn.addEventListener('click', () => {
+          const on = slv.classList.toggle('is-orig');
+          btn.setAttribute('aria-pressed', String(on));
+          tag.textContent = on ? '回到双色' : '看原图';
+        });
+        if (l.cover.w && l.cover.h) slv.style.setProperty('--ar', String(l.cover.w / l.cover.h));
+        aside = h('aside', { class: 'sd-aside' }, h('div', { class: 'sd-pin' }, btn));
+      }
+
+      // ---- 正文：把 Jekyll 渲染好的节点搬进来 ----
+      dress(contentEl);
+      const body = h('div', { class: 'letter-body sd-prose' }, contentEl);
+      ctx.widgets.init(contentEl);
+
+      const pn = h('nav', { class: 'sd-pn', 'aria-label': '上一首 / 下一首 / 曲目表' }, h('div', { class: 'sd-pn-in' },
+        pnTile(l.prev || 'first', '上一首', 'prev'),
+        pnTile(l.next || 'none', '下一首', 'next'),
+        h('a', { class: 'sd-pn-back', href: '/', 'data-back': '' }, h('span', { 'aria-hidden': 'true' }, '←'), h('span', {}, '回到曲目表'), h('small', {}, `全部 ${tracks.length} 首`))));
+      // 上一首 / 下一首：替换历史记录，所以从任何一封信按后退都回到曲目表
+      pn.addEventListener('click', (e) => {
+        const a = e.target.closest && e.target.closest('a[data-step]');
+        if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
+        e.preventDefault();
+        router.go(a.getAttribute('href'), { replace: true });
+      });
+
+      return h('article', { class: 'sd-letter' + (aside ? '' : ' no-slv'), 'data-side': s, 'data-quiet': l.quiet || null, 'data-plain': l.quiet || guest || null },
+        bandEl,
+        h('div', { class: 'sd-body' }, h('div', { class: 'sd-cols' },
+          aside,
+          h('div', { class: 'sd-text' }, body, h('p', { class: 'sd-end' }, `${authorsOf(l).join(' & ')} · ${dot(l.date)}`)),
+          h('aside', { class: 'sd-cred', 'aria-label': '署名' }, h('div', { class: 'sd-pin' },
+            h('dl', { class: 'sd-credits' }, credits.map(([k, v]) => h('div', {}, h('dt', { class: 'sd-l' }, k), h('dd', {}, v)))))))),
+        pn);
+    }
+
+    const lostView = () => h('section', { class: 'sd-lost' },
+      h('div', { class: 'sd-cat sd-l' }, h('span', {}, '221–LP'), h('span', {}, '404')),
+      h('b', { class: 'sd-lost-no', 'aria-hidden': 'true' }, '404'),
+      h('h1', {}, '这张唱片里没有这一首。'),
+      h('p', {}, `曲目表上一共 ${tracks.length} 首，都还在。`),
+      h('p', { class: 'sd-lost-go' }, h('a', { href: '/' }, '← 回到曲目表'), latest && h('a', { href: latest.url }, `最新一封 · ${latest.title} →`)));
+
+    // =====================================================================================
+    // 路由：一个函数画任何一页
+    // =====================================================================================
+    /** 核心记下的「刚读过的那封信」（CORE-ADDENDUM C）。没有就是 null。 */
+    function lastRead() {
+      const v = router.lastRead;
+      if (!v) return null;
+      if (typeof v === 'object' && v.no && v.url) return letters.byUrl(v.url);
+      return letters.byUrl(typeof v === 'string' ? v : v.url || '') || null;
+    }
+    const tint = (color) => { const m = document.querySelector('meta[name="theme-color"]'); if (m && color) m.content = color; };
+
+    let first = true;
+    function show(route) {
+      const from = view;
+      let moved;
+      if (route.type === 'letter') {
+        main.replaceChildren(letterView(route));
+        view = { type: 'letter', letter: route.letter };
+      } else if (route.type === 'home') {
+        band = null;
+        home = home || buildHome();
+        home.clear();
+        home.rows.forEach((li) => li.classList.remove('is-last'));
+        main.replaceChildren(home.el);
+        home.fit();
+        view = { type: 'home', letter: null };
+        // 从一封信回来：把刚读过的那一行带到眼前，而不是当初出发的位置
+        const last = from.type === 'letter' ? lastRead() : null;
+        const li = last && home.rows.get(last);
+        if (li && !li.hidden) {
+          li.classList.add('is-last');
+          const top = li.getBoundingClientRect().top + window.scrollY;
+          const vh = window.innerHeight - P.el.offsetHeight;
+          const y = route.scrollY || 0;
+          if (top < y + 8 || top + li.offsetHeight > y + vh - 8) {
+            window.scrollTo(0, Math.max(0, Math.round(top - vh * 0.38)));
+            moved = false;                                      // 滚动位置我们自己管了
+          }
+        }
+      } else {
+        band = null;
+        main.replaceChildren(lostView());
+        view = { type: '404', letter: null };
+      }
+      root.dataset.view = view.type;
+      const el = main.firstElementChild;
+      tint(getComputedStyle(view.type === 'letter' ? el.firstElementChild : document.documentElement).backgroundColor);
+      paint();
+      if (!first) main.focus({ preventScroll: true });
+      first = false;
+      return moved;
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || view.type !== 'letter' || e.defaultPrevented) return;
+      if (router.home) router.home(); else router.back('/');
+    });
+
+    show(router.current);
+    return { show };
+  },
+};
