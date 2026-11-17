@@ -249,7 +249,7 @@ body { margin: 0; }
   --gift-ink: var(--ink); --gift-radius: 0; --gift-shadow: none;
   font-size: 18px; line-height: 1.95; overflow-wrap: break-word; line-break: strict; }
 @supports (text-autospace: normal) { .prose, .ro-quote, .c-title, .l-title, .margin-q, .ro-title, .pn .ttl { text-autospace: normal; } }
-.prose .content-body > * + * { margin-top: 1.25em; }
+.prose .content-body > * + *:not(canvas, script, style) { margin-top: 1.25em; }
 .prose .content-body > :first-child { margin-top: 0; }
 .prose p { margin: 0; text-align: justify; text-justify: inter-character; }
 .prose :lang(en) { text-align: left; }
@@ -275,8 +275,9 @@ body { margin: 0; }
 .prose table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: .9em; }
 .prose td, .prose th { border: 1px solid var(--line-2); padding: .3em .7em; }
 .prose img { max-width: 100%; height: auto; }
-.o-fig { display: block; width: -webkit-fit-content; width: fit-content; max-width: 100%; margin: 2em auto; }
-.o-fig .cy img { width: auto; max-width: 100%; }
+.prose .o-fig { width: var(--fig-w, -webkit-fit-content); width: var(--fig-w, fit-content); max-width: 100%; margin: 2em auto; }
+.prose .o-fig.is-portrait { max-width: min(100%, calc(var(--ar, 1) * 76vh)); }
+.o-fig .cy img { width: auto; max-width: calc(100% + .5px); }
 /* 核心还没把背景图换成 <img> 时的样子：同样是蓝晒 */
 .prose div.img { filter: grayscale(1) brightness(.93); mix-blend-mode: screen; outline: 1px solid var(--line); outline-offset: 6px; margin: 2em 7px; }
 .in-colour .prose div.img { filter: none; mix-blend-mode: normal; }
@@ -491,7 +492,7 @@ html[data-navigating] #theme-root::after { content: ""; position: fixed; z-index
   .song { margin-top: 18px; padding: 6px 0; gap: 12px; }
   .song-track { display: none; }
   .song-meta { flex: 1; }
-  .plate { margin: 22px auto 0; grid-column: 1 / -1; width: 100%; max-width: calc(var(--ar, 9) * 440px); }
+  .plate { margin: 22px auto 0; grid-column: 1 / -1; width: 100%; max-width: calc(var(--ar, 9) * 300px); }
   .prose { font-size: 17px; margin-top: 30px; }
   .prose p { text-align: left; }
   .pn { margin-top: 48px; }

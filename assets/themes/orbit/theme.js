@@ -205,7 +205,7 @@ export default {
       }
 
       // 太阳，以及围着它的四季
-      if (!mini) [[135, '冬'], [225, '春'], [315, '夏'], [45, '秋']].forEach(([a, name]) => { const p = P(a, rIn * (phone ? 0.6 : 0.56)); text(name, p[0], p[1], 't-season', gMid); });
+      if (!mini) [[135, '冬'], [225, '春'], [315, '夏'], [45, '秋']].forEach(([a, name]) => { const p = P(a, rIn * (phone ? 0.52 : 0.56)); text(name, p[0], p[1], 't-season', gMid); });
       S('circle', { cx, cy, r: f1(sunR + (mini ? 2.2 : 3.5)), class: 'sun-ring' }, gMid);
       S('circle', { cx, cy, r: sunR, class: 'sun' }, gMid);
 
@@ -252,7 +252,7 @@ export default {
         const gT = S('g', { class: 'today' }, gBodies);
         // 今天正好有一封信（或刚写完）时，⊕ 变成套住它的一个准星
         const on = bodies.some((b) => Math.hypot(b.x - tp[0], b.y - tp[1]) < dotR + 7);
-        const k = on ? dotR + 5.5 : big ? 4.8 : 4, k0 = on ? k - 2.4 : 0, k1 = on ? k + 3 : k;
+        const k = on ? dotR + (big ? 5.5 : 4) : big ? 4.8 : 4, k0 = on ? k - 2 : 0, k1 = on ? k + (big ? 3 : 2) : k;
         if (!still) S('circle', { cx: tp[0], cy: tp[1], r: k, class: 'pulse' }, gT);
         S('circle', { cx: tp[0], cy: tp[1], r: k, class: on ? 'open' : null }, gT);
         [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => line([f1(tp[0] + dx * k0), f1(tp[1] + dy * k0)], [f1(tp[0] + dx * k1), f1(tp[1] + dy * k1)], null, gT));
@@ -401,19 +401,21 @@ export default {
     /** 封面缩略图，蓝晒 */
     const thumb = (letter, sizes, widths) => h('span', { class: 'cy' }, ctx.img(letter.cover, { sizes, widths }));
 
-    /** 信里的照片：装进和封面一样的版框，默认蓝晒，带图注和「原色」。可以对同一个节点反复执行。 */
+    /** 信里的照片（核心已经把它们整理成 <figure class="letter-figure">）：装进和封面一样的版框，
+     *  默认蓝晒，带图注和「原色」。可以对同一个节点反复执行。 */
     function dress(el, letter) {
       let n = 0;
-      el.querySelectorAll('img').forEach((img) => {
-        if (img.id || img.closest('.flip-card, .gift-scene, [id^="gift"]')) return;
+      el.querySelectorAll('figure.letter-figure').forEach((fig) => {
+        const img = fig.querySelector('img');
+        if (!img) return;
         n++;
-        if (img.closest('.cy')) return;
-        const fig = img.closest('figure') || h('span');
-        if (!fig.parentNode) { img.replaceWith(fig); fig.append(img); }
+        if (fig.classList.contains('o-fig')) return;
         fig.classList.add('o-fig');
+        const w = Number(img.getAttribute('width')), ht = Number(img.getAttribute('height'));
+        if (w && ht) fig.style.setProperty('--ar', f1(w / ht));
         const cy = h('span', { class: 'cy', onclick: flip });
         img.replaceWith(cy); cy.append(img);
-        fig.append(h('span', { class: 'o-cap' }, h('span', {}, h('b', {}, `图 ${letter.no}·${n}`), img.hasAttribute('data-gif') || /\.gif($|\?)/i.test(img.currentSrc || img.src) ? '动图' : null), capToggle()));
+        fig.append(h('figcaption', { class: 'o-cap' }, h('span', {}, h('b', {}, `图 ${letter.no}·${n}`), fig.classList.contains('is-gif') ? '动图' : null), capToggle()));
       });
       // 整段都是西文的段落交给拉丁字体（引号、撇号才不会占一个汉字宽）
       el.querySelectorAll('p, li, blockquote, h3, h4, h5').forEach((p) => {
