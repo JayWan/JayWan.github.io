@@ -88,6 +88,10 @@ export default {
     const geo = letters.map((l) => { const ms = utc(l.date); return { ms, a: helio(ms) }; });
     const gapOf = (l) => Math.round((geo[l.index].ms - (l.prev ? geo[l.prev.index].ms : MET)) / DAY);
     const season = (iso) => (fmt.season ? fmt.season(iso) : '');
+    /** 「季节」一格：大字是按月份的春夏秋冬（核心给），小字是离最近的二分二至几天。核心还没有 season 时只报节气，不自己猜季节。 */
+    const cell = (dt, dd, small) => h('div', {}, h('dt', {}, dt), h('dd', {}, dd), h('small', {}, small));
+    const seasonCell = (iso) => { const s = season(iso), c = nearCardinal(iso); return s ? cell('季节', s, c) : cell('节气', c.slice(0, 2), c.slice(2)); };
+    const names = (l) => (l.authors && l.authors.length > 1 ? l.authors.join(' · ') : l.author);
     // 每年都会经过的五个日子
     const SPOKES = [[site.met, '认识'], [site.together, '在一起'], [site.married, '结婚'], ['-02-06', '他的生日'], ['-07-04', '她的生日']]
       .filter((x) => x[0]).map(([d, label]) => ({ md: d.slice(-5), label }));
@@ -112,7 +116,14 @@ export default {
       let R, band, rOut, rIn, dotR, sunR;
       if (mini) { R = Math.min(W, H) / 2 - (lab ? 24 : 2); band = 0; rOut = R - (lab ? 12 : 7); rIn = R * 0.19; dotR = lab ? 1.7 : 1.2; sunR = lab ? 4.5 : 3; }
       else if (phone) { R = Math.min(W / 2 - 16, H / 2 - 22); band = 15; rOut = R - band - 8; rIn = R * 0.2; dotR = 2.8; sunR = 5.5; }
-      else { R = Math.min(W / 2 - (W < 700 ? 58 : 66), H / 2 - 34); band = 20; rOut = R - band - 16; rIn = R * 0.25; dotR = Math.max(3.2, Math.min(4.4, R / 82)); sunR = 9; }
+      else {
+        R = Math.min(W / 2 - (W < 700 ? 58 : 66), H / 2 - 34);
+        // 图版左上角压着站名：圆不能碰到它
+        const hr = host.getBoundingClientRect(), t = host.parentElement.querySelector('.masthead h1'), tr = t && t.getBoundingClientRect();
+        if (tr && tr.bottom > hr.top && tr.right > hr.left) R = Math.min(R, Math.hypot(cx - (tr.right - hr.left), cy - (tr.bottom - hr.top)) - 4);
+        band = 20; rOut = R - band - 16; rIn = R * 0.25; dotR = Math.max(3.2, Math.min(4.4, R / 82)); sunR = 9;
+      }
+      if (big) svg.style.setProperty('--z', f1(Math.min(1.3, Math.max(1, R / 290))));     // 图大了，图上的字跟着大
       const step = (rOut - rIn) / Math.max(1, Y1 - Y0);
       const rOf = (y) => rOut - (Math.min(Math.max(y, Y0), Y1) - Y0) * step;
       const P = (deg, r) => { const a = deg * Math.PI / 180; return [f1(cx + r * Math.cos(a)), f1(cy - r * Math.sin(a))]; };
@@ -290,7 +301,11 @@ export default {
         gSel.textContent = ''; gTrace.textContent = '';
         bodies.forEach((b) => { if (b.label) b.label.classList.toggle('is-sel', b.no === no); });
         current = no || null;
-        if (!no) { if (!mini) trace(bodies[bodies.length - 1].ms, TODAY, false); return; }
+        if (!no) {                           // 今日：自最新一封走到今天的弧；今天正是它那一天，就画它自己走过的那一段
+          const n = bodies.length, last = bodies[n - 1];
+          if (!mini && last) { if (TODAY - last.ms >= DAY) trace(last.ms, TODAY, false); else trace(n > 1 ? bodies[n - 2].ms : MET, last.ms, false); }
+          return;
+        }
         const b = bodies[no - 1], prev = no > 1 ? bodies[no - 2] : null;
         trace(prev ? prev.ms : MET, b.ms, animate);
         const pp = prev ? [prev.x, prev.y] : P(helio(MET), rOf(Y0));
@@ -417,6 +432,14 @@ export default {
         img.replaceWith(cy); cy.append(img);
         fig.append(h('figcaption', { class: 'o-cap' }, h('span', {}, h('b', {}, `图 ${letter.no}·${n}`), fig.classList.contains('is-gif') ? '动图' : null), capToggle()));
       });
+      // 卡片背面那张手写的照片：同样的版框。点卡片是翻面，所以原色只放在图注里的那个钮上
+      el.querySelectorAll('.flip-card-back img').forEach((img) => {
+        n++;
+        if (img.parentElement.classList.contains('cy')) return;
+        const cy = h('span', { class: 'cy' });
+        img.replaceWith(cy); cy.append(img);
+        cy.after(h('div', { class: 'o-cap' }, h('span', {}, h('b', {}, `图 ${letter.no}·${n}`), '手写的那一面'), capToggle()));
+      });
       // 整段都是西文的段落交给拉丁字体（引号、撇号才不会占一个汉字宽）
       el.querySelectorAll('p, li, blockquote, h3, h4, h5').forEach((p) => {
         const t = p.textContent.trim();
@@ -474,14 +497,13 @@ export default {
 
       function today() {
         const last = letters.latest, lp = lapOf(TODAY), d = site.today.date, away = Math.round((TODAY - geo[last.index].ms) / DAY);
-        const cell = (dt, dd, small) => h('div', {}, h('dt', {}, dt), h('dd', {}, dd), h('small', {}, small));
         readout.replaceChildren(h('div', { class: 'ro ro-today' },
           h('p', { class: 'ro-kicker' }, h('strong', {}, '今日读数'), h('span', {}, `${dots(d)} ${fmt.date(d, 'weekday')}`),
             h('span', { class: 'ro-tip' }, touch ? '点图上任何地方，会落到最近的一封信上。' : '把指针移到图上的点或右表的行，在此读出那封信。')),
           h('dl', { class: 'strip' },
             cell('自认识', [h('span', { class: 'tp' }, 'T+'), String(site.today.days.met), h('i', {}, 'd')], `${dots(site.met)} 起`),
             lp && cell('圈次', `第 ${lp.n} 圈`, `本圈已走 ${lp.deg}°`),
-            cell('季节', season(d) || nearCardinal(d).slice(0, 2), season(d) ? nearCardinal(d) : nearCardinal(d).slice(2)),
+            seasonCell(d),
             h('div', { class: 'ro-new' }, h('dt', {}, '距上一封信'), h('dd', {}, String(away), h('i', {}, 'd')),
               h('small', {}, h('a', { href: last.url }, `№ ${last.no} ${last.title} `, icon(16, 10, ARROW)))))));
       }
@@ -491,9 +513,11 @@ export default {
         readout.replaceChildren(h('div', { class: 'ro ro-letter' + (l.cover ? '' : ' no-thumb') },
           l.cover && h('a', { class: 'ro-thumb', href: l.url, tabindex: '-1', 'aria-hidden': 'true' }, thumb(l, '140px', [480])),
           h('div', { class: 'ro-main' },
-            h('p', { class: 'ro-kicker' }, h('span', {}, `№ ${l.no}`), h('span', {}, dots(l.date)), h('span', {}, `T+${l.days.met} d`), season(l.date) && h('span', {}, season(l.date)), h('span', {}, glyph(l), ' ', l.author),
+            h('p', { class: 'ro-kicker' }, h('span', {}, `№ ${l.no}`), h('span', {}, dots(l.date)), h('span', {}, `T+${l.days.met} d`), h('i', { class: 'brk' }),
+              h('span', {}, glyph(l), ' ', names(l)), season(l.date) && h('span', {}, season(l.date)),
               h('button', { type: 'button', class: 'ro-reset', onclick: () => setSel(null) }, '今日')),
             h('a', { class: 'ro-title', href: l.url, lang: latin(l.title) ? 'en' : null }, l.title),
+            l.song && h('p', { class: 'ro-sl', lang: latin(l.song.title) ? 'en' : null }, h('em', { lang: 'zh' }, '曲'), l.song.title),
             l.quote && h('p', { class: 'ro-quote' }, `“${l.quote}”`)),
           h('div', { class: 'ro-actions' },
             stepper(-1, l.prev),
@@ -589,7 +613,6 @@ export default {
     function letterView({ letter, contentEl }) {
       const g = geo[letter.index], lp = lapOf(g.ms), gap = gapOf(letter), prev = letter.prev, T = letter.days.met;
       const loc = h('div', { class: 'loc' });
-      const cell = (dt, dd, small) => h('div', {}, h('dt', {}, dt), h('dd', {}, dd), h('small', {}, small));
       const cover = letter.cover && h('figure', { class: 'plate', style: letter.cover.w / letter.cover.h < 1.2 ? `--ar:${f1(letter.cover.w / letter.cover.h)}` : null },
         h('span', { class: 'cy', onclick: flip }, ctx.img(letter.cover, { sizes: '(min-width: 1200px) 400px, (min-width: 660px) 600px, 100vw', lazy: false, lqip: true, alt: `《${letter.title}》的封面` })),
         h('figcaption', { class: 'o-cap' }, h('span', {}, h('b', {}, `图 ${letter.no}`), '封面'), capToggle()));
@@ -631,7 +654,7 @@ export default {
           h('dl', { class: 'l-data' },
             cell('自认识', [h('span', { class: 'tp' }, 'T+'), String(T), h('i', {}, 'd')], `${dots(site.met)} 起`),
             cell('日期', dots(letter.date), fmt.date(letter.date, 'weekday')),
-            cell('季节', season(letter.date) || nearCardinal(letter.date).slice(0, 2), season(letter.date) ? nearCardinal(letter.date) : nearCardinal(letter.date).slice(2)),
+            seasonCell(letter.date),
             cell('圈次', lp ? `第 ${lp.n} 圈` : '入轨前', lp ? `本圈已走 ${lp.deg}°` : '尚未绕日'),
             cell(prev ? '距上一封' : '距认识', [String(gap), h('i', {}, 'd')], prev ? `№ ${prev.no} 之后` : '第一封')),
           h('aside', { class: 'l-side' },
