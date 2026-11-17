@@ -442,7 +442,7 @@ export default {
     track.addEventListener('pointerleave', () => { if (!arm) hideTip(0); });
 
     /* ───────── chrome that follows the scroll: year pin + ruler marker ───────── */
-    let raf = 0, curYear = 0, lastScroll = 0;
+    let raf = 0, curYear = 0, lastScroll = 0, moveStart = 0, lastTouch = -1e9;
     function chrome() {
       raf = 0; if (!G) return;
       const top = river.getBoundingClientRect().top;
@@ -458,7 +458,7 @@ export default {
       yearpin.classList.toggle('on', !openL && G.wide && window.scrollY > hero.offsetTop + hero.offsetHeight - 220 && innerHeight * 0.5 - top < G.end + 40);
     }
     const queueChrome = () => { if (!raf) raf = requestAnimationFrame(chrome); };
-    addEventListener('scroll', () => { lastScroll = performance.now(); if (pin && Math.abs(window.scrollY - pinY) > 4) pin = false; queueChrome(); }, { passive: true });
+    addEventListener('scroll', () => { const now = performance.now(); if (now - lastScroll > 140) moveStart = now; lastScroll = now; if (pin && Math.abs(window.scrollY - pinY) > 4) pin = false; queueChrome(); }, { passive: true });
 
     /* only prints near the viewport drift */
     if ('IntersectionObserver' in window) {
@@ -649,9 +649,9 @@ export default {
       if (!openL || !root.classList.contains('walked')) return;
       if (sheetInView()) { walked(false); return; }
       if (touching || performance.now() - lastScroll < 140) { rest = setTimeout(settle, 150); return; }
-      // The page came to rest at its very top a moment after the letter was on screen: a tap on the iOS status bar
-      // (or the Home key). With a letter open, "the top" is the top of this letter.
-      if (window.scrollY <= 1 && performance.now() - lastSeen < 2000 && sheetTarget() > innerHeight) { window.scrollTo(0, sheetTarget()); walked(false); return; }
+      // The page came to rest at its very top, from far away, a moment after the letter was on screen, and no
+      // finger started that movement: a tap on the iOS status bar. With a letter open, "the top" is the top of this letter.
+      if (window.scrollY <= 1 && moveStart - lastTouch > 400 && performance.now() - lastSeen < 1600 && sheetTarget() > innerHeight * 2.5) { window.scrollTo(0, sheetTarget()); walked(false); return; }
       closing = 'silent';
       goHome();
     };
@@ -670,8 +670,8 @@ export default {
         if (es[es.length - 1].isIntersecting) walked(false); else { lastSeen = performance.now(); away = setTimeout(leave, 320); }
       }).observe(sheet);
     }
-    addEventListener('touchstart', () => { touching = true; }, { passive: true });
-    ['touchend', 'touchcancel'].forEach((t) => addEventListener(t, (e) => { touching = e.touches.length > 0; }, { passive: true }));
+    addEventListener('touchstart', () => { touching = true; lastTouch = performance.now(); }, { passive: true });
+    ['touchend', 'touchcancel'].forEach((t) => addEventListener(t, (e) => { touching = e.touches.length > 0; lastTouch = performance.now(); }, { passive: true }));
 
     addEventListener('keydown', (e) => {
       if (!openL || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
