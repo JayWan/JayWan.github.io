@@ -171,9 +171,10 @@ export default {
       it.w = w;
       it.a.style.width = w + 'px';
       if (!it.p.cover) return;
-      // derivatives only; only what the first screen shows is fetched at once. On a 3x screen a print asks for 2x:
-      // behind the grain nobody sees the difference, and the first screen of a phone stays within its weight.
-      const sizes = Math.round(w * Math.min(1, 2 / (window.devicePixelRatio || 1))) + 'px';
+      // derivatives only; only what the first screen shows is fetched at once. On a 3x screen a print asks for 2x
+      // (behind the grain nobody sees the difference); a far print is dim and soft by design and asks for 1.6x at most.
+      // That keeps the first screen within its weight on a phone and on a 2x desktop.
+      const sizes = Math.round(w * Math.min(1, (LAYER[i] ? 2 : 1.6) / (window.devicePixelRatio || 1))) + 'px';
       if (!it.pic) {
         it.pic = ctx.img(it.p.cover, { sizes, lazy: i >= EAGER });
         it.ph.append(it.pic);
