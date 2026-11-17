@@ -395,7 +395,7 @@ export default {
       }
       if (strip) {
         strip.el.classList.toggle('is-loaded', cur === strip.letter);
-        strip.note.textContent = cur === strip.letter && st.error ? '放不出来，再点一次试试' : cur === strip.letter && st.loading ? '正在取歌…' : '这封信的歌';
+        strip.note.textContent = cur === strip.letter && st.error ? '放不出来，再点一次试试' : cur === strip.letter && st.loading ? '歌在路上…' : '这封信的歌';
       }
       tick(st);
     }
@@ -500,7 +500,7 @@ export default {
         const last = letters.latest, lp = lapOf(TODAY), d = site.today.date, away = Math.round((TODAY - geo[last.index].ms) / DAY);
         readout.replaceChildren(h('div', { class: 'ro ro-today' },
           h('p', { class: 'ro-kicker' }, h('strong', {}, '今日读数'), h('span', {}, `${dots(d)} ${fmt.date(d, 'weekday')}`),
-            h('span', { class: 'ro-tip' }, touch ? '点图上任何地方，会落到最近的一封信上。' : '把指针移到图上的点或右表的行，在此读出那封信。')),
+            h('span', { class: 'ro-tip' }, touch ? '点图上哪里都行，会落到最近的一封信上。' : '把指针移到图上的点或右表的行，在此读出那封信。')),
           h('dl', { class: 'strip' },
             cell('自认识', [h('span', { class: 'tp' }, 'T+'), String(site.today.days.met), h('i', {}, 'd')], `${dots(site.met)} 起`),
             lp && cell('圈次', `第 ${lp.n} 圈`, `本圈已走 ${lp.deg}°`),
@@ -676,7 +676,7 @@ export default {
         h('div', { class: 'lost-body' }, loc,
           h('p', { class: 'kicker' }, '404 · 轨道之外'),
           h('h1', { class: 'l-title' }, '这个位置上没有信'),
-          h('p', { class: 'lost-p' }, `图上一共 ${letters.length} 封，都在各自的那一天。`),
+          h('p', { class: 'lost-p' }, `图上一共 ${letters.length} 封，每一封都在自己的那一天。`),
           h('a', { class: 'btn', href: '/' }, '回到绕日图 ', icon(16, 10, ARROW))));
       return { el, enter() { keepDrawn(loc, () => makeChart(loc, { mini: true })); } };
     }
