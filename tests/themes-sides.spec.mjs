@@ -86,4 +86,48 @@ test.describe('theme "sides": its own rules', () => {
     expect((await sub.boundingBox()).height, 'one line').toBeLessThan(24);
     expect(await ctx(page, () => getComputedStyle(document.querySelector('#theme-root .sd-ptxt .sd-amp')).fontFamily), 'the ampersand is drawn by the Chinese face').not.toMatch(/^"?F221 Grotesk/);
   });
+
+  test('a cover shown whole: a drawing on white sits on paper, a photograph on ink', async ({ page }) => {
+    await open(page, '/', theme);
+    const sleeves = await ctx(page, () => {
+      const { letters } = window.__theme.ctx;
+      return [...document.querySelectorAll('#theme-root .sd-mosaic a')].map((a) => {
+        const { cover, title } = letters.byUrl(a);
+        const n = parseInt(cover.color.slice(1), 16);
+        return { title, fit: a.querySelector('.sd-slv').dataset.fit || null, light: 0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) > 190 };
+      });
+    });
+    const whole = sleeves.filter((sleeve) => sleeve.fit);
+    test.skip(!whole.length, 'no cover is shown whole');
+    for (const sleeve of whole) expect(sleeve.fit, sleeve.title).toBe(sleeve.light ? 'paper' : 'ink');
+  });
+
+  test('回到曲目表 with the list ahead instead of behind: the letter just read is on screen', async ({ page, request }) => {
+    const { letters } = await getIsland(request);
+    const letter = letters.filter((l) => !l.standalone && !l.quiet)[12];
+    test.skip(!letter, 'not enough letters');
+    const seen = watch(page, new URL(page.url() || 'http://x').origin);
+    for (const size of [{ width: 402, height: 874 }, { width: 1440, height: 900 }]) {
+      await page.setViewportSize(size);
+      await open(page, letter.url, theme);                                       // opened directly: no list behind it
+      await page.locator('#theme-root .sd-pn-back').click();
+      const row = page.locator('#theme-root .sd-trk.is-last');
+      await expect(row.locator('a.sd-ttl')).toHaveText(letter.title);
+      await expect(row, 'the list was added: the row is brought into view').toBeInViewport({ ratio: 1 });
+      await page.goBack();                                                       // the letter again; the list is now ahead
+      await expect(page.locator('#theme-root .sd-h1')).toHaveText(letter.title);
+      await page.locator('#theme-root .sd-nav a[data-back]').click();
+      await expect(row.locator('a.sd-ttl')).toHaveText(letter.title);
+      await expect(row, `${size.width}px: back to the list a second time`).toBeInViewport({ ratio: 1 });
+      const brand = page.locator('#theme-root .sd-nav a.sd-brand');
+      await page.goBack();
+      await expect(page.locator('#theme-root .sd-h1')).toHaveText(letter.title);
+      if (await brand.isVisible()) {                                             // the site's name is an ordinary link: the top of the list
+        await brand.click();
+        await expect(page.locator('#theme-root .sd-home')).toBeVisible();
+        expect(await page.evaluate(() => window.scrollY)).toBe(0);
+      }
+    }
+    expect(seen.errors).toEqual([]);
+  });
 });
