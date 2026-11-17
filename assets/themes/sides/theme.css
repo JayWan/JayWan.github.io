@@ -136,8 +136,10 @@ body { margin: 0; }
 .sd-cap-lbl { margin: 0 0 10px; color: var(--ink-2); }
 .sd-cap-big { margin: 0 0 6px; font: 700 20px/1.5 var(--zh); }
 .sd-cap-note { margin: 0; font: 400 14px/1.8 var(--zh); color: var(--ink-2); }
-.sd-cap-now { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--rule); }
-.sd-cap-now .sd-cap-quote { margin-top: 0; font-size: 15px; }
+.sd-cap-now { margin: 26px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); }
+.sd-cap-now dt { color: var(--ink-2); margin-bottom: 8px; }
+.sd-cap-now dd { display: flex; align-items: baseline; gap: 8px; margin: 0; padding: 3px 0; font: 400 14px/1.4 var(--zh); color: var(--ink-2); }
+.sd-cap-now dd b { font: 700 24px/1 var(--lat); font-stretch: 75%; font-variant-numeric: tabular-nums; color: var(--ink); }
 .sd-cap-top { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 18px; align-items: end; padding-bottom: 14px; border-bottom: 1px solid var(--ink); }
 .sd-cap-no { font: 800 88px/.78 var(--lat); font-stretch: 62%; color: var(--side); font-variant-numeric: tabular-nums; }
 .sd-cap-top .sd-cap-lbl { margin-bottom: 8px; }
@@ -162,7 +164,7 @@ body { margin: 0; }
 }
 .sd-trk::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 1px; background: var(--rule); }
 .sd-no { font: 700 28px/1 var(--lat); font-stretch: 75%; font-variant-numeric: tabular-nums; color: var(--side); }
-.sd-ttl { padding: 15px 0; font: 700 19px/1.35 var(--zh); text-decoration: none; }
+.sd-ttl { padding: 15px 0; font: 700 19px/1.35 var(--zh); font-stretch: 92%; text-decoration: none; }
 .sd-ttl::after { content: ""; position: absolute; inset: 0; }
 .sd-song { font: 400 14px/1.4 var(--zh); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sd-date, .sd-len { font: 500 13px/1 var(--lat); font-variant-numeric: tabular-nums; color: var(--ink-2); text-align: right; }
@@ -200,7 +202,8 @@ body { margin: 0; }
 }
 
 /* ---- 页脚 ---- */
-.sd-foot { margin-top: 72px; padding-bottom: 20px; color: var(--ink-2); }
+/* 页脚在最底下，没滚到附近之前不排版：网站那句话里的字不在首屏字体切片里，这样就不会一打开就去下那几片字体 */
+.sd-foot { margin-top: 72px; padding-bottom: 20px; color: var(--ink-2); content-visibility: auto; contain-intrinsic-size: auto 150px; }
 .sd-hunger { margin: 0; padding: 18px 0 14px; border-top: 1px solid var(--ink); font: 500 15px/1.7 var(--zh); color: var(--ink); }
 .sd-foot-row { display: flex; justify-content: space-between; align-items: center; gap: 8px 24px; flex-wrap: wrap; border-top: 1px solid var(--rule); font: 500 12px/1.4 var(--zh); letter-spacing: .06em; }
 .theme-switcher ul { display: flex; flex-wrap: wrap; margin: 0 -8px 0 0; padding: 0; list-style: none; }
@@ -236,9 +239,9 @@ body { margin: 0; }
 .sd-band .sd-na, .sd-band .sd-nb { color: inherit; }
 .sd-letter[data-plain] .sd-bigno { font-size: 120px; }
 .sd-htx { grid-area: tx; min-width: 0; }
-.sd-h1 { margin: 0 0 30px; font: 900 64px/1.18 var(--zh); letter-spacing: .01em; }
+.sd-h1 { margin: 0 0 30px; font: 800 64px/1.18 var(--zh); font-stretch: 88%; letter-spacing: .01em; }   /* 宽度只作用在西文上：和中文一样黑、一样宽 */
 .sd-h1.is-long { font-size: 46px; }
-.sd-h1.is-lat { font-weight: 800; letter-spacing: 0; }
+.sd-h1.is-lat { letter-spacing: 0; }
 .sd-letter[data-plain] .sd-h1 { font-size: 46px; margin-bottom: 24px; }
 .sd-sbox { max-width: 612px; display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; column-gap: 18px; row-gap: 16px; align-items: center; }
 .sd-lplay { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--btn-bg); color: var(--btn-fg); }

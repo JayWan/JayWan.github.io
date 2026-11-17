@@ -221,6 +221,8 @@ export default {
       const totalText = `${Math.floor(total / 3600)}:${pad2(Math.floor((total % 3600) / 60))}:${pad2(Math.round(total % 60))}`;
       const span = years.length ? `${Math.min(years[0], Number(site.met.slice(0, 4)))} – ${years[years.length - 1]}` : '';
       const bonus = letters.length - tracks.length;
+      const td = site.today.days || {};
+      const today = [['认识', td.met], ['相恋', td.together], ['结婚', td.married]].filter(([, n]) => n != null);
       const count = { a: 0, b: 0 };
       tracks.forEach((l) => { const s = sideOf(l); if (s !== 'b') count.a++; if (s !== 'a') count.b++; });
 
@@ -232,7 +234,7 @@ export default {
           h('p', { class: 'sd-line sd-l', 'aria-hidden': 'true' }, `${tracks.length} 首 · ${span} · 全长 ${totalText}`)),
         h('dl', { class: 'sd-facts' },
           h('div', {}, h('dt', { class: 'sd-l' }, '曲目'), h('dd', {}, String(tracks.length), bonus ? h('small', {}, ` + ${bonus}`) : null)),
-          h('div', {}, h('dt', { class: 'sd-l' }, '年份'), h('dd', {}, span)),
+          h('div', {}, h('dt', { class: 'sd-l' }, '年头'), h('dd', {}, span)),
           h('div', {}, h('dt', { class: 'sd-l' }, '全长'), h('dd', {}, totalText))));
       const latestLink = latest && h('a', { class: 'sd-latest', href: latest.url, 'data-side': sideOf(latest) },
         h('span', {}, '最新一封'), noEl(latest, 'sd-latest-no', 'b'), h('u', {}, tx(latest.title)), h('i', { 'aria-hidden': 'true' }, '→'));
@@ -261,9 +263,10 @@ export default {
         h('p', { class: 'sd-cap-lbl sd-l' }, `封套 · ${tracks.length} / ${cells} 格`),
         h('p', { class: 'sd-cap-big' }, '蓝的是他写的，绿的是她写的。'),
         h('p', { class: 'sd-cap-note' }, `第 ${tracks.length + 1} 首还没写。`),
-        latest && latest.quote && h('div', { class: 'sd-cap-now', 'data-side': sideOf(latest) },
-          h('p', { class: 'sd-cap-lbl sd-l' }, `最新一封 · ${noText(latest)} · ${dot(latest.date)}`),
-          h('p', { class: 'sd-cap-quote' }, latest.quote)),
+        // 没有悬停时，右栏下半截放「今天」：他们自己的数法。（不放摘句：摘句里的字不在首屏字体切片里，要多下 90 KB）
+        today.length && h('dl', { class: 'sd-cap-now' },
+          h('dt', { class: 'sd-l' }, `今天 · ${dot(site.today.date)}`),
+          today.map(([k, n]) => h('dd', {}, h('span', {}, `${k}第`), h('b', {}, String(n)), h('span', {}, '天')))),
       ];
 
       // ---- 曲目表 ----
@@ -294,7 +297,7 @@ export default {
       });
       const extras = letters.filter((l) => !trackNo.has(l));
       if (extras.length) {
-        list.append(h('li', { class: 'sd-yr sd-yr--bonus' }, h('span', {}, '附'), h('span', {}, 'Bonus track · 客人写的，不占曲号')));
+        list.append(h('li', { class: 'sd-yr sd-yr--bonus' }, h('span', {}, '附'), h('span', {}, `Bonus track · ${[...new Set(extras.map((l) => l.author))].join('、')} 写的，不排曲号`)));
         extras.forEach((l) => list.append(row(l)));
       }
 
