@@ -22,21 +22,29 @@ What it writes
 
 How the Chinese families are cut (unicode-range slices; a page downloads only the slices it shows)
     a        everything a home page can show except the pull-quotes: letter titles, places, authors,
-             song titles and artists, the interface strings, ASCII, punctuation, a margin of the
-             200 characters the letters use most
+             song titles and artists, the interface strings, ASCII, punctuation, the marks a browser
+             draws by itself (list bullets, emphasis dots), a margin of the 200 characters the
+             letters use most
     q        the pull-quotes (front matter `quote:`) that are not already in a
     b01-b03  every other character that two or more letters use, the most shared first
-    b04...   the characters only one letter uses, in the order of the letters: reading a letter
-             needs b01-b03 and one or two of these, not all of them
-    s1 s2    symbols and Latin letters / kana and full-width forms that nothing uses yet
-    c01...   the rest of levels 1 and 2 of the 通用规范汉字表, most frequent first
+    l01...   the characters only one letter uses, one slice per letter (l07 = the 7th letter,
+             oldest first): reading a letter needs b01-b03 and its own l slice
+    s1-s4    what nothing uses yet: accented Latin and Greek / symbols / CJK symbols and full-width
+             forms / kana
+    c001...  the rest of levels 1 and 2 of the 通用规范汉字表, most frequent first, in small slices
     t01...   common traditional characters (the letters quote Cantonese lyrics)
-  a, q and b* carry every weight of the family; the other slices are regular weight only.
+  a, q, b* and l* carry every weight of the family; the other slices are regular weight only.
+  A c or t slice is a fixed window of the list in scripts/fonts-data/hanzi.txt (minus what the site
+  already uses), so a character's slice never depends on the other characters: after a new letter,
+  running this script again rewrites slices a and q, the three b slices, the new letter's l slice and
+  the few small l, c and t slices that lose a character to it. Everything else stays byte for byte
+  the same (less to commit, less for returning readers to download again).
 
 New letters
     Nothing has to be done. A character no letter has used before is in a c or t slice, and the
-    browser fetches that slice by itself. Running this script afterwards moves the new characters
-    into the b slices (and new titles into slice a), which saves readers a few requests.
+    browser fetches that slice by itself: one small file (a few KB) per new character, about 100 to
+    200 KB for a typical letter. Running this script afterwards moves the new characters into the
+    letter's own l slice (and new titles into slice a), which saves readers those requests.
 
 How to run
     python3 -m venv .venv-fonts && .venv-fonts/bin/pip install fonttools==4.65.0 brotli==1.2.1
@@ -57,6 +65,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 import urllib.request
 import zipfile
 
@@ -94,7 +103,7 @@ SOURCES = {
 }
 
 # ── families ──────────────────────────────────────────────────────────────────────────────────
-# Chinese: `full` builds slices a, q, b* (every weight); `rest` builds the other slices (regular only,
+# Chinese: `full` builds slices a, q, b*, l* (every weight); `rest` builds the other slices (regular only,
 # declared with the same weight range so that no browser fakes a bold for them).
 # `freeze`: bake the font's localised forms for that OpenType language into the character map and drop
 # the `locl` feature (see freeze_locl below).
@@ -105,7 +114,7 @@ CJK = [
     dict(id='sans-sc', family='F221 Sans', source='NotoSansSC', freeze='ZHS ',
          full=dict(tag='vf', instance={'wght': (400, 900)}, weight='400 900'),
          rest=dict(tag='400', instance={'wght': 400}, weight='400 900')),
-    # the same typeface for a theme that only ever sets it at regular weight: a, q, b as static files
+    # the same typeface for a theme that only ever sets it at regular weight: a, q, b, l as static files
     # (half the bytes of the variable ones); the other slices are the very files of sans-sc
     dict(id='sans-sc-400', family='F221 Sans 400', internal='F221 Sans', source='NotoSansSC', folder='sans-sc', freeze='ZHS ',
          full=dict(tag='400', instance={'wght': 400}, weight='400'),
@@ -159,6 +168,12 @@ def cps(*parts):
 ASCII = cps((0x20, 0x7E))
 CJK_PUNCT = cps('\u00a0·—‘’“”…‰′″※', (0x3000, 0x3003), (0x3008, 0x3011), (0x3014, 0x3017), 0x301C, 0x30FB,
                 '！（），－．／：；？［］｛｜｝～￥', '〇')
+# Characters a browser draws without their being in the text: list bullets (WebKit takes • ◦ ■ from the
+# font, Firefox ▪), the triangles of <details>, emphasis marks (text-emphasis: dot, circle, double-circle,
+# triangle, sesame) and the hyphen of automatic hyphenation. They go into slice a; otherwise a <ul>
+# fetches whichever slice happens to hold the bullet.
+BROWSER_MARKS = cps(0x2010, 0x2022, 0x25A0, 0x25AA, 0x25B2, 0x25B3, 0x25B8, 0x25BE, 0x25C9, 0x25CB, 0x25CE, 0x25CF,
+                    0x25E6, 0xFE45, 0xFE46)
 # Latin faces: the glyphs they carry ...
 LATIN_CHARS = cps(ASCII, (0xA0, 0xFF), 0x131, 0x152, 0x153, 0x2C6, 0x2DA, 0x2DC, 'αβγδεθλμπσφωΔΩ',
                   (0x2010, 0x2015), (0x2018, 0x201E), (0x2020, 0x2022), 0x2026, 0x2030,
@@ -168,18 +183,26 @@ LATIN_CHARS = cps(ASCII, (0xA0, 0xFF), 0x131, 0x152, 0x153, 0x2C6, 0x2DA, 0x2DC,
 # curly quotes, daggers, bullet, ellipsis, per mille, guillemets. Chinese punctuation set in a Latin face is
 # too narrow, sits too low and has no vertical form. The "<family> En" twin keeps them for lang="en" text.
 LATIN_YIELD = cps(0xB7, 0x2014, 0x2015, (0x2018, 0x201F), (0x2020, 0x2022), 0x2026, 0x2030, 0x2039, 0x203A)
-# s1: symbols and Latin letters, s2: kana and full-width forms (only what a/q/b do not already hold)
-SYMBOLS_1 = cps((0xA0, 0x17F), (0x1CD, 0x1DC), (0x2C6, 0x2DC), (0x391, 0x3A9), (0x3B1, 0x3C9), (0x2010, 0x2027),
-                (0x2030, 0x203E), 0x2042, 0x2044, (0x2070, 0x208E), 0x20AC, 0x2103, 0x2109, 0x2116, 0x2121, 0x2122,
-                (0x2150, 0x217F), (0x2190, 0x21FF), (0x2200, 0x22FF), (0x2460, 0x24FF), (0x25A0, 0x25FF),
-                (0x2600, 0x266F), (0x2700, 0x27BF))
-SYMBOLS_2 = cps((0x3000, 0x303F), (0x3041, 0x3096), (0x3099, 0x30FF), (0x3220, 0x3229), (0x338E, 0x33A1),
-                (0xFE10, 0xFE19), (0xFE30, 0xFE4F), (0xFF01, 0xFF5E), (0xFFE0, 0xFFE6))
+# What nothing uses yet but a letter might (only what a/q/b/l do not already hold): s1 accented Latin and
+# Greek letters, s2 general punctuation and symbols, s3 CJK symbols and full-width forms, s4 kana
+SYMBOLS = [
+    cps((0xA0, 0x17F), (0x1CD, 0x1DC), (0x2C6, 0x2DC), (0x391, 0x3A9), (0x3B1, 0x3C9)),
+    cps((0x2010, 0x2027), (0x2030, 0x203E), 0x2042, 0x2044, (0x2070, 0x208E), 0x20AC, 0x2103, 0x2109, 0x2116, 0x2121,
+        0x2122, (0x2150, 0x217F), (0x2190, 0x21FF), (0x2200, 0x22FF), (0x2460, 0x24FF), (0x25A0, 0x25FF),
+        (0x2600, 0x266F), (0x2700, 0x27BF)),
+    cps((0x3000, 0x303F), (0x3220, 0x3229), (0x338E, 0x33A1), (0xFE10, 0xFE19), (0xFE30, 0xFE4F), (0xFF01, 0xFF5E),
+        (0xFFE0, 0xFFE6)),
+    cps((0x3041, 0x3096), (0x3099, 0x30FF)),
+]
 B_SHARED = [160, 280]           # characters two or more letters use: the 160 most shared, the next 280, the rest
-B_SINGLE = 60                   # characters one letter uses: slices of about this size, in the order of the letters
-C_SIZES = [400] + [100] * 11    # then slices of about 200
-C_TAIL = 200
-T_SIZE = 100
+# c slices: fixed windows over the [common] list of hanzi.txt (most frequent first). (up to this place in
+# the list, window width). The list is 6,500 characters long; the site already uses most of its first
+# 2,000, so the early windows are wide and still hold only a handful of characters each. Measured on the
+# letters so far, half of a new letter's never-used characters come from the first 2,000 places and
+# five in six from the first 3,250: those windows are kept small, because a reader downloads one whole
+# slice per new character. Do not change the widths without a reason: it renames every c slice.
+C_WINDOWS = [(1000, 125), (2000, 32), (3250, 32), (None, 64)]
+T_WINDOW = 40                   # t slices: fixed windows over the [traditional] list
 MARGIN = 200                    # the N characters the letters use most always go into slice a
 
 
@@ -241,6 +264,23 @@ def front_matter(raw):
     return out
 
 
+def marked(text):
+    """{(base, combining mark)} of a text, e.g. the • and its accent in the face (ง •̀_•́)ง.
+
+    A browser shapes such a pair with one font file. If the two characters sit in different slices, the
+    file chosen for the base has no glyph for the mark and the pair is drawn by a system font."""
+    pairs, base = set(), None
+    for c in text:
+        if unicodedata.category(c)[0] == 'M':
+            if base is not None and usable(ord(c)):
+                pairs.add((ord(base), ord(c)))
+        elif usable(ord(c)):
+            base = c
+        else:
+            base = None
+    return pairs
+
+
 def collect():
     """The characters of the site, by where they can appear."""
     ui = set()
@@ -258,6 +298,7 @@ def collect():
         if ext in ('.css', '.js', '.mjs', '.html', '.svg', '.json', '.yml', '.yaml', '.txt') and os.path.isfile(path):
             ui.update(c for c in strip_comments(read(path), ext) if ord(c) > 0x7F)
     home, quotes, body, freq = set(), set(), set(), collections.Counter()
+    pairs = set()
     letters, first = collections.Counter(), {}      # in how many letters a character occurs; the first of them
     posts_dir = os.path.join(ROOT, '_posts')
     by_date = lambda name: [int(x) for x in re.findall(r'\d+', name)[:3]] + [name]
@@ -268,6 +309,7 @@ def collect():
         home.update(fm.get('title', '') + fm.get('author', '') + fm.get('place', '') + re.sub(r'\.mp3\b', '', fm.get('bgm', '')))
         quotes.update(fm.get('quote', ''))
         body.update(raw)
+        pairs |= marked(raw)
         freq.update(c for c in raw if is_han(ord(c)))
         for c in set(raw):
             letters[ord(c)] += 1
@@ -281,10 +323,23 @@ def collect():
               'from the audio files are not in slice a', file=sys.stderr)
     margin = {c for c, _n in freq.most_common(MARGIN)}
     conv = lambda s: {ord(c) for c in s if usable(ord(c))}
-    a = conv(home) | conv(ui) | conv(margin) | ASCII | CJK_PUNCT
+    a = conv(home) | conv(ui) | conv(margin) | ASCII | CJK_PUNCT | BROWSER_MARKS
+    a |= {cp for pair in pairs for cp in pair}      # a base and its combining mark stay together, in slice a
     q = conv(quotes) - a
     b = conv(body) - a - q
-    return dict(a=a, q=q, b=b, posts=len(posts), letters=letters, first=first)
+    # marks no text contains: wanted in slice a when the font has them, not missed when it does not
+    optional = BROWSER_MARKS - conv(home) - conv(ui) - conv(quotes) - conv(body)
+    return dict(a=a, q=q, b=b, posts=len(posts), letters=letters, first=first, pairs=pairs, optional=optional)
+
+
+def windows(table, length):
+    """[(start, end)] over a list of `length` entries, cut as `table` says: [(up to this place, width), ...]."""
+    out, start = [], 0
+    for end, width in table:
+        end = length if end is None else min(end, length)
+        out += [(lo, min(lo + width, end)) for lo in range(start, end, width)]
+        start = max(start, end)
+    return out
 
 
 def plan_cjk(chars, have):
@@ -299,47 +354,28 @@ def plan_cjk(chars, have):
     used.update(body)
     letters, first = chars['letters'], chars['first']
     shared = sorted((c for c in body if letters[c] >= 2), key=lambda c: (-letters[c], c))
-    single = sorted((c for c in body if letters[c] < 2), key=lambda c: (first.get(c, 0), c))
-    parts, pos = [], 0
-    for n in B_SHARED:
-        parts.append(shared[pos:pos + n])
-        pos += n
-    parts.append(shared[pos:])
-    k = max(1, round(len(single) / B_SINGLE))
     pos = 0
-    for i in range(k):
-        n = len(single) // k + (1 if i < len(single) % k else 0)
-        parts.append(single[pos:pos + n])
+    for i, n in enumerate(B_SHARED + [len(shared)]):
+        slices['b%02d' % (i + 1)] = sorted(shared[pos:pos + n])
         pos += n
-    for i, part in enumerate(p for p in parts if p):
-        slices['b%02d' % (i + 1)] = sorted(part)
-    for name, pool in (('s1', SYMBOLS_1), ('s2', SYMBOLS_2)):
-        slices[name] = sorted((pool & have) - used)
-        used.update(slices[name])
-    common = [ord(c) for c in lists['common'] if ord(c) in have and ord(c) not in used]
-    used.update(common)
-    sizes, left = [], len(common)
-    for n in C_SIZES:
-        if left <= 0:
-            break
-        sizes.append(min(n, left))
-        left -= sizes[-1]
-    if left > 0:
-        k = max(1, round(left / C_TAIL))
-        sizes += [left // k + (1 if i < left % k else 0) for i in range(k)]
-    pos = 0
-    for i, n in enumerate(sizes):
-        slices['c%02d' % (i + 1)] = sorted(common[pos:pos + n])
-        pos += n
-    trad = [ord(c) for c in lists['traditional'] if ord(c) in have and ord(c) not in used]
-    k = max(1, round(len(trad) / T_SIZE))
-    pos = 0
-    for i in range(k):
-        n = len(trad) // k + (1 if i < len(trad) % k else 0)
-        slices['t%02d' % (i + 1)] = sorted(trad[pos:pos + n])
-        pos += n
-    missing = sorted((chars['a'] | chars['q'] | chars['b']) - have)
-    return {k: v for k, v in slices.items() if v}, missing
+    # one slice per letter for the characters nothing else uses: l07 belongs to the 7th letter (oldest first)
+    for c in sorted(body):
+        if letters[c] < 2:
+            slices.setdefault('l%02d' % (first.get(c, 0) + 1), []).append(c)
+    for name in sorted((n for n in slices if n[0] == 'l'), key=lambda n: int(n[1:])):
+        slices.move_to_end(name)
+    for i, pool in enumerate(SYMBOLS):
+        slices['s%d' % (i + 1)] = sorted((pool & have) - used)
+        used.update(slices['s%d' % (i + 1)])
+    # c and t: a character's slice is the window its place in the list falls into, whatever else is in use
+    for prefix, digits, entries, table in (('c', 3, lists['common'], C_WINDOWS), ('t', 2, lists['traditional'], [(None, T_WINDOW)])):
+        entries = [ord(c) for c in entries]
+        for i, (lo, hi) in enumerate(windows(table, len(entries))):
+            part = sorted(set(c for c in entries[lo:hi] if c in have and c not in used))
+            used.update(part)
+            slices['%s%0*d' % (prefix, digits, i + 1)] = part
+    missing = sorted((chars['a'] | chars['q'] | chars['b']) - chars['optional'] - have)
+    return collections.OrderedDict((k, v) for k, v in slices.items() if v), missing
 
 
 def unicode_range(codepoints):
@@ -521,7 +557,7 @@ def build(args):
         manifest[fam['id']] = dict(family=fam['family'], source='%s %s' % (source['name'], source['version']), files=[],
                                    missing=''.join(chr(c) for c in missing))
         for name, codepoints in slices.items():
-            v = fam['full'] if name[0] in 'aqb' else fam['rest']
+            v = fam['full'] if name[0] in 'aqbl' else fam['rest']
             rel = '%s/%s-%s.woff2' % (fam.get('folder', fam['id']), name, v['tag'])
             if not any(j['key'] == rel for j in jobs):
                 jobs.append(dict(key=rel, src=src(fam['source']), out=os.path.join(OUT, rel), codepoints=codepoints,
@@ -617,7 +653,7 @@ def parse_css(path):
 def check(args):
     """Coverage and consistency of what is in assets/fonts/ against the text of the site."""
     chars = collect()
-    site = chars['a'] | chars['q'] | chars['b']
+    site = (chars['a'] | chars['q'] | chars['b']) - chars['optional']
     manifest = json.load(open(os.path.join(OUT, 'manifest.json'), encoding='utf-8'))['families']
     problems, notes = [], []
     try:
@@ -680,13 +716,18 @@ def check(args):
                 notes.append('%s: %d symbols of the site are in no slice (the system font draws them): %s'
                              % (family, len(gap - text), ' '.join(chr(c) for c in sorted(gap - text))[:80]))
             by_slice = {re.sub(r'^.*/([a-z]+\d*)-.*$', r'\1', m['url']): m['range'] for m in members}
+            where = {cp: n for n, r in by_slice.items() for cp in r}
+            split = sorted((b, m) for b, m in chars['pairs'] if b in where and m in where and where[b] != where[m])
+            if split:
+                problems.append('%s: "%s" has a character and its combining mark in different slices (%s): a system font draws them — run scripts/fonts.py'
+                                % (fam_id, family, ', '.join('U+%04X in %s + U+%04X in %s' % (b, where[b], m, where[m]) for b, m in split[:4])))
             first = by_slice.get('a', set())
             late = (chars['a'] & covered) - first
             if late:
                 where = collections.Counter(n for cp in late for n, r in by_slice.items() if cp in r)
                 notes.append('%s: %d first-view characters are outside slice a (in %s): %s — run scripts/fonts.py to move them'
                              % (family, len(late), ', '.join('%s×%d' % kv for kv in sorted(where.items())), ''.join(chr(c) for c in sorted(late))[:60]))
-            early = set().union(*[r for n, r in by_slice.items() if n[0] in 'aqb'])
+            early = set().union(*[r for n, r in by_slice.items() if n[0] in 'aqbl'])
             new = ((chars['q'] | chars['b']) & covered) - early
             if new:
                 where = collections.Counter(n for cp in new for n, r in by_slice.items() if cp in r)

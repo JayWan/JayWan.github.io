@@ -10,6 +10,11 @@
 #               themselves in levels 1-2, plus a short hand-picked list of Cantonese and colloquial
 #               characters. Same ordering. The letters quote Cantonese lyrics in traditional characters.
 #
+# Keep the order. scripts/fonts.py cuts the c and t slices as fixed windows over these two lists (the
+# 40th c slice is always the same stretch of [common]), so that adding a letter and regenerating
+# rewrites only the few slices its new characters came out of. Re-sorting a list, or inserting
+# anywhere but at its end, renames and rewrites every slice after that point. Append new entries.
+#
 # Unihan data: (c) Unicode, Inc., https://www.unicode.org/license.txt
 [common]
 一日中月有网的点新人入了力三于工下大与上小个广门之子开天无专不区友内手长片化分公文方为户心以正本可平业电号生们令用外务主市司出加发对式动地机权过在页成当同回年自
