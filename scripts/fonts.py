@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.9"
+# dependencies = ["fonttools==4.65.0", "brotli==1.2.1"]
+# ///
+# (the block above lets `uv run scripts/fonts.py` install the two packages by itself; plain python ignores it)
 """Regenerate the self-hosted web fonts of 221 FOREVER (everything under assets/fonts/).
 
 NOT part of the site build and NOT run in CI: the generated WOFF2 and CSS files are committed.
@@ -47,10 +52,14 @@ New letters
     letter's own l slice (and new titles into slice a), which saves readers those requests.
 
 How to run
+    python3 scripts/fonts.py --check     # coverage report; needs no packages and no sources
+    python3 scripts/fonts.py --fetch     # download the pinned sources into .fonts-src/ (54 MB); no packages needed
+    uv run scripts/fonts.py              # rebuild assets/fonts/ (about a minute on 6 cores)
+  Building needs fontTools and brotli. `uv run` (https://docs.astral.sh/uv/) reads the versions from the top
+  of this file and installs them into a throw-away environment. Without uv:
     python3 -m venv .venv-fonts && .venv-fonts/bin/pip install fonttools==4.65.0 brotli==1.2.1
-    .venv-fonts/bin/python scripts/fonts.py --fetch     # download the pinned sources into .fonts-src/ (57 MB)
-    .venv-fonts/bin/python scripts/fonts.py             # rebuild assets/fonts/ (under a minute on 6 cores)
-    python3 scripts/fonts.py --check                    # coverage report; needs no packages and no sources
+    .venv-fonts/bin/python scripts/fonts.py
+  (on Debian/Ubuntu `python3 -m venv` needs the python3-venv package).
   Options: --src DIR (where the source fonts are; default .fonts-src, git-ignored), --only id[,id],
   --jobs N. The source fonts are never committed. Run `node scripts/images.mjs` first if
   _data/media.json is missing (song titles and artists come from it).
@@ -532,7 +541,8 @@ def build(args):
         from fontTools.ttLib import TTFont
         import brotli  # noqa: F401  (WOFF2 needs it)
     except ImportError:
-        sys.exit('fontTools and brotli are needed to build: pip install fonttools==4.65.0 brotli==1.2.1')
+        sys.exit('fontTools and brotli are needed to build. Either `uv run scripts/fonts.py`, or '
+                 '`pip install fonttools==4.65.0 brotli==1.2.1` into a virtual environment (see the top of this file).')
     from concurrent.futures import ProcessPoolExecutor
     only = set(args.only.split(',')) if args.only else None
     if only:  # families that share a folder are always rebuilt together
