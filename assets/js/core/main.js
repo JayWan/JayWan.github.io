@@ -82,7 +82,7 @@ async function start() {
       standaloneDisplay: query('(display-mode: standalone)') || navigator.standalone === true,
     },
     player: createPlayer(letters, site),
-    router: createRouter({ letters, site, page, normalise: prose.prepare, prepare: widgets.init }),
+    router: createRouter({ letters, site, page, root, normalise: prose.prepare, prepare: widgets.init }),
     img,
     ui: {
       hunger: () => eggs.hunger(letters, site.today.date),
