@@ -14,10 +14,7 @@
   opacity: 0;
   visibility: hidden;
   background: transparent;
-  -webkit-transition-delay: 0.5s;
   transition-delay: 0.5s;
-  -webkit-transition: opacity 0.3s ease-in;
-  -moz-transition: opacity 0.3s ease-in;
   transition: opacity 0.3s ease-in;
   z-index: $zIndex-8--fullscreen-modal;
 }
@@ -25,7 +22,6 @@
 .fullscreenModal.active {
   opacity: 1;
   visibility: visible;
-  -webkit-transition-delay: 0.5s;
   transition-delay: 0.5s;
 }
 
@@ -80,10 +76,6 @@
 
 .modal-toggle-wrapper.active {
   opacity: 0;
-  -webkit-transform: rotate(360deg);
-  -moz-transform: rotate(360deg);
-  -ms-transform: rotate(360deg);
-  -o-transform: rotate(360deg);
   transform: rotate(360deg);
 }
 
@@ -92,8 +84,6 @@
   top: 0;
   z-index: $zIndex-6--modal-toggle-close;
   opacity: 0;
-  -webkit-transition: opacity 0.3s;
-  -moz-transition: opacity 0.3s;
   transition: opacity 0.3s;
 
   .modal-toggle-close {
@@ -104,8 +94,6 @@
     width: 30px;
     height: 2px;
     background: transparent;
-    -webkit-transition: background 0.3s;
-    -moz-transition: background 0.3s;
     transition: background 0.3s;
     z-index: inherit;
 
@@ -117,33 +105,18 @@
       background: inherit;
       width: 100%;
       height: 100%;
-      -webkit-transform: translateZ(0);
-      -moz-transform: translateZ(0);
-      -ms-transform: translateZ(0);
-      -o-transform: translateZ(0);
       transform: translateZ(0);
-      -webkit-backface-visibility: hidden;
       backface-visibility: hidden;
-      -webkit-transition: -webkit-transform 0.5s, background 0s;
-      -moz-transition: -moz-transform 0.5s, background 0s;
       transition: transform 0.5s, background 0s;
     }
 
     &:before {
       top: -6px;
-      -webkit-transform: rotate(0);
-      -moz-transform: rotate(0);
-      -ms-transform: rotate(0);
-      -o-transform: rotate(0);
       transform: rotate(0);
     }
 
     &:after {
       bottom: -6px;
-      -webkit-transform: rotate(0);
-      -moz-transform: rotate(0);
-      -ms-transform: rotate(0);
-      -o-transform: rotate(0);
       transform: rotate(0);
     }
   }
@@ -163,19 +136,11 @@
 
     &:before {
       top: 0;
-      -webkit-transform: rotate(135deg);
-      -moz-transform: rotate(135deg);
-      -ms-transform: rotate(135deg);
-      -o-transform: rotate(135deg);
       transform: rotate(135deg);
     }
 
     &:after {
       bottom: 0;
-      -webkit-transform: rotate(225deg);
-      -moz-transform: rotate(225deg);
-      -ms-transform: rotate(225deg);
-      -o-transform: rotate(225deg);
       transform: rotate(225deg);
     }
   }

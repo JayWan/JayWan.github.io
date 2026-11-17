@@ -73,13 +73,9 @@
 }
 
 .is-blurred {
-  -webkit-filter: blur(10px);
   -moz-filter: blur(10px);
   -o-filter: blur(10px);
   filter: blur(10px);
-  -webkit-transition: all 0.5s;
-  -moz-transition: all 0.5s;
-  -o-transition: all 0.5s;
   transition: all 0.5s;
 }
 

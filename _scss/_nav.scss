@@ -16,11 +16,9 @@
   z-index: $zIndex-9--sidebar;
   overflow-x: hidden;
   overflow-y: scroll;
-  -webkit-transition: all .3s ease-in-out;
   transition: all .3s ease-in-out;
   -moz-user-select: -moz-none;
   -webkit-user-select: none;
-  -ms-user-select: none;
   -o-user-select: none;
   user-select: none;
   -webkit-overflow-scrolling: touch !important;
@@ -57,8 +55,6 @@
 .postWrapper,
 .sidebar,
 .sidebar-toggle {
-  -webkit-backface-visibility: hidden;
-  -ms-backface-visibility: hidden;
   backface-visibility: hidden;
 }
 
@@ -99,8 +95,6 @@
   background: $black;
   /* background-color: transparent;
   border-radius: 4px; */
-  -webkit-transition: background 0.3s;
-  -moz-transition: background 0.3s;
   transition: background 0.3s;
 
   &:before,
@@ -111,33 +105,18 @@
     background: inherit;
     width: 100%;
     height: 100%;
-    -webkit-transform: translateZ(0);
-    -moz-transform: translateZ(0);
-    -ms-transform: translateZ(0);
-    -o-transform: translateZ(0);
     transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    -webkit-transition: -webkit-transform 0.5s, background 0s;
-    -moz-transition: -moz-transform 0.5s, background 0s;
     transition: transform 0.5s, background 0s;
   }
 
   &:before {
     top: -6px;
-    -webkit-transform: rotate(0);
-    -moz-transform: rotate(0);
-    -ms-transform: rotate(0);
-    -o-transform: rotate(0);
     transform: rotate(0);
   }
 
   &:after {
     bottom: -6px;
-    -webkit-transform: rotate(0);
-    -moz-transform: rotate(0);
-    -ms-transform: rotate(0);
-    -o-transform: rotate(0);
     transform: rotate(0);
   }
 }
@@ -151,8 +130,6 @@
 /* #sidebar-checkbox:checked ~ .postWrapper, */
 #sidebar-checkbox:checked ~ .sidebar,
 #sidebar-checkbox:checked ~ .sidebar-toggle-wrapper {
-  -webkit-transform: translateX(-14rem);
-  -ms-transform: translateX(-14rem);
   transform: translateX(-14rem);
 }
 
@@ -172,19 +149,11 @@
 
   &:before {
     top: 0;
-    -webkit-transform: rotate(135deg);
-    -moz-transform: rotate(135deg);
-    -ms-transform: rotate(135deg);
-    -o-transform: rotate(135deg);
     transform: rotate(135deg);
   }
 
   &:after {
     bottom: 0;
-    -webkit-transform: rotate(225deg);
-    -moz-transform: rotate(225deg);
-    -ms-transform: rotate(225deg);
-    -o-transform: rotate(225deg);
     transform: rotate(225deg);
   }
 }
@@ -195,7 +164,6 @@
 
 .postWrapper,
 .sidebar-toggle-wrapper {
-  -webkit-transition: -webkit-transform .3s ease-in-out;
   transition: transform .3s ease-in-out;
 }
 
