@@ -72,6 +72,29 @@ test('what the core derives from the island: four roles, stated counts, the real
   expect(got.own).toEqual([false, true]);
 });
 
+test('the season of a letter goes by the month, and a year without letters is still a year', async ({ page }) => {
+  await page.goto('/?theme=probe');
+  await page.waitForSelector('html[data-theme-ready="probe"]');
+  const got = await page.evaluate(() => {
+    const { ui: { fmt }, letters } = window.__theme.ctx;
+    return {
+      months: Array.from({ length: 12 }, (_, m) => fmt.season(`2026-${String(m + 1).padStart(2, '0')}-15`)).join(''),
+      june: fmt.season('2016-06-08'),                                      // 「Hang Zhou」: 夏花烂漫, two weeks before the solstice
+      edges: [fmt.season('2026-02-28'), fmt.season('2026-03-01'), fmt.season('2026-11-30'), fmt.season('2026-12-01'), fmt.season(new Date(2026, 7, 12)), fmt.season(''), fmt.season(null)],
+      years: letters.years.map((y) => [y.year, y.letters.length]),
+      sum: letters.years.reduce((n, y) => n + y.letters.length, 0),
+      oneYear: letters.years.find((y) => y.year === 2017).letters.some((l) => l.title === 'One Year'),
+    };
+  });
+  expect(got.months).toBe('冬冬春春春夏夏夏秋秋秋冬');
+  expect(got.june).toBe('夏');
+  expect(got.edges).toEqual(['冬', '春', '秋', '冬', '夏', '', '']);
+  expect(got.years.map((y) => y[0])).toEqual([2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]);
+  expect(got.years.filter((y) => y[1] === 0).map((y) => y[0]), 'the years in which nobody wrote').toEqual([2020, 2022]);
+  expect(got.sum).toBeGreaterThanOrEqual(32);
+  expect(got.oneYear).toBe(true);
+});
+
 for (const theme of ['classic', 'probe']) {
   test(`${theme}: a greeting waits in the console`, async ({ page }) => {
     await page.route(/^https:\/\//, (route) => route.abort());
