@@ -4,6 +4,7 @@
  * It holds the parts of a letter's own HTML that cannot work without CSS, so that no theme
  * has to rediscover them:
  *
+ *   0. safety nets                 covers never wider than their box; a "busy" pointer while a letter loads
  *   1. letter content primitives   the photo blocks letters use (<div class="img img--14xLeading">)
  *   2. the flip card               木婚快乐
  *   3. the gift box                29, 28, π
@@ -23,9 +24,21 @@
  *   --gift-ink           (inherit)             --gift-shadow        (0 24px 64px rgb(0 0 0 / .4))
  */
 
+/* ---------------------------------------------------------------- 0. safety nets */
+
+/* :where() keeps all of these at zero specificity: any rule in a theme wins without a fight. */
+
+/* A cover from ctx.img() carries the width / height of the original photo (4032 × 3024 …) so the
+   page does not jump while it loads. Left unsized by a theme, it would be as wide as the photo. */
+:where(#theme-root) :where(picture) > :where(img) { max-width: 100%; height: auto; }
+
+/* The core is waiting for a letter to arrive (see ctx.router): say so with the pointer at least.
+   A theme can do better with its own rule on html[data-navigating]. */
+:where(html[data-navigating]),
+:where(html[data-navigating]) :where(a, button) { cursor: progress; }
+
 /* ---------------------------------------------------------------- 1. letter content primitives */
 
-/* :where() keeps these at zero specificity: any rule in a theme wins without a fight. */
 :where(.letter-body) :where(img, video) { max-width: 100%; height: auto; }
 
 /* Photos placed as backgrounds. The class says how many lines tall the block is (5x … 16x). */
