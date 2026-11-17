@@ -243,6 +243,7 @@ body { margin: 0; }
 
 /* 图版：封面和信里的照片同一个做法——发丝线版框，默认蓝晒，点一下看原色 */
 .plate .cy, .o-fig .cy, .flip-card-back .cy { margin: 7px; outline: 1px solid var(--line); outline-offset: 6px; }
+.l-grid .plate.is-found { max-width: min(250px, var(--ar, 9) * 250px); margin-left: auto; margin-right: auto; }
 .o-cap { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; font-size: 12.5px; color: var(--ink-3); line-height: 1.6; padding-top: 8px; text-align: left; text-indent: 0; }
 .o-cap b { font-weight: 400; color: var(--ink-2); letter-spacing: .14em; margin-right: .9em; }
 .cap-toggle { flex: none; font-size: 12.5px; letter-spacing: .12em; color: var(--ink-2); min-height: 44px; min-width: 44px; margin: -12px 0; padding: 0 0 0 12px; display: inline-flex; align-items: center; justify-content: flex-end; gap: 7px; }
@@ -292,7 +293,7 @@ body { margin: 0; }
 #theme-root .gift-scene { border: 1px solid var(--line); padding: 1.6rem 1rem; }
 #theme-root .gift-anim { filter: grayscale(1) brightness(.93); mix-blend-mode: screen; }
 #theme-root.in-colour .gift-anim { filter: none; mix-blend-mode: normal; }
-#theme-root .gift-hint { color: var(--ink-2); font-size: 13px; letter-spacing: .1em; }
+#theme-root #gift-container::after { content: "点一下，拆开"; display: block; padding-top: 6px; font-size: 12.5px; letter-spacing: .14em; color: var(--ink-3); }
 #theme-root .reveal-words { text-align: center; font-size: 1.05rem; }
 
 .end { display: flex; align-items: center; gap: 14px; margin-top: 3.2em; font-size: 12.5px; letter-spacing: .2em; color: var(--ink-3); }
@@ -439,7 +440,7 @@ html[data-navigating] #theme-root::after { content: ""; position: fixed; z-index
   .masthead .plate-desc br { display: none; }
   .masthead .plate-desc span::before { content: "，"; }
   .chart { order: 2; width: 100%; aspect-ratio: 1 / 1.09; margin-top: 2px; }
-  .readout { order: 3; margin: 6px 8px 0; padding: 12px 0 14px; border-bottom: 1px solid var(--line); min-height: 200px; display: grid; }
+  .readout { order: 3; margin: 6px 8px 0; padding: 12px 0 14px; border-bottom: 1px solid var(--line); min-height: 204px; display: grid; }
   .tablecol { order: 4; padding: 24px 8px 0; }
   .legend { order: 5; padding: 22px 8px 0; gap: 6px 18px; }
   .chartnote { order: 6; padding: 10px 8px 0; }
@@ -451,7 +452,8 @@ html[data-navigating] #theme-root::after { content: ""; position: fixed; z-index
   .strip > div { padding: 0 0 0 12px; }
   .strip dd { font-size: 24px; }
   .ro-tip { margin-left: 0; flex-basis: 100%; }
-  .strip > .ro-new { grid-column: 1 / -1; padding: 9px 0 0; border-left: 0; border-top: 1px solid var(--line-2); display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: baseline; gap: 0 10px; min-height: 44px; }
+  .strip > .ro-new { grid-column: 1 / -1; padding: 4px 0 0; border-left: 0; border-top: 1px solid var(--line-2); display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; gap: 0 10px; }
+  .ro-new small a { display: flex; align-items: center; justify-content: flex-end; gap: 4px; min-height: 44px; }
   .ro-new dd { font-size: 16px; font-weight: 400; }
   .ro-new small { color: var(--ink); font-size: 14px; text-align: right; }
   .ro-letter { grid-template-columns: 76px minmax(0, 1fr); gap: 16px 14px; align-content: center; }

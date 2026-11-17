@@ -611,9 +611,10 @@ export default {
     function letterView({ letter, contentEl }) {
       const g = geo[letter.index], lp = lapOf(g.ms), gap = gapOf(letter), prev = letter.prev, T = letter.days.met;
       const loc = h('div', { class: 'loc' });
-      const cover = letter.cover && h('figure', { class: 'plate', style: letter.cover.w / letter.cover.h < 1.2 ? `--ar:${f1(letter.cover.w / letter.cover.h)}` : null },
+      const found = letter.cover && letter.cover.own === false;          // 早年从网上找的配图，不是他们自己的照片：版框小一号
+      const cover = letter.cover && h('figure', { class: 'plate' + (found ? ' is-found' : ''), style: letter.cover.w / letter.cover.h < 1.2 ? `--ar:${f1(letter.cover.w / letter.cover.h)}` : null },
         h('span', { class: 'cy', onclick: flip }, ctx.img(letter.cover, { sizes: '(min-width: 1200px) 400px, (min-width: 660px) 600px, 100vw', lazy: false, lqip: true, alt: `《${letter.title}》的封面` })),
-        h('figcaption', { class: 'o-cap' }, h('span', {}, h('b', {}, `图 ${letter.no}`), '封面'), capToggle()));
+        h('figcaption', { class: 'o-cap' }, h('span', {}, h('b', {}, `图 ${letter.no}`), found ? '封面配图' : '封面'), capToggle()));
 
       let song = null;
       if (letter.song) {
