@@ -42,7 +42,16 @@ sass:
 
 # Build
 destination:         ./_site
-exclude:             ["README.md", "package.json", "package-lock.json", "mise.toml", "scripts"]
+exclude:
+  - README.md
+  - package.json
+  - package-lock.json
+  - mise.toml
+  - scripts
+  # CSS files the old gulp pipeline left in working copies (git-ignored). If Jekyll
+  # copied them, they would overwrite the freshly compiled stylesheet.
+  - assets/css/main.css
+  - assets/css/main.min.css
 
 # Dev server (`bundle exec jekyll serve`): http://localhost:4301 with live reload
 port:                4301

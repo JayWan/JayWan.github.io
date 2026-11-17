@@ -53,6 +53,8 @@ python3 -m http.server 4201 --bind 127.0.0.1 --directory _site
 
 入口是 `assets/css/main.scss`，各个模块在 `_scss/` 目录，由 Jekyll 自带的 Sass 编译成 `/assets/css/main.css`，仓库里不再有编译产物，也不需要单独编译 CSS。
 
+> 以前用 gulp 时生成在 `assets/css/` 里的 `main.css`、`main.min.css` 已经不再使用，Git 和 Jekyll 都会忽略它们，看到可以直接删掉。
+
 现在没有 Autoprefixer 了：个别还需要前缀的属性（例如 `-webkit-user-select`、`-webkit-line-clamp`、`-webkit-text-size-adjust`）请直接手写。
 
 ### 图片
