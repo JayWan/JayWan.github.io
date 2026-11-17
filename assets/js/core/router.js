@@ -12,6 +12,7 @@
 
 import { normPath } from './util.js';
 
+const CLASSIC_ONLY = /<noscript class="classic-only">[\s\S]*?<\/noscript>/g;   // what _includes/classic-only.html writes
 const FETCH_TIMEOUT = 8000;   // a letter that has not arrived by then is loaded as a normal page (the browser shows its own progress)
 const SHOW_TIMEOUT = 2000;    // how long a new navigation waits for a show() that has not finished
 
@@ -107,7 +108,10 @@ export function createRouter({ letters, site, page, prepare = () => {} }) {
       const job = fetch(target.url, { credentials: 'same-origin', ...(abort && { signal: abort.signal }) })
         .then((res) => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.text(); })
         .then((text) => {
-          const source = new DOMParser().parseFromString(text, 'text/html').querySelector('.content-body');
+          // The classic-only blocks are dropped before parsing. In a real page load they are inert
+          // text inside <noscript>; DOMParser has scripting off and would parse them as markup, so
+          // a stray "<!--" in a letter's title could swallow the letter that follows it.
+          const source = new DOMParser().parseFromString(text.replace(CLASSIC_ONLY, ''), 'text/html').querySelector('.content-body');
           if (!source) throw new Error('no .content-body in ' + target.url);
           inert.set(target.path, source);
           return source;

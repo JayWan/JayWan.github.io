@@ -303,6 +303,24 @@ test.describe('router: the corners', () => {
     expect(seen.requests.slice(before).filter((u) => u === new URL(flip, baseURL).href).length, 'and the HTML is not fetched again').toBe(1);
   });
 
+  test('a fetched letter is read past whatever the classic page around it contains', async ({ page, request, baseURL }) => {
+    // A title with "<!--" in it: harmless in a page load (the classic markup is text inside
+    // <noscript>), but a parser with scripting off would let the comment swallow the letter.
+    const { letters } = await getIsland(request);
+    const target = letters[9];
+    await openProbe(page);
+    await page.route(`**${new URL(target.url, baseURL).pathname}`, async (route) => {
+      const response = await route.fetch();
+      const body = (await response.text()).replace(/<h2>/, '<h2><!-- ');
+      expect(body).toContain('<noscript class="classic-only">');
+      expect(body).toContain('<h2><!-- ');
+      await route.fulfill({ response, body });
+    });
+    expect(await ctx(page, (c, url) => c.router.go(url), target.url), 'soft navigation').toBe(true);
+    await expect(page.locator('#theme-root h1')).toHaveText(target.title);
+    expect((await page.locator('#theme-root .letter-body .content-body').innerText()).trim().length).toBeGreaterThan(50);
+  });
+
   test('while a letter is on its way <html> carries data-navigating', async ({ page, request, baseURL }) => {
     const { letters } = await getIsland(request);
     const target = letters[3];
