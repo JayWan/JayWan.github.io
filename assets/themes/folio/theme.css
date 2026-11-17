@@ -73,7 +73,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 
 /* 翻到某一年 */
 .yidx{display:flex;justify-content:space-between;align-items:center;margin:22px 0 0;font:16.5px/1 var(--lat);letter-spacing:.05em;font-variant-numeric:oldstyle-nums}
-.yidx-k{font:13.5px/1 var(--fs);letter-spacing:.34em;color:var(--red);min-width:44px}
+.yidx-k{font:13.5px/1.4 var(--fs);letter-spacing:.34em;color:var(--red);min-width:44px;white-space:nowrap}
 .yidx a{display:flex;align-items:center;justify-content:center;min-width:48px;min-height:44px;text-decoration:none}
 .yidx a:lang(zh-Hans){font:16px/1 var(--fs)}
 .yidx a.is-blank{color:var(--ink-3)}
@@ -100,8 +100,15 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .wari>span{display:block}
 .wari .lat{font-size:.94em;letter-spacing:.03em}
 .wari .it{font-style:italic;font-size:1em}
-/* 从夹注到日数的一道虚线，像目录里的引导点 */
-.lead{flex:1;min-height:0;width:0;margin:12px 0 10px;border-left:1px dotted var(--frame);opacity:.75}
+/* 两行的题名：夹注平时接在第二行下面（--in）；窄屏上、或者太长时（.is-long）改放在两行的下面（--out），歌名拆成两行 */
+.wari--out{display:none}
+.col.is-long .wari--in{display:none}
+.col.is-long .wari--out{display:block}
+.col.is-long .wari{line-height:1.14}
+.col.is-long .ws>span{display:block}
+/* 从夹注到日数的一道虚线，像目录里的引导点。放不下时它先让出位置 */
+.lead{flex:1 1 0;min-height:0;width:1px;position:relative;overflow:hidden}
+.lead::before{content:"";position:absolute;left:0;top:12px;bottom:10px;border-left:1px dotted var(--frame);opacity:.75}
 .day{flex:none;margin-top:auto;height:var(--foot);display:flex;align-items:center;font:19px/1 var(--lat);letter-spacing:.04em;color:var(--red);font-variant-numeric:oldstyle-nums}
 .day--k{font:13px/1 var(--fs);letter-spacing:.34em;padding-left:.34em;color:var(--ink-2)}
 .leaf--title .day{height:auto;padding-bottom:20px}
@@ -159,9 +166,9 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .side{grid-area:side;min-width:0}.tiji{grid-area:tiji}.head{grid-area:head}.body{grid-area:body}.feet{grid-area:feet}
 
 /* 笺头：像单位信笺上印的那一行 */
-.head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:0 1px 10px;font:14px/1.2 var(--fs);letter-spacing:.2em;color:var(--red);white-space:nowrap}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px;padding:0 1px 10px;font:14px/1.2 var(--fs);letter-spacing:.2em;color:var(--red);white-space:nowrap}
 .head :lang(en){letter-spacing:.24em;font-size:13px}
-.head-r{letter-spacing:.16em;overflow:hidden;text-overflow:ellipsis}
+.head-r{letter-spacing:.16em;margin-left:auto}
 
 /* 横格。字落在格线上：行高就是格距，段落、歌词、图都占整数行 */
 .body{min-width:0;border:1px solid var(--frame);border-right:0;
@@ -180,7 +187,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .body :is(em,i){font-style:italic;text-decoration:underline;text-decoration-color:var(--frame);text-decoration-thickness:1px;text-underline-offset:5px}
 .body code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,"F221 Fangsong",monospace;font-size:.8em;color:var(--ink-2)}
 .body a{text-decoration-thickness:1px;text-underline-offset:4px}
-.body p.fo-sign{text-indent:0;text-align:right;color:var(--ink-2)}
+.body p:is(.fo-sign,.letter-signoff){text-indent:0;text-align:right;color:var(--ink-2)}
 
 .body blockquote{margin:var(--lh) 0;padding:0 0 0 2em;font-size:calc(var(--fz) - 1px);color:var(--ink-2);letter-spacing:.02em}
 .body blockquote p{text-indent:0;text-align:left}
@@ -202,7 +209,9 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 /* 信里的图：保持原来的颜色，带一圈衬纸，宽度随图。高度由脚本凑成整行（.fo-snap） */
 .body .fo-snap{position:relative;margin-top:var(--lh);margin-bottom:var(--lh)}
 .body :is(figure,.fo-fig){text-align:center;text-indent:0;line-height:0}
-.body :is(figure,.fo-fig) img{display:inline-block;vertical-align:top;width:auto;height:auto;max-width:100%;max-height:calc(var(--lh) * 15);
+.body :is(figure,.fo-fig) img{display:inline-block;vertical-align:top;height:auto;max-width:100%;max-height:calc(var(--lh) * 15);object-fit:contain;
+  /* --iw / --ir：原图的宽和宽高比，脚本写在 <img> 上；没有的话这一行无效，宽度回到 auto */
+  width:min(var(--fig-w,100%),calc(var(--iw) + 12px),calc((var(--lh) * 15 - 12px) * var(--ir) + 12px));
   padding:5px;border:1px solid var(--rule);background:var(--paper-lit)}
 .body img[style*="width"]{max-height:none}
 .body figure figcaption{font-size:14px;line-height:var(--lh);color:var(--ink-2)}
@@ -216,12 +225,17 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .body .flip-card-front{background-image:linear-gradient(to bottom,transparent calc(var(--lh) - 1px),var(--rule) calc(var(--lh) - 1px));
   background-size:100% var(--lh);background-position:0 calc(var(--shift) * -1)}
 .body .flip-card-back{border:1px solid var(--frame)}
+.body :is(.flip-card-inner,.flip-card-front,.flip-card-back){transition:none}   /* 这个主题不动：卡片直接换面 */
 .body .flip-card-hint{margin-top:var(--lh);font-size:14px;line-height:var(--lh);letter-spacing:.14em;text-indent:0}
 .body .flip-card-front::after,.body .flip-card-back::after{position:absolute;right:14px;bottom:0;font-size:13px;line-height:var(--lh);letter-spacing:.2em;color:var(--red)}
 .body .flip-card-front::after{content:"点一下，翻到背面"}
 .body .flip-card-back::after{content:"点一下，翻回正面";position:static;display:block;text-align:right;line-height:30px;margin-bottom:-8px}
-.body .gift-scene{text-indent:0;line-height:var(--lh)}
-.body .gift-scene p{text-indent:0;text-align:center}
+/* 礼物盒：盒子八行高，拆开后图九行、字一行，都落在格线上；图不浮动（彩纸是信自己的，照旧） */
+#theme-root .body .gift-scene{display:block;min-height:0;text-align:center;text-indent:0;line-height:var(--lh)}
+#theme-root .body .gift-anim{width:auto;height:calc(var(--lh) * 8);max-width:100%}
+#theme-root .body #gift-container::after{content:"礼物 · 点一下拆开";display:block;font-size:13px;line-height:var(--lh);letter-spacing:.2em;color:var(--red)}
+#theme-root .body .float-img{box-sizing:border-box;width:auto;height:calc(var(--lh) * 9);max-width:100%;object-fit:contain;padding:5px;border:1px solid var(--rule);background:var(--paper-lit);animation:none;vertical-align:top}
+#theme-root .body .reveal-words{margin:0;font-size:inherit;line-height:var(--lh);text-indent:0;text-align:center;animation:none}
 
 /* 题记：竖在右边的书口 */
 .tiji{border:1px solid var(--frame);border-left:1px solid var(--rule);min-width:0}
@@ -328,6 +342,10 @@ html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(-
   .pens{margin-bottom:16px}
   .latest-k{font-size:12.5px;margin-bottom:12px}
   .yidx{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));margin-top:14px;font-size:16px}
+  .yidx-k{font-size:12.5px;letter-spacing:.24em;min-width:0}
+  .yidx-k span{display:block}
+  .t--two .wari--in{display:none}
+  .wari--out{display:block}
   .yidx a{min-width:0}
   .yr-t{font-size:27px}
   .yr-n{font-size:13.5px;margin-top:12px}

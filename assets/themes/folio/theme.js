@@ -144,7 +144,6 @@ export default {
     const { site, letters, root, player, router, ui } = ctx;
     const { fmt } = ui;
     const wide = window.matchMedia('(min-width: 720px)');
-    const plain = (e) => e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && !e.defaultPrevented;
 
     const authorsOf = (l) => (Array.isArray(l.authors) && l.authors.length ? l.authors : [l.author || '']);
     const who = (l) => authorsOf(l).join('、');
@@ -153,37 +152,41 @@ export default {
     const guests = letters.filter(isGuest);               // 客人的信：放在书末的「跋」
     const newest = own[own.length - 1] || letters.latest;
 
-    /* ── 回目录：有 router.home() 就用它，否则靠链接上的 data-back ── */
-    function goHome(e) {
-      if (e && !plain(e)) return;
-      if (typeof router.home === 'function') { if (e) e.preventDefault(); router.home(); }
-      else if (!e) router.back('/');
-    }
-    const homeLink = (cls, ...kids) => h('a', { class: cls, href: '/', 'data-back': true, onclick: goHome }, kids);
-    /* 上一封 / 下一封：替换历史记录，这样「后退」总是回到目录 */
-    function hop(e) {
-      if (!plain(e)) return;
-      e.preventDefault();
-      router.go(e.currentTarget.getAttribute('href'), { replace: true });
-    }
+    /* 回目录：链接带 data-back，核心会把它当作「后退」（从目录来的话回到原处），并把刚读的那封带到眼前。
+       上一封 / 下一封是普通链接：信到信由核心替换历史记录，所以「后退」总是回到目录。 */
+    const homeLink = (cls, ...kids) => h('a', { class: cls, href: '/', 'data-back': true }, kids);
 
     /* ══════════════ 目录（首页） ══════════════ */
 
-    /** 双行夹注（其实是三行）：日期、执笔、《歌》 */
-    function wari(l) {
-      return h('span', { class: 'wari v' },
+    /** 夹注：日期、执笔、《歌》，每样一行。歌名分成两半，放不下时（.is-long）各占一行。 */
+    function songSpan(song) {
+      const t = String(song.title), zh = CJK.test(t);
+      let cut = -1, best = 1e9;
+      const half = units(t) / 2, tryAt = (i) => { const d = Math.abs(units(t.slice(0, i)) - half); if (i > 0 && i < t.length && d < best) { best = d; cut = i; } };
+      if (zh) {
+        try { for (const g of new Intl.Segmenter('zh', { granularity: 'word' }).segment(t)) tryAt(g.index); } catch { /* 没有 Intl.Segmenter */ }
+        if (cut < 0) tryAt(Math.round(t.length / 2));
+      } else for (let i = 1; i < t.length; i++) if (t[i] === ' ') tryAt(i);
+      const a = cut > 0 ? t.slice(0, cut) : t, b = cut > 0 ? t.slice(cut).trim() : '';
+      const part = (text, open, close) => (zh ? h('span', {}, open, vt(text), close) : h('span', { class: 'lat it', lang: 'en' }, text));
+      return h('span', { class: 'ws' }, part(a + (b && !zh ? ' ' : ''), '《', b ? '' : '》'), b && part(b, '', '》'));
+    }
+    function wari(l, cls) {
+      return h('span', { class: 'wari v' + (cls || ''), 'aria-hidden': 'true' },
         h('span', {}, mdZh(l.date)),
         h('span', {}, vt(who(l))),
-        l.song && (CJK.test(l.song.title) ? h('span', {}, '《', vt(l.song.title), '》') : h('span', { class: 'lat it', lang: 'en' }, l.song.title)));
+        l.song && songSpan(l.song));
     }
     function column(l, label) {
       const d = l.days.met;
+      const two = splitTitle(l.title).length > 1;
       const a = h('a', {
         class: 'col', href: l.url,
         'aria-label': `第 ${l.no} 封：${l.title}，${fmt.date(l.date)}，${who(l)} 写${l.song ? `，配歌《${l.song.title}》` : ''}${d != null ? `，相识第 ${d} 日` : ''}`,
       },
       label && h('span', { class: 'latest-k v' }, label),
-      h('span', { class: 't' }, titleLines(l.title, wari(l))),
+      h('span', { class: 't' + (two ? ' t--two' : '') }, titleLines(l.title, wari(l, two ? ' wari--in' : ''))),
+      two && wari(l, ' wari--out'),                         // 两行的题名：窄屏上夹注放在两行下面，才不会挤出这一列
       h('span', { class: 'lead', 'aria-hidden': 'true' }),
       h('span', { class: 'day', lang: 'en' }, d != null ? String(d) : ''));
       a.addEventListener('pointerenter', () => router.prefetch(a.href));
@@ -264,6 +267,11 @@ export default {
         const u = Number(m.dataset.u) || 1, per = Math.ceil(u / Math.max(1, Math.ceil(u / maxPer)));
         m.style.height = ((per + 0.7) * 1.06).toFixed(2) + 'em';
       }
+      for (const c of homeEl.querySelectorAll('a.col')) {                  // 题名加夹注比这一列还长：歌名拆成两行
+        c.classList.remove('is-long');
+        const d = c.querySelector('.day'), ld = c.querySelector('.lead');
+        if (d && ld && (ld.offsetHeight < 8 || d.getBoundingClientRect().bottom > c.getBoundingClientRect().bottom + 1)) c.classList.add('is-long');
+      }
       for (const lf of homeEl.querySelectorAll('.leaf')) {
         const left = lf.getBoundingClientRect().left;
         for (const c of lf.querySelectorAll('.cell--letter, .cell--latest')) {
@@ -276,10 +284,8 @@ export default {
     }
 
     /* 刚读过的那封：回到目录时它那一列亮着，眉批换成它的 */
-    let lastShown = null;
-    const lastRead = () => router.lastRead || lastShown;
     function markRead() {
-      const l = lastRead();
+      const l = router.lastRead || null;                     // 核心记着刚读的是哪一封（没有这一项时就不标）
       for (const c of leaves.querySelectorAll('.is-read, .is-off')) c.classList.remove('is-read', 'is-off');
       const cell = l && cells.get(l);
       if (!cell || !cell.isConnected) return null;
@@ -317,9 +323,11 @@ export default {
           latest));
     }
     function yearIndex() {
-      return h('nav', { class: 'yidx', 'aria-label': '翻到某一年' },
-        h('span', { class: 'yidx-k' }, '翻到'),
-        groups.map((g) => h('a', { href: '#' + g.id, class: g.list.length ? '' : 'is-blank', lang: g.guest ? null : 'en', 'aria-label': g.label }, g.guest ? '跋' : String(g.year))));
+      /* 跋只有一篇时，「跋」直接打开它（最新的一封离第一屏只有一下） */
+      const to = (g) => (g.guest && g.list.length === 1 ? g.list[0].url : '#' + g.id);
+      return h('nav', { class: 'yidx', 'aria-label': '去哪一年' },
+        h('span', { class: 'yidx-k' }, h('span', {}, '去哪'), h('span', {}, '一年')),
+        groups.map((g) => h('a', { href: to(g), class: g.list.length ? '' : 'is-blank', lang: g.guest ? null : 'en', 'aria-label': g.label }, g.guest ? '跋' : String(g.year))));
     }
 
     let homeEl = null;
@@ -382,7 +390,7 @@ export default {
         if (!to) return h('li', { class: 'cell cell--foot' }, h('div', { class: 'col' }, h('span', { class: 'foot-none v' }, none)));
         const d = to.days.met;
         return h('li', { class: 'cell cell--foot' },
-          h('a', { class: 'col', href: to.url, rel: label === '上一封' ? 'prev' : 'next', onclick: hop, 'aria-label': `${label}：${to.title}` },
+          h('a', { class: 'col', href: to.url, rel: label === '上一封' ? 'prev' : 'next', 'aria-label': `${label}：${to.title}` },
             h('span', { class: 'latest-k v' }, label),
             h('span', { class: 't' }, titleLines(to.title)),
             h('span', { class: 'day', lang: 'en' }, d != null ? String(d) : '')));
@@ -414,6 +422,12 @@ export default {
       for (const t of texts) {
         const parts = t.nodeValue.match(/[\u3400-\u9fff]|[A-Za-z0-9][A-Za-z0-9 .,'’!?-]*[A-Za-z0-9]|[A-Za-z0-9]|[^\u3400-\u9fffA-Za-z0-9]+/g) || [];
         t.replaceWith(...parts.map((s) => (/^[\u3400-\u9fff]$/.test(s) ? h('span', { class: 'dz' }, s) : /^[A-Za-z0-9]/.test(s) ? h('span', { class: 'lz' }, s) : s)));
+      }
+      /* 图在载入之前就按原图的尺寸占好位置（宽度随图，不超过十五行高），信不会在读的时候跳 */
+      for (const img of el.querySelectorAll('img[width][height]')) {
+        if (img.closest('.flip-card, .gift-scene')) continue;
+        const w = Number(img.getAttribute('width')), hh = Number(img.getAttribute('height'));
+        if (w > 0 && hh > 0) { img.style.setProperty('--iw', w + 'px'); img.style.setProperty('--ir', String(Math.round(w / hh * 1e4) / 1e4)); }
       }
       for (const p of el.querySelectorAll('p, div[align]')) {
         if (p.closest('.flip-card-back, .gift-scene')) continue;
@@ -570,29 +584,18 @@ export default {
     /* ── 一个函数画任何一页；之后每次站内跳转核心都会再调它 ── */
     let first = true;
     function show(route) {
-      let moved;
       if (ro) ro.disconnect();
       if (route.type === 'letter') {
         main.replaceChildren(letterView(route));
         root.dataset.view = 'letter';
         root.toggleAttribute('data-quiet', Boolean(route.letter.quiet));
         settle(route.contentEl);
-        lastShown = route.letter;
       } else if (route.type === 'home') {
         main.replaceChildren(homeView());
         root.dataset.view = 'home';
         root.removeAttribute('data-quiet');
         layoutHome();
-        /* 回到目录：落在刚读过的那封信所在的那一叶，而不是当初出发的地方 */
-        const cell = markRead();
-        if (cell && !route.hash) {
-          const r = cell.getBoundingClientRect(), y0 = window.scrollY, top = r.top + y0, vh = window.innerHeight;
-          const tian = parseFloat(getComputedStyle(cell.closest('.leaf')).paddingTop) || 0;
-          if (top - tian < route.scrollY || top + r.height > route.scrollY + vh) {
-            window.scrollTo(0, Math.max(0, top - tian - 12));
-            moved = false;
-          }
-        }
+        markRead();                                          // 滚到哪里由核心决定：后退回原处，翻过几封就把刚读的那封带到屏幕中间
       } else {
         main.replaceChildren(lostView());
         root.dataset.view = 'lost';
@@ -600,7 +603,6 @@ export default {
       paint(player.state);
       if (!first) main.focus({ preventScroll: true });
       first = false;
-      return moved;
     }
 
     /* 栏数随宽度变；字体到了以后眉批要重排一次 */
@@ -608,7 +610,7 @@ export default {
     window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { layoutHome(); fit(); }, 120); });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layoutHome(); fit(); });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && root.dataset.view === 'letter' && !e.defaultPrevented && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '')) goHome();
+      if (e.key === 'Escape' && root.dataset.view === 'letter' && !e.defaultPrevented && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '')) router.back('/');
     });
 
     show(router.current);
