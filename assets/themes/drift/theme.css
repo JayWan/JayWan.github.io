@@ -193,7 +193,7 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
 .cap-title { display: block; margin-top: 6px; font: 500 20px/1.45 var(--serif); letter-spacing: .02em; color: var(--text); text-wrap: balance; text-decoration: underline transparent 1px; text-underline-offset: .32em; transition: text-decoration-color .3s; }
 .nb { display: inline-block; text-decoration: inherit; }
 .cap-song { display: block; margin-top: 5px; font: 500 13px/1.6 var(--serif); letter-spacing: .04em; color: var(--dim); }
-.cap-quote { display: block; margin-top: 9px; max-width: 24em; font: 400 14.5px/1.8 var(--serif); color: var(--text-2); }
+.cap-quote { display: block; margin-top: 9px; max-width: 24em; font: 400 14.5px/1.8 var(--serif); color: var(--text-2); text-wrap: balance; }
 .item.L .cap-quote { margin-left: auto; }
 .z2 .cap-title { font-size: 22px; }
 .z0 .cap-title { font-size: 18px; }
@@ -293,6 +293,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
   box-shadow: 0 2px 4px rgba(0, 0, 0, .5), 0 50px 120px -10px rgba(0, 0, 0, .9), 0 0 200px rgba(var(--paper-rgb), .07);
 }
 .sheet > :not(.sheet-paper) { position: relative; z-index: 1; }
+.sheet > .sheet-head { z-index: 2; }   /* the progress line reaches a finger's width below the head: the body must not cover that half */
 
 #theme-root .sheet-bar {
   position: sticky; top: 24px; z-index: 5;

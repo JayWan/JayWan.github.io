@@ -22,8 +22,17 @@ function h(tag, props = {}, ...children) {
   return node;
 }
 
-/* A title that has to break breaks after its own comma (「装修好了，／钥匙在门垫下面」, never 「钥／匙」). */
-const phrases = (s) => { const parts = String(s).match(/[^，、；：！？]+[，、；：！？]*|[，、；：！？]+/g) || [s]; return parts.length < 2 ? [String(s)] : parts.map((t) => h('span', { className: 'nb' }, t)); };
+/* A title or a quoted line that has to break breaks after its own punctuation (「装修好了，／钥匙在门垫下面」, never 「钥／匙」). */
+const phrases = (s) => {
+  const raw = String(s).match(/[^，、；：。！？]+[，、；：。！？”’」』）]*|[，、；：。！？]+/g) || [String(s)], parts = [];
+  let carry = '';
+  raw.forEach((t, i) => {      // 「还有，」 does not stand on a line of its own: a short phrase goes with the one after it
+    if (t.length < 4 && i < raw.length - 1) carry += t;
+    else if (t.length < 4 && parts.length) parts[parts.length - 1] += carry + t;
+    else { parts.push(carry + t); carry = ''; }
+  });
+  return parts.length < 2 ? [String(s)] : parts.map((t) => h('span', { className: 'nb' }, t));
+};
 
 /* 间距照时间来。step：相邻两封在轴上的距离（开方压缩）；clear：超过 180 天的空白里，两岸都空着的那一段，
    跟天数成正比，所以 838 天一定是整页最长的一段空白 */
@@ -148,12 +157,12 @@ export default {
       a.style.setProperty('--del', (-rnd(i, 4) * 16).toFixed(1) + 's');
       const ph = h('span', { className: 'ph' });
       if (c) { ph.style.aspectRatio = clamp(c.w / c.h, 0.8, 2).toFixed(3); if (c.color) ph.style.backgroundColor = c.color; }
-      const frame = h('span', { className: 'frame' }, c ? ph : [h('span', { className: 'blank-t' }, phrases(p.title)), p.quote && h('span', { className: 'blank-q' }, p.quote)]);
+      const frame = h('span', { className: 'frame' }, c ? ph : [h('span', { className: 'blank-t' }, phrases(p.title)), p.quote && h('span', { className: 'blank-q' }, phrases(p.quote))]);
       const cap = h('span', { className: 'cap' },
         h('span', { className: 'cap-meta' }, h('span', {}, dot(p.date)), p.days.met != null && h('span', {}, '第', h('i', {}, String(p.days.met)), '天'), h('span', {}, capWho(p))),
         c && h('span', { className: 'cap-title' }, phrases(p.title)),
         p.song && h('span', { className: 'cap-song' }, `歌 · ${p.song.title}`),
-        z === 2 && p.quote && h('span', { className: 'cap-quote' }, p.quote));
+        z === 2 && p.quote && h('span', { className: 'cap-quote' }, phrases(p.quote)));
       a.append(h('span', { className: 'par' }, h('span', { className: 'bob' }, frame, cap)));
       a.addEventListener('pointerenter', () => router.prefetch(a.href));
       a.addEventListener('touchstart', () => router.prefetch(a.href), { passive: true });
@@ -569,7 +578,7 @@ export default {
       sheet.classList.toggle('mini-on', Boolean(openL) && (trackAway || Boolean(cur && !mine)));
       if (mine && !st.error) { tickTime(st); return; }
       S.time.classList.add('cn');
-      S.time.textContent = mine ? '这首歌没放出来，再点一下试试' : '点一下才响';
+      S.time.replaceChildren(...phrases(mine ? '这首歌没放出来，再点一下试试' : '点一下才响'));
       S.line.style.setProperty('--prog', '0');
     }
     player.on('change', paint);
