@@ -16,7 +16,7 @@
  *   --letter-leading     one line of the letter's rhythm; photo blocks are N of them tall   (1.5rem)
  *   --flip-duration      (.7s)                 --flip-margin        (1.5rem 0)
  *   --flip-front-bg      (#fafaf8)             --flip-back-bg       (#f5f0e8)
- *   --flip-front-ink     (inherit)             --flip-back-pad      (1.5rem)
+ *   --flip-front-ink     (#23221f)             --flip-back-pad      (1.5rem)
  *   --flip-front-border  (1px solid #e8e8e4)   --flip-photo-shadow  (0 2px 12px rgb(0 0 0 / .18))
  *   --flip-front-pad     (2rem 1.5rem)         --flip-hint-ink      (currentColor at 45%)
  *   --flip-focus         (currentColor)
@@ -102,7 +102,9 @@
 
 .flip-card-front {
   padding: var(--flip-front-pad, 2rem 1.5rem);
-  color: var(--flip-front-ink, inherit);
+  /* The default card is a light card with dark ink, whatever the theme around it: under a dark
+     theme, ink inherited from the page would be light text on this light paper. */
+  color: var(--flip-front-ink, #23221f);
   background: var(--flip-front-bg, #fafaf8);
   border: var(--flip-front-border, 1px solid #e8e8e4);
 }
