@@ -66,6 +66,20 @@ export function createRouter({ letters, site, page, prepare = () => {} }) {
   // Unique even when the clock stands still (tests freeze it) and across reloads of the same tab.
   const newKey = () => `${Date.now().toString(36)}-${(seq++).toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
+  // Scroll positions outlive the document in sessionStorage, so a reload, or Back to a page that
+  // was left by a real page load, finds the reader's place again. They cannot be written into
+  // history.state while the page is being left: Chrome drops a replaceState made during a
+  // reload, and in WebKit one made during pagehide wipes the entry's state altogether (the page
+  // then comes back with history.state === null). So: never call replaceState from pagehide.
+  const STORE = 'f221:scroll';
+  function recall() {
+    try { for (const [k, y] of Object.entries(JSON.parse(sessionStorage.getItem(STORE)) || {})) scrolls.set(k, y); } catch { /* storage unavailable */ }
+  }
+  function remember() {
+    scrolls.set(key, window.scrollY);
+    try { sessionStorage.setItem(STORE, JSON.stringify(Object.fromEntries([...scrolls].slice(-40)))); } catch { /* storage unavailable */ }
+  }
+
   const here = () => normPath(location.href);
   const current = { type: page.type, url: page.url, hash: '', letter: page.letter || null, contentEl: page.contentEl || null, scrollY: 0 };
   let currentPath = here();
@@ -277,15 +291,18 @@ export function createRouter({ letters, site, page, prepare = () => {} }) {
     history.replaceState(stamp(from ? { from } : null), '');
     // We restore scroll ourselves: the browser cannot know how tall a view the theme is about to draw.
     history.scrollRestoration = 'manual';
+    recall();
     const nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
-    if (state.scroll && nav && nav.type !== 'navigate') {              // came back to this page by Back or reload
-      window.scrollTo(0, state.scroll);
-      requestAnimationFrame(() => window.scrollTo(0, state.scroll));
+    const scrollY = scrolls.has(key) ? scrolls.get(key) : state.scroll || 0;
+    if (scrollY && nav && nav.type !== 'navigate') {                   // came back to this page by Back or reload
+      window.scrollTo(0, scrollY);
+      requestAnimationFrame(() => window.scrollTo(0, scrollY));
     }
     document.addEventListener('click', onClick);
     window.addEventListener('popstate', onPop);
     window.addEventListener('scroll', () => scrolls.set(key, window.scrollY), { passive: true });
-    window.addEventListener('pagehide', () => { try { history.replaceState(stamp({ scroll: window.scrollY }), ''); } catch { /* ignore */ } });
+    window.addEventListener('pagehide', remember);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') remember(); });   // iOS often skips pagehide
   }
 
   return {

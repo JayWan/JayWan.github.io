@@ -410,19 +410,48 @@ test.describe('router: the corners', () => {
     await fresh.close();
   });
 
+  test('a reload keeps the reader\'s place', async ({ page, request, baseURL }) => {
+    const { letters } = await getIsland(request);
+    await openProbe(page);
+    await page.evaluate(() => window.scrollTo(0, 900));
+    await page.reload();
+    await page.waitForSelector('html[data-theme-ready="probe"]');
+    await expect.poll(() => page.evaluate(() => window.scrollY), 'the list, reloaded').toBe(900);
+
+    await ctx(page, (c, url) => c.router.go(url), letters[5].url);       // a letter reached without a page load
+    await expect(page.locator('#theme-root h1')).toHaveText(letters[5].title);
+    await page.evaluate(() => window.scrollTo(0, 400));
+    await page.reload();
+    await page.waitForSelector('html[data-theme-ready="probe"]');
+    await expect.poll(() => page.evaluate(() => window.scrollY), 'the letter, reloaded').toBe(400);
+    await page.goBack();                                                  // and the list is still where it was
+    await expect(page.locator('#theme-root .p-list')).toBeVisible();
+    await expect.poll(() => page.evaluate(() => window.scrollY), 'Back after the reload').toBe(900);
+    await page.goForward();
+    await expect(page.locator('#theme-root h1')).toHaveText(letters[5].title);
+    await expect.poll(() => page.evaluate(() => window.scrollY), 'Forward').toBe(400);
+
+    await page.goto(new URL(letters[2].url, baseURL).href);              // a fresh visit to a page starts at its top
+    await page.waitForSelector('html[data-theme-ready="probe"]');
+    await page.goto('/');
+    await page.waitForSelector('html[data-theme-ready="probe"]');
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  });
+
   test('"back to the list" after a real page load: the standalone letter', async ({ page, request, baseURL }) => {
     const { gift } = await samplePages(request);
     await openProbe(page);
     const link = page.locator(`#theme-root .p-list a[href="${gift}"]`);
-    await link.scrollIntoViewIfNeeded();
+    await page.evaluate(() => window.scrollTo(0, 150));                   // the link is near the top of the list: still on screen
     const scrollAtHome = await page.evaluate(() => window.scrollY);
+    expect(scrollAtHome).toBe(150);
     await link.click();                                                   // a full page load
     await page.waitForFunction(() => document.documentElement.getAttribute('data-theme-ready') === 'probe' && window.__theme.ctx.page.type === 'letter');
     expect(await page.evaluate(() => history.state.from)).toBe('/');
     await page.locator('#theme-root a[data-back]').click();
     await expect(page).toHaveURL(new URL('/', baseURL).href);
     await expect(page.locator('#theme-root .p-list')).toBeVisible();
-    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(scrollAtHome - 80);
+    await expect.poll(() => page.evaluate(() => window.scrollY), 'the list is where the reader left it').toBe(scrollAtHome);
   });
 });
 
