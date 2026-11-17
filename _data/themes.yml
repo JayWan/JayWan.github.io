@@ -8,7 +8,8 @@
 #   name     界面上显示的名字
 #   ground   底色。页面一打开先铺这个颜色，样式表到达之前不会闪白
 #   dark     是不是深色主题（夜里只抽深色的）
-#   fonts    用到的字体，每个名字对应 assets/fonts/<名字>.css，只在这个主题下加载
+#   fonts    用到的字体，每个名字对应 assets/fonts/<名字>.css（有哪些见 assets/fonts/README.md），只在这个主题下加载。
+#            文件不存在的名字会被跳过（页面改用 theme.css 里写的后备字体），npm test 会指出写错的名字
 #   dates    这个主题的日子（访客本地日期，"月-日"）。那天新的到访一定是它
 #   enabled  false = 不参加抽选，纪念日也不出现；仍然可以用 ?theme=<id> 预览
 #   hidden   true  = 永远不参加抽选，只能用 ?theme=<id> 打开（契约测试用的 probe）
@@ -29,7 +30,7 @@ themes:
     name: 夜航
     ground: "#14130f"
     dark: true
-    fonts: [noto-serif-sc, noto-sans-sc, ibm-plex-mono]
+    fonts: [serif-sc, sans-sc-400, mono]
     dates: ["11-28"]              # 认识
     enabled: true
 
@@ -37,7 +38,7 @@ themes:
     name: 笺
     ground: "#F4F1EA"
     dark: false
-    fonts: [zhuque-fangsong, eb-garamond]
+    fonts: [fangsong, garamond]
     dates: ["08-12"]              # 结婚
     enabled: true
 
@@ -45,7 +46,7 @@ themes:
     name: Side A / Side B
     ground: "#EFEBE2"
     dark: false
-    fonts: [noto-sans-sc, archivo]
+    fonts: [sans-sc, grotesk]
     dates: ["02-06", "07-04"]     # 两个人的生日
     enabled: true
 
@@ -53,7 +54,7 @@ themes:
     name: 绕日
     ground: "#0B3566"
     dark: true
-    fonts: [noto-serif-sc, source-serif-4]
+    fonts: [serif-sc, text]
     dates: ["02-21"]              # 在一起
     enabled: true
 

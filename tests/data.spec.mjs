@@ -110,6 +110,25 @@ test('the inline boot script stays small and knows exactly the themes that have 
   }
 });
 
+test('the fonts named in _data/themes.yml exist', () => {
+  // The boot script leaves out a font whose stylesheet is missing (the theme then shows its
+  // fallback fonts), so a misspelt name would go unnoticed on the page. It is noticed here.
+  // Skipped in a checkout that has no fonts at all yet.
+  const fontsDir = path.join(root, 'assets/fonts');
+  test.skip(!existsSync(fontsDir), 'assets/fonts is not in this checkout yet');
+  const registry = readFileSync(path.join(root, '_data/themes.yml'), 'utf8');
+  const entries = registry.split(/^\s*- id:\s*/m).slice(1);
+  expect(entries.length).toBeGreaterThan(4);
+  for (const entry of entries) {
+    const id = entry.split('\n')[0].trim();
+    const fonts = (/^\s*fonts:\s*\[(.*)\]/m.exec(entry) || [])[1];
+    expect(fonts, `${id}: fonts is written as a [list] on one line`).not.toBeUndefined();
+    for (const font of fonts.split(',').map((name) => name.trim()).filter(Boolean)) {
+      expect(existsSync(path.join(fontsDir, `${font}.css`)), `${id}: assets/fonts/${font}.css`).toBe(true);
+    }
+  }
+});
+
 test('theme files stay within their budgets', () => {
   for (const id of themeIds) {
     const dir = path.join(root, 'assets/themes', id);

@@ -22,7 +22,7 @@
                    file is loaded from this site. (Chrome may refuse a cross-site script that was
                    added with document.write on a very slow connection; the classic scripts would
                    then fail on the first "$".)
-         others    assets/fonts/<name>.css for each font in the registry, shared/widgets.css,
+         others    assets/fonts/<name>.css for each font in the registry that exists, shared/widgets.css,
                    assets/themes/<id>/theme.css, and modulepreload hints for the core and the theme
     4. defines __c(), used by _includes/classic-only.html to write classic-only markup
     5. leaves window.__theme = { id, by, v, page, themes, fail() } for assets/js/core/main.js
@@ -54,7 +54,15 @@
     {%- if t.enabled == false or t.hidden -%}{%- assign draw = 0 -%}{%- endif -%}
     {%- assign dark = 0 -%}
     {%- if t.dark -%}{%- assign dark = 1 -%}{%- endif -%}
-    {%- capture one -%},[{{ t.id | jsonify }},{{ t.name | jsonify }},{{ dark }},{{ draw }},{%- if t.fonts -%}{{ t.fonts | jsonify }}{%- else -%}[]{%- endif -%}]{%- endcapture -%}
+    {%- comment -%} Only the fonts whose stylesheet exists in this build: a name without a file would be a 404
+    in front of every page of the theme. (tests/data.spec.mjs reports a misspelt name.) {%- endcomment -%}
+    {%- assign fonts = '' -%}
+    {%- for f in t.fonts -%}
+      {%- assign css = '/assets/fonts/' | append: f | append: '.css' -%}
+      {%- assign have = site.static_files | where: 'path', css | size -%}
+      {%- if have > 0 -%}{%- capture fonts -%}{{ fonts }},{{ f | jsonify }}{%- endcapture -%}{%- endif -%}
+    {%- endfor -%}
+    {%- capture one -%},[{{ t.id | jsonify }},{{ t.name | jsonify }},{{ dark }},{{ draw }},[{{ fonts | remove_first: ',' }}]]{%- endcapture -%}
     {%- assign boot_themes = boot_themes | append: one -%}
     {%- if draw == 1 -%}
       {%- for d in t.dates -%}
