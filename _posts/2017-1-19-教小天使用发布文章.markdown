@@ -15,6 +15,7 @@ bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 胆小鬼.mp3
 quote: "u supposed to be out of my list, but life makes a miracle."
+coauthor: Pikachi           # most of the body is hers, written 2017-04-12: her first words on the site
 ---
 
 <b>“我要问你一个问题”<br>

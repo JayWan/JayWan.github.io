@@ -10,11 +10,13 @@ image:
   feature: 7.jpg
   topPosition: 0px
   focus: [0.5, 0.3]
+  own: false                 # not their own photo (a picture found online): themes keep it small
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 寂静之声.mp3
 quote: "尽管爱永远说不完，还是要用力去说吧。"
+days: { met: 295 }          # the letter counts 295 (inclusive); themes show the letter's own number
 ---
 
 ### 永远说不完的爱

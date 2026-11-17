@@ -8,6 +8,7 @@
 //   assets/m/hero/<stem>-<ext>-<width>.jpg   AVIF for browsers that take it, JPEG for the rest
 //   _data/media.json                         what the templates and themes need to know:
 //       hero.<file>  : { w, h, color, lqip, base, widths }
+//       posts.<file> : { w, h, base?, widths? }   pictures used inside letters
 //       tracks.<file>: { duration, title, artist, bytes }
 //
 // A full-size cover is 0.1 – 11 MB; the home page used to load all 31 of them (45 MB).
@@ -84,6 +85,44 @@ async function covers() {
     };
   }
   return { hero, made, count: names.length };
+}
+
+// ---------------------------------------------------------------- pictures inside letters
+
+// Letters embed pictures from assets/images/posts/ (often as CSS backgrounds, with no size).
+// Themes need the real dimensions to lay them out without jumps; stills wider than 1200px
+// also get lighter copies (the largest original is 4.5 MB).
+async function inLetter() {
+  const SRC = path.join(root, 'assets/images/posts');
+  const DST = path.join(root, 'assets/m/posts');
+  await mkdir(DST, { recursive: true });
+  const out = {};
+  let made = 0;
+  for (const name of (await readdir(SRC)).filter((n) => /\.(jpe?g|png|gif)$/i.test(n)).sort()) {
+    const src = path.join(SRC, name);
+    const meta = await (await sharp(src)).metadata();
+    const [w, h] = (meta.orientation ?? 1) >= 5 ? [meta.height, meta.width] : [meta.width, meta.height];
+    const entry = { w, h };
+    const still = !/\.gif$/i.test(name) && !meta.hasAlpha;
+    if (still && w > 1200) {
+      const slug = name.replace(/\.(\w+)$/, '-$1').toLowerCase();
+      entry.base = `/assets/m/posts/${slug}`;
+      entry.widths = [...new Set([800, 1600].map((x) => Math.min(x, w)))];
+      const srcTime = await mtime(src);
+      for (const width of entry.widths) {
+        for (const ext of ['avif', 'jpg']) {
+          const file = path.join(DST, `${slug}-${width}.${ext}`);
+          if (!force && (await mtime(file)) > srcTime) continue;
+          const img = (await sharp(src)).rotate().resize({ width, withoutEnlargement: true });
+          if (ext === 'avif') await img.avif({ quality: 52, effort: 4 }).toFile(file);
+          else await img.jpeg({ quality: 80, mozjpeg: true, progressive: true }).toFile(file);
+          made++;
+        }
+      }
+    }
+    out[name] = entry;
+  }
+  return { posts: out, made };
 }
 
 // ---------------------------------------------------------------- songs
@@ -178,8 +217,9 @@ async function tracks() {
 
 const t0 = Date.now();
 const { hero, made, count } = await covers();
+const { posts, made: madePosts } = await inLetter();
 const songs = await tracks();
 await mkdir(path.dirname(DATA), { recursive: true });
-const json = JSON.stringify({ hero, tracks: songs }, null, 1) + '\n';
+const json = JSON.stringify({ hero, posts, tracks: songs }, null, 1) + '\n';
 if ((await readFile(DATA, 'utf8').catch(() => '')) !== json) await writeFile(DATA, json);
-console.log(`images: ${count} covers, ${Object.keys(songs).length} songs, ${made} file(s) written in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+console.log(`images: ${count} covers, ${Object.keys(posts).length} in-letter pictures, ${Object.keys(songs).length} songs, ${made + madePosts} file(s) written in ${((Date.now() - t0) / 1000).toFixed(1)}s`);

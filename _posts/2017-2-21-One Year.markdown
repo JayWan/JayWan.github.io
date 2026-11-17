@@ -15,6 +15,7 @@ bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 开不了口.mp3
 quote: "我也不想成为你的故事，想成为你的生活"
+written_on: 2017-02-21   # the date in `date` is a typo that became the URL; themes show this one
 ---
 
 可爱又亲爱还挚爱的范雅琪：

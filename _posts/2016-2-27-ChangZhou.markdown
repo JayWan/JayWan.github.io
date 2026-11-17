@@ -10,6 +10,7 @@ image:
   feature: 4.jpg
   topPosition: -300px
   focus: [0.5, 0.5]
+  own: false                 # not their own photo (a picture found online): themes keep it small
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no

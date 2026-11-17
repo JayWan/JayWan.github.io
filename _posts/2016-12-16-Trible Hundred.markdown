@@ -10,11 +10,13 @@ image:
   feature: 11.jpg
   topPosition: -300px
   focus: [0.38, 0.6]
+  own: false                 # not their own photo (a picture found online): themes keep it small
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: No One But You.mp3
 quote: "我书桌上属于你的那一角也永远是整齐的。"
+days: { together: 300 }     # the letter counts 300 (inclusive)
 ---
 
 <blockquote class="u--startsWithDoubleQuote">标题的正确打开方式应该是这样的</blockquote>
