@@ -172,10 +172,17 @@ export default {
       // Returning nothing lets the core set the scroll position (top for a link, the old place for Back).
     }
 
-    // Esc on a letter = "back to the list": router.home() is the Back button when the list is the
-    // previous history entry, and a soft navigation to "/" otherwise.
+    // Keys on a letter. Esc = "back to the list": router.home() is the Back button when the list is
+    // the previous history entry, and a soft navigation to "/" otherwise. ← / → = the letter before
+    // and after: go(url, { replace: true }) says out loud what the core does anyway between two
+    // letters, it takes the place of the history entry instead of adding one.
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && !event.defaultPrevented && router.current.type === 'letter') router.home();
+      const { type, letter } = router.current;
+      if (type !== 'letter' || event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.target.closest && event.target.closest('input, textarea, select')) return;   // the seek bar uses the arrows itself
+      if (event.key === 'Escape') router.home();
+      else if (event.key === 'ArrowLeft' && letter.prev) router.go(letter.prev.url, { replace: true });
+      else if (event.key === 'ArrowRight' && letter.next) router.go(letter.next.url, { replace: true });
     });
 
     show(router.current);       // the page we landed on: { type, letter, contentEl } just like a route
