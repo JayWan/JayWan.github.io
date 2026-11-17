@@ -42,6 +42,16 @@ test.describe('player', () => {
     await expect.poll(async () => (await playerState(page)).time).toBeGreaterThan(59);
     expect((await playerState(page)).time).toBeLessThan(70);
 
+    // switching songs: the new one is loading, and is not "playing" until it makes a sound
+    expect(await ctx(page, (c) => { c.player.toggle(c.letters[3]); const { letter, playing, loading, time } = c.player.state; return [letter.no, playing, loading, time]; })).toEqual([letters[3].no, false, true, 0]);
+    await expect.poll(async () => (await playerState(page)).playing).toBe(true);
+    await page.locator(`#theme-root [data-play="${second.no}"]`).click();
+    await expect.poll(async () => { const now = await playerState(page); return [now.no, now.playing]; }).toEqual([second.no, true]);
+
+    // a letter without a song, and toggle() with nothing to toggle, are ignored
+    await ctx(page, (c) => { c.player.toggle({ no: 99, song: null }); });
+    expect((await playerState(page)).no).toBe(second.no);
+
     // next / prev walk the letters that have a song
     await ctx(page, (c) => c.player.next());
     await expect.poll(async () => (await playerState(page)).no).toBe(letters[letters.length - 1].no);
@@ -76,6 +86,32 @@ test.describe('player', () => {
     expect((await playerState(page)).playing).toBe(false);
     await expect(page.locator('#theme-root .p-bar-title')).toContainText('放不出来');
     expect(errors).toEqual([]);
+  });
+
+  test('a song that failed is loaded again on the next try', async ({ page }) => {
+    let broken = true;
+    await page.route('**/*.mp3', (route) => (broken ? route.fulfill({ status: 404, contentType: 'text/plain', body: 'Not found' }) : route.continue()));
+    await openProbe(page);
+    const play = page.locator('#theme-root [data-play]').first();
+    await play.click();
+    await expect.poll(async () => (await playerState(page)).error).toBe('failed');
+    broken = false;                                                        // the network is back
+    await play.click();
+    await expect.poll(async () => { const now = await playerState(page); return [now.playing, now.error]; }).toEqual([true, null]);
+    await ctx(page, (c) => c.player.pause());
+    await expect.poll(async () => (await playerState(page)).playing).toBe(false);
+  });
+
+  test('seeking before the song has loaded sets where it will start', async ({ page }) => {
+    await openProbe(page);
+    await ctx(page, (c) => c.player.seek(30));                             // nothing loaded: ignored
+    expect((await playerState(page)).time).toBe(0);
+    await page.locator('#theme-root [data-play]').first().click();
+    await ctx(page, (c) => c.player.seek(30));                             // right after the click, long before any audio has arrived
+    await expect.poll(async () => (await playerState(page)).playing).toBe(true);
+    const now = await playerState(page);
+    expect(now.time).toBeGreaterThanOrEqual(30);
+    expect(now.time).toBeLessThan(40);
   });
 
   test('the lock screen knows what is playing (Media Session)', async ({ page, request }) => {

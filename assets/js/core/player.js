@@ -21,10 +21,14 @@ const TIME_EVENT_MS = 250;   // 'time' fires at most 4 times per second
  *                             loading   true between asking for sound and getting it (show a spinner or nothing)
  *                             error     null | 'blocked' (the browser refused to play) | 'failed' (file missing / unreadable)
  *   player.toggle(letter)   play this letter's song; if it is the loaded one: pause / resume.
- *                           Without an argument: pause / resume whatever is loaded.
+ *                           Without an argument: pause / resume whatever is loaded (nothing loaded:
+ *                           nothing happens). A letter without a song: nothing happens.
+ *                           After error 'failed', toggle() and play() load the file again.
  *   player.play() / pause() resume / pause the loaded song
- *   player.seek(seconds)
- *   player.next() / prev()  the next / previous letter that has a song, and play it
+ *   player.seek(seconds)    clamped to 0 … duration; before the file has loaded it sets where
+ *                           playback will start. Nothing loaded: nothing happens.
+ *   player.next() / prev()  the next / previous letter that has a song, and play it. At either
+ *                           end of the archive nothing happens (no wrap-around).
  *   player.on('change', fn) letter, playing, loading, error or duration changed.   fn(state)
  *                           Redraw everything on it, the position included (a new song starts at 0).
  *   player.on('time', fn)   the position moved; at most 4 times a second.          fn(state)
@@ -51,6 +55,7 @@ export function createPlayer(letters, site) {
 
   function load(letter) {
     state.letter = letter;
+    state.playing = false;            // the song that was playing is gone; this one has not made a sound yet
     state.time = 0;
     state.duration = (letter.song && letter.song.duration) || 0;
     state.error = null;
@@ -105,11 +110,17 @@ export function createPlayer(letters, site) {
     state,
     toggle(letter = state.letter) {
       if (!letter || !letter.song) return;
-      if (letter !== state.letter) { load(letter); start(); }
+      // A song that failed is loaded afresh: the file may have been out of reach for a moment
+      // (a train, a lift), and a media element that has given up does not try again by itself.
+      if (letter !== state.letter || state.error === 'failed') { load(letter); start(); }
       else if (audio.paused) start();
       else audio.pause();
     },
-    play() { if (state.letter && audio.paused) start(); },
+    play() {
+      if (!state.letter) return;
+      if (state.error === 'failed') { load(state.letter); start(); }
+      else if (audio.paused) start();
+    },
     pause() { audio.pause(); },
     seek(seconds) {
       if (!state.letter) return;
