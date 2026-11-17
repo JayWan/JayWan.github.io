@@ -38,7 +38,7 @@ const latinOnly = (s) => /^[\x20-\x7e]+$/.test(s);
 // 封套怎么裁：默认按 cover.focus 裁成正方形。下面这些封面一裁就会把人或内容切掉
 // （两个人分站画面两头、拼贴、图表、插画），改成整幅放进方框，四周露出油墨底色。
 // 键是封面文件名；新的封面不在表里时，特别宽（≥ 2.1:1）的也整幅放。
-const FIT = new Set(['9.png', '10.jpg', '19.png', '20.jpg', '23.jpg', '24.png']);
+const FIT = new Set(['9.png', '10.jpg', '11.jpg', '18.png', '19.png', '20.jpg', '23.jpg', '24.png']);
 const fits = (cover) => Boolean(cover && (FIT.has(cover.file) || (cover.w && cover.h && cover.w / cover.h >= 2.1)));
 
 export default {
@@ -61,6 +61,8 @@ export default {
       const who = authorsOf(l);
       return sideOf(l) === 'ab' && who.length > 1 ? `${who[0]} 起头 · ${who.slice(1).join('、')} 写` : `${l.author} 写`;
     };
+    /** 歌手来自 mp3 的标签；「群星」这类合辑标签不是歌手，不印 */
+    const artistOf = (l) => { const a = l.song && l.song.artist ? l.song.artist.trim() : ''; return /^(群星|various( artists?)?|va|unknown( artist)?)$/i.test(a) ? '' : a; };
     const dayLines = (l) => {
       const d = l.days || {};
       return [d.met != null && `认识第 ${d.met} 天`, d.together != null && `相恋第 ${d.together} 天`, d.married != null && `结婚第 ${d.married} 天`].filter(Boolean);
@@ -322,7 +324,7 @@ export default {
             h('div', {},
               h('p', { class: 'sd-cap-lbl sd-l' }, `${SIDE_NAME[sideOf(l)]} · ${dot(l.date)}`, d != null && h('span', { class: 'sd-cap-day' }, ` · 认识第 ${d} 天`)),
               h('h2', { class: 'sd-cap-title' }, tx(l.title)),
-              l.song && h('p', { class: 'sd-cap-song' }, note(), l.song.title, l.song.artist ? ` · ${l.song.artist}` : ''))),
+              l.song && h('p', { class: 'sd-cap-song' }, note(), l.song.title, artistOf(l) ? ` · ${artistOf(l)}` : ''))),
           l.quote && h('p', { class: 'sd-cap-quote' }, l.quote));
       }
       function setOn(l) {
@@ -363,6 +365,7 @@ export default {
         }
         cuedRow.classList.add('is-cued', 'is-open');
         cuedRow.classList.toggle('is-playing', on);
+        if (ctx.env.touch && !phone.matches && !onLetter) panel(on ? l : null);   // 没有悬停的宽屏（平板）：右栏跟着正在放的那一行
       }
 
       // ---- 筛选 ----
@@ -466,7 +469,7 @@ export default {
         ['日期', [dot(l.date), h('small', {}, [season, fmt.date(l.date, 'weekday')].filter(Boolean).join(' · '))]],
         l.place && ['地点', [l.place]],
         dayLines(l).length && [guest ? '这一天' : '天数', dayLines(l).map((t, i) => h('span', {}, guest && !i ? `他们${t}` : t))],
-        l.song && ['歌', [l.song.title, h('small', {}, [l.song.artist, l.song.duration && fmt.clock(l.song.duration)].filter(Boolean).join(' · '))]],
+        l.song && ['歌', [l.song.title, h('small', {}, [artistOf(l), l.song.duration && fmt.clock(l.song.duration)].filter(Boolean).join(' · '))]],
         l.chars ? ['篇幅', [`${l.chars} 字`]] : null,
         ['编号', [guest ? '221–附' : `221–${pad3(trackNo.get(l))}`]],
       ].filter(Boolean);
@@ -483,7 +486,7 @@ export default {
         const btn = playBtn(l, 'sd-lplay');
         btn.addEventListener('click', () => player.toggle(l));
         songBox = h('div', { class: 'sd-sbox' }, btn,
-          h('div', {}, h('p', { class: 'sd-sname' }, l.song.title), h('p', { class: 'sd-sart' }, '这封信的歌', l.song.artist ? ` · ${l.song.artist}` : '', err)),
+          h('div', {}, h('p', { class: 'sd-sname' }, l.song.title), h('p', { class: 'sd-sart' }, '这封信的歌', artistOf(l) ? ` · ${artistOf(l)}` : '', err)),
           time, h('div', { class: 'sd-lprog' }, bar));
         band = { letter: l, bar, time, err };
       }
