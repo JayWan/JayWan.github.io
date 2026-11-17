@@ -49,9 +49,12 @@
 {%- assign boot_themes = '' -%}
 {%- assign boot_dates = '' -%}
 {%- for t in site.data.themes.themes -%}
+  {%- comment -%} A theme exists for the site once both of its files do. {%- endcomment -%}
   {%- assign js = '/assets/themes/' | append: t.id | append: '/theme.js' -%}
+  {%- assign css = '/assets/themes/' | append: t.id | append: '/theme.css' -%}
   {%- assign found = site.static_files | where: 'path', js | size -%}
-  {%- if t.id == 'classic' or found > 0 -%}
+  {%- assign styled = site.static_files | where: 'path', css | size -%}
+  {%- if t.id == 'classic' or found > 0 and styled > 0 -%}
     {%- assign draw = 1 -%}
     {%- if t.enabled == false or t.hidden -%}{%- assign draw = 0 -%}{%- endif -%}
     {%- assign dark = 0 -%}

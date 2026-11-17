@@ -11,9 +11,9 @@ export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 // Firefox prefetches rel="next"; on the real site that is a request to itself, not to someone else.
 const HOME = `https://${readFileSync(path.join(root, 'CNAME'), 'utf8').trim()}/`;
 
-/** Every theme that has files in assets/themes/<id>/ (the reference theme `probe` included). */
+/** Every theme that has its two files in assets/themes/<id>/ (the reference theme `probe` included). */
 export const themeIds = readdirSync(path.join(root, 'assets/themes'), { withFileTypes: true })
-  .filter((d) => d.isDirectory() && existsSync(path.join(root, 'assets/themes', d.name, 'theme.js')))
+  .filter((d) => d.isDirectory() && ['theme.js', 'theme.css'].every((file) => existsSync(path.join(root, 'assets/themes', d.name, file))))
   .map((d) => d.name)
   .sort((a, b) => (a === 'probe') - (b === 'probe') || a.localeCompare(b));
 
