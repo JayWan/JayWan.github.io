@@ -68,7 +68,7 @@ npm run preview        # http://127.0.0.1:4201
 npm test
 ```
 
-会先构建一遍网站，再用电脑上装的 Chrome 自动检查：每个主题的首页、信、404 能不能正常显示，有没有横向滚动，歌能不能放、换页时会不会断，主题坏掉时能不能回到旧版，选主题的规则对不对。大约一分钟。想连 iPhone 尺寸的 Safari 内核一起测，先运行一次 `npx playwright install webkit`。
+会先构建一遍网站，再用电脑上装的 Chrome 自动检查：每个主题的首页、信、404 能不能正常显示，有没有横向滚动，歌能不能放、换页时会不会断，主题坏掉时能不能回到旧版，选主题的规则对不对。大约一分钟。想连 iPhone 尺寸的 Safari 内核和 Firefox 一起测，先运行一次 `npx playwright install webkit firefox`。
 
 ### 样式
 

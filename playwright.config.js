@@ -5,12 +5,13 @@
 // - "webkit-iphone" is the closest thing to iOS Safari that runs off a Mac: WebKit at 402 × 874
 //   (iPhone 17 Pro). It is only added when Playwright's WebKit is installed
 //   (`npx playwright install webkit`); otherwise it is silently left out.
+// - "firefox" (desktop size) is added the same way when Playwright's Firefox is installed.
 // - tests/global-setup.mjs builds the site into tests/.site and serves it on a free port.
 //   SITE_DIR=<dir> skips the build and serves that directory instead.
 
 import { existsSync } from 'node:fs';
 import { createServer } from 'node:net';
-import { defineConfig, webkit } from '@playwright/test';
+import { defineConfig, firefox, webkit } from '@playwright/test';
 
 // The port is picked once, in the process that starts the run, and handed to the workers
 // through the environment: they load this file again and must agree on the address.
@@ -23,8 +24,9 @@ if (!process.env.TEST_PORT) {
   }));
 }
 
-let hasWebkit = false;
-try { hasWebkit = existsSync(webkit.executablePath()); } catch { /* not installed */ }
+const installed = (browser) => { try { return existsSync(browser.executablePath()); } catch { return false; } };
+const hasWebkit = installed(webkit);
+const hasFirefox = installed(firefox);
 
 const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 26_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.1 Mobile/15E148 Safari/604.1';
 
@@ -53,6 +55,10 @@ export default defineConfig({
     ...(hasWebkit ? [{
       name: 'webkit-iphone',
       use: { browserName: 'webkit', viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, userAgent: IPHONE_UA },
+    }] : []),
+    ...(hasFirefox ? [{
+      name: 'firefox',
+      use: { browserName: 'firefox', viewport: { width: 1440, height: 900 } },
     }] : []),
   ],
 });

@@ -438,6 +438,7 @@ npm start                        # http://localhost:4301
 - `http://localhost:4301/?theme=<id>` 强制用某个主题，并在本次到访里一直用它（之后的刷新、跳转都不用再带参数）。
 - `?theme=classic` 回到旧版，`?theme=random` 重新抽一次，`?theme=probe` 看参考主题。
 - 没启用（`enabled: false`）的主题也可以这样预览。
+- 404 页在 `http://localhost:4301/404/?theme=<id>`。（`permalink: pretty` 把 `404.html` 生成在 `/404/` 下，所以线上遇到不存在的地址时，GitHub Pages 显示的是它自己的 404 页，不是这一页。）
 
 ```bash
 npm test                                     # 全部测试
@@ -446,7 +447,7 @@ npx playwright test --project=chrome         # 只用 Chrome
 npx playwright test --ui                     # 带界面，能一步步看
 ```
 
-`npm test` 会先构建网站（到 `tests/.site/`），在一个空闲端口上起一个小服务器，然后用机器上装的 Chrome（1440 × 900）跑。装了 Playwright 的 WebKit（`npx playwright install webkit`）的话，还会用 WebKit 在 402 × 874 下再跑一遍，这是不用真机时最接近 iOS Safari 的办法。
+`npm test` 会先构建网站（到 `tests/.site/`），在一个空闲端口上起一个小服务器，然后用机器上装的 Chrome（1440 × 900）跑。装了 Playwright 的 WebKit（`npx playwright install webkit`）的话，还会用 WebKit 在 402 × 874 下再跑一遍，这是不用真机时最接近 iOS Safari 的办法；装了 Playwright 的 Firefox 也会多跑一遍。
 
 对 `assets/themes/` 里**每一个有文件的主题**，测试会检查（`tests/themes.spec.mjs`）：
 

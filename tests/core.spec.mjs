@@ -116,7 +116,7 @@ test.describe('router', () => {
     await expect(page.locator('#theme-root h1')).toHaveText(start.title);
     expect(await page.evaluate(() => document.querySelector('#theme-root .letter-body .content-body').dataset.mark)).toBe('landed');
     expect(await page.evaluate(() => window.__sameDocument), 'never reloaded').toBe(true);
-    expect(seen.requests.filter((u) => u.endsWith(new URL(letters[5].url, baseURL).pathname)).length, 'a letter is fetched once').toBe(1);
+    expect(seen.requests.filter((u) => u === new URL(letters[5].url, baseURL).href).length, 'a letter is fetched once').toBe(1);
     expect(seen.errors).toEqual([]);
   });
 

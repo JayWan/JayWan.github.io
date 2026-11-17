@@ -1,11 +1,15 @@
 // Shared by the spec files.
 
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect } from '@playwright/test';
 
 export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+// The site's public address. The pages name it in <link rel="canonical | next | prev">, and
+// Firefox prefetches rel="next"; on the real site that is a request to itself, not to someone else.
+const HOME = `https://${readFileSync(path.join(root, 'CNAME'), 'utf8').trim()}/`;
 
 /** Every theme that has files in assets/themes/<id>/ (the reference theme `probe` included). */
 export const themeIds = readdirSync(path.join(root, 'assets/themes'), { withFileTypes: true })
@@ -43,7 +47,7 @@ export function watch(page, baseURL) {
   page.on('pageerror', (err) => seen.errors.push(String(err)));
   page.on('console', (msg) => { if (msg.type() === 'error') seen.errors.push(`console: ${msg.text()}`); });
   page.on('request', (req) => seen.requests.push(req.url()));
-  seen.offSite = () => seen.requests.filter((u) => /^https?:/.test(u) && !u.startsWith(baseURL));
+  seen.offSite = () => seen.requests.filter((u) => /^https?:/.test(u) && !u.startsWith(baseURL) && !u.startsWith(HOME));
   seen.audio = () => seen.requests.filter((u) => /\.(mp3|m4a|ogg|wav)(\?|$)/i.test(u));
   seen.originals = () => seen.requests.filter((u) => /\/assets\/images\/(hero|thumbnail)\//.test(u));
   return seen;
