@@ -22,6 +22,9 @@ const SHOW_TIMEOUT = 2000;    // how long a new navigation waits for a show() th
  *   letters, site   from data.js
  *   page            ctx.page: { type, url, letter, contentEl }. The router keeps it up to date, so
  *                   ctx.page always describes what is on screen.
+ *   normalise(el, letter)   called once on every fetched letter body while it is still inside the
+ *                   document it was parsed in, before it is brought into this one (the core passes
+ *                   prose.prepare: pictures become lazy before they can start loading)
  *   prepare(el)     called once on every letter body the first time it is about to be shown
  *                   (the core passes widgets.init)
  *
@@ -51,7 +54,7 @@ const SHOW_TIMEOUT = 2000;    // how long a new navigation waits for a show() th
  * While a letter is being fetched, <html> carries the attribute data-navigating, so a theme can
  * show that something is happening.
  */
-export function createRouter({ letters, site, page, prepare = () => {} }) {
+export function createRouter({ letters, site, page, normalise = () => {}, prepare = () => {} }) {
   const bodies = new Map();     // normalised path → the live .content-body of that letter (in this document)
   const inert = new Map();      // normalised path → a fetched .content-body still inside its own parsed document
   const pending = new Map();    // normalised path → Promise of the fetch in flight
@@ -128,6 +131,7 @@ export function createRouter({ letters, site, page, prepare = () => {} }) {
     if (target.letter.standalone) throw new Error('standalone letter');
     const source = await fetchInert(target);
     if (bodies.has(target.path)) return bodies.get(target.path);     // another navigation got here first
+    normalise(source, target.letter);
     const body = document.importNode(source, true);
     inert.delete(target.path);
     prepare(body);

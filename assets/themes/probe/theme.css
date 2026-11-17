@@ -84,6 +84,15 @@ small, .p-days, .p-facts, .p-fine { color: var(--soft); font-size: .8125rem; }
 .letter-body blockquote { margin: 1.25em 0 0; padding-left: 1em; border-left: 3px solid var(--line); color: var(--soft); }
 .letter-body blockquote.largeQuote { padding: 0; border: 0; color: inherit; font-size: 1.125rem; text-align: center; }
 .letter-body blockquote p:first-child { margin-top: 0; }
+/* What ctx.prose.prepare() adds (the core has already run it on every body a theme receives):
+   blockquote.lyrics = set line by line; .quote-by = the closing "- somebody" line of a quotation;
+   figure.letter-figure (.is-gif / .is-portrait / .is-small) around every picture, with width and
+   height on the <img>; p.letter-signoff = the closing date-and-place lines of the flip card. */
+.letter-body blockquote.lyrics { padding-left: 1.5em; border-left-width: 1px; }
+.letter-body .quote-by { display: block; text-align: right; font-size: .875rem; }
+.letter-body .letter-figure { margin: 1.5rem 0 0; }
+.letter-body .letter-figure img { border-radius: 3px; }
+.letter-body .letter-signoff { text-align: right; color: var(--soft); }
 
 /* ---- the bar that follows the reader while a song is loaded ---- */
 .p-bar {

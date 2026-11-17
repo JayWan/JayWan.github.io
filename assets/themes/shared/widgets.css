@@ -5,7 +5,7 @@
  * has to rediscover them:
  *
  *   0. safety nets                 covers never wider than their box; a "busy" pointer while a letter loads
- *   1. letter content primitives   the photo blocks letters use (<div class="img img--14xLeading">)
+ *   1. letter content primitives   the pictures inside letters (<figure class="letter-figure">)
  *   2. the flip card               木婚快乐
  *   3. the gift box                29, 28, π
  *
@@ -41,7 +41,18 @@
 
 :where(.letter-body) :where(img, video) { max-width: 100%; height: auto; }
 
-/* Photos placed as backgrounds. The class says how many lines tall the block is (5x … 16x). */
+/* Pictures after ctx.prose.prepare() (core/prose.js):
+     <figure class="letter-figure [is-gif] [is-portrait] [is-small]"><img width height …></figure>
+   The picture keeps its proportions, is never wider than the column and never enlarged, and sits
+   in the middle. --fig-w is a width the author wrote on the picture itself ("70%"). A portrait
+   picture is kept within one screen. A theme overrides any of this with an ordinary rule. */
+:where(.letter-body) :where(.letter-figure) { margin: var(--letter-leading, 1.5rem) 0 0; }
+:where(.letter-figure) > :where(img) { display: block; margin: 0 auto; width: var(--fig-w, auto); max-width: 100%; height: auto; }
+:where(.letter-figure.is-portrait) > :where(img) { max-height: 85vh; max-height: 85svh; object-fit: contain; }
+
+/* Photos placed as backgrounds, as the classic page wrote them. prepare() turns every one of them
+   into a figure, so these rules only matter for a body that was not prepared. The class says how
+   many lines tall the block is (5x … 16x). */
 :where(.letter-body) .img { background: center / cover no-repeat; margin-top: var(--letter-leading, 1.5rem); }
 :where(.letter-body) .img--fullContainer img { width: 100%; }
 :where(.letter-body) .img--5xLeading { height: calc(5 * var(--letter-leading, 1.5rem)); }
