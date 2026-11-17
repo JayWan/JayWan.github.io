@@ -115,7 +115,7 @@ export default {
       const cx = W / 2, cy = H / 2;
       let R, band, rOut, rIn, dotR, sunR;
       if (mini) { R = Math.min(W, H) / 2 - (lab ? 24 : 2); band = 0; rOut = R - (lab ? 12 : 7); rIn = R * 0.19; dotR = lab ? 1.7 : 1.2; sunR = lab ? 4.5 : 3; }
-      else if (phone) { R = Math.min(W / 2 - 16, H / 2 - 22); band = 15; rOut = R - band - 8; rIn = R * 0.2; dotR = 2.8; sunR = 5.5; }
+      else if (phone) { R = Math.min(W / 2 - (W < 330 ? 26 : 16), H / 2 - 22); band = 15; rOut = R - band - 8; rIn = R * 0.2; dotR = 2.8; sunR = 5.5; }
       else {
         R = Math.min(W / 2 - (W < 700 ? 58 : 66), H / 2 - 34);
         // 图版左上角压着站名：圆不能碰到它
@@ -668,7 +668,7 @@ export default {
           h('p', { class: 'end' }, `T+${T} d`),
           h('nav', { class: 'pn', 'aria-label': '上一封、下一封、回到绕日图' }, pn(prev, -1), pn(letter.next, 1),
             backLink('pn-home', icon(20, 20, TARGET), h('span', {}, '回到绕日图')))));
-      return { el, enter() { let first = true; keepDrawn(loc, () => { const c = makeChart(loc, { mini: true }); if (c) c.select(letter.no, first); first = false; }); } };
+      return { el, enter() { let draw = !letter.quiet; keepDrawn(loc, () => { const c = makeChart(loc, { mini: true }); if (c) c.select(letter.no, draw); draw = false; }); } };      // 沉重的那封信：弧直接在那里，不画出来
     }
 
     function lostView() {

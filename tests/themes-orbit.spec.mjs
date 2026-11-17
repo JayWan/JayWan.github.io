@@ -114,6 +114,19 @@ test.describe('theme "orbit", its own promises', () => {
     }
   });
 
+  test('the page for an address without a letter is one centred column, with a way back', async ({ page }) => {
+    await open(page, '/404/', THEME);
+    const lost = page.locator('#theme-root .lost-body');
+    await expect(lost).toContainText('这个位置上没有信');
+    await expect(lost.locator('a[href="/"]')).toBeVisible();
+    const off = await page.evaluate(() => [...document.querySelectorAll('#theme-root .lost-body > *')].map((el) => {
+      const box = el.getBoundingClientRect();
+      return Math.abs((box.left + box.right) / 2 - window.innerWidth / 2);
+    }));
+    expect(Math.max(...off), 'everything sits on the centre line').toBeLessThan(8);
+    await expectNoSidewaysScroll(page);
+  });
+
   test('nothing moves under prefers-reduced-motion', async ({ browser, baseURL, request }) => {
     const context = await browser.newContext({ baseURL, reducedMotion: 'reduce', viewport: { width: 402, height: 874 } });
     const page = await context.newPage();

@@ -231,8 +231,8 @@ body { margin: 0; }
 .song { display: flex; align-items: center; gap: 14px; background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .song-meta { display: flex; flex-direction: column; min-width: 0; line-height: 1.35; }
 .song-k { font-size: 12px; letter-spacing: .18em; color: var(--ink-3); }
-.song-t { font-size: 16px; }
-.song-t small { font-size: 12.5px; color: var(--ink-2); margin-left: .8em; font-family: var(--serif); }
+.song-t { font-size: 16px; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: .8em; }      /* 歌手放不下时整个换到下一行 */
+.song-t small { font-size: 12.5px; color: var(--ink-2); font-family: var(--serif); white-space: nowrap; }
 .song-track { position: relative; flex: 1; min-width: 40px; height: 44px; cursor: pointer; }
 .song-track::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--line); }
 .song-track .ticks { position: absolute; left: 0; right: 0; top: calc(50% - 4px); height: 4px; background: repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 10%); border-right: 1px solid var(--line); }
@@ -312,7 +312,7 @@ body { margin: 0; }
 .pn-home { grid-column: 1 / -1; justify-content: center; min-height: 56px; border-top: 1px solid var(--line-2); font-size: 14px; color: var(--ink); }
 
 .lost-body { display: grid; justify-items: center; gap: 14px; text-align: center; padding: 48px 20px 64px; }
-.lost .loc { width: 220px; height: 220px; }
+.lost .loc { width: 220px; height: 220px; grid-column: auto; order: 0; margin: 0; }
 .lost .l-title { font-size: 30px; }
 .lost-p { font-size: 14px; color: var(--ink-2); margin-bottom: 14px; }
 
