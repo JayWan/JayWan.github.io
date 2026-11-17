@@ -404,11 +404,22 @@ export default {
           if (/[A-Za-z]{3}/.test(t) && !/[㐀-鿿]/.test(t)) { p.classList.add('q-en'); p.lang = 'en'; }
         }
       }
+      /* 着重号：加粗的每个汉字包一层，点画在字的正下方（不占行高）；西文画一道细线 */
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const texts = [];
+      for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+        const p = t.parentNode;
+        if (p.closest('b, strong') && !p.closest('code, .dz, .lz') && /[\u3400-\u9fffA-Za-z0-9]/.test(t.nodeValue)) texts.push(t);
+      }
+      for (const t of texts) {
+        const parts = t.nodeValue.match(/[\u3400-\u9fff]|[A-Za-z0-9][A-Za-z0-9 .,'’!?-]*[A-Za-z0-9]|[A-Za-z0-9]|[^\u3400-\u9fffA-Za-z0-9]+/g) || [];
+        t.replaceWith(...parts.map((s) => (/^[\u3400-\u9fff]$/.test(s) ? h('span', { class: 'dz' }, s) : /^[A-Za-z0-9]/.test(s) ? h('span', { class: 'lz' }, s) : s)));
+      }
       for (const p of el.querySelectorAll('p, div[align]')) {
         if (p.closest('.flip-card-back, .gift-scene')) continue;
         const t = p.textContent.trim();
         if (!t && p.querySelector('img') && !p.querySelector('p, div')) p.classList.add('fo-fig');
-        else if (p.tagName === 'P' && t.length < 80 && !p.nextElementSibling && /^(\d{4}\s*年\s*\d|-{4,})/.test(t)) p.classList.add('fo-sign');
+        else if (p.tagName === 'P' && t.length < 80 && (!p.nextElementSibling || p.nextElementSibling.matches('.flip-card-hint')) && /^(\d{4}\s*年\s*\d|-{4,})/.test(t)) p.classList.add('fo-sign');
         else if (p.tagName === 'P' && /^-{4,}.*-{4,}$/.test(t)) p.classList.add('fo-sign');
       }
     }
@@ -424,6 +435,16 @@ export default {
       const mb = (L + r).toFixed(2) + 'px', top = (r / 2).toFixed(2) + 'px';
       if (el.style.marginBottom !== mb) el.style.marginBottom = mb;
       if (el.style.top !== top) el.style.top = top;
+    }
+    /* 短信的笺是被两边的栏撑高的：把它补到整行，底边才落在格线上 */
+    function fit() {
+      const body = root.querySelector('.letter-body');
+      if (!body) return;
+      body.style.minHeight = '';
+      const cs = getComputedStyle(body), L = parseFloat(cs.lineHeight) || 36, H = body.getBoundingClientRect().height;
+      const inner = H - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - parseFloat(cs.borderTopWidth) - parseFloat(cs.borderBottomWidth);
+      const r = inner % L;
+      if (r > 0.5 && L - r > 0.5) body.style.minHeight = (H + L - r).toFixed(2) + 'px';
     }
     function snapAll(el) {
       if (ro) ro.disconnect();
@@ -463,6 +484,7 @@ export default {
     function settle(contentEl) {
       ctx.widgets.init(contentEl);
       snapAll(contentEl);
+      fit();
     }
 
     function lostView() {
@@ -583,8 +605,8 @@ export default {
 
     /* 栏数随宽度变；字体到了以后眉批要重排一次 */
     let rz = 0;
-    window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(layoutHome, 120); });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutHome);
+    window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { layoutHome(); fit(); }, 120); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layoutHome(); fit(); });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && root.dataset.view === 'letter' && !e.defaultPrevented && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '')) goHome();
     });
