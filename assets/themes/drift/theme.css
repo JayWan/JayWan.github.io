@@ -284,6 +284,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
   background: #1f1d18; border: 1px solid var(--line); font: 500 13px/1 var(--serif); letter-spacing: .14em; color: var(--text); cursor: pointer;
 }
 .has-open .ruler { opacity: .3; pointer-events: none; }
+@media (min-width: 760px) and (max-width: 999px) { .has-open .ruler { opacity: 0; } }   /* there the sheet reaches under the ruler */
 
 /* ───────── the sheet (the only bright surface) ───────── */
 .sheet { position: absolute; z-index: 20; color: var(--ink); }
@@ -408,7 +409,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 .sheet-foot { padding: 30px 96px 60px; }
 .sheet-sign { margin: 0; text-align: right; font: 400 12.5px/1.8 var(--mono); letter-spacing: .06em; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .sheet-sign b { display: block; font: 500 17px/1.6 var(--serif); letter-spacing: .06em; color: var(--ink); }
-.sheet-nav { display: grid; grid-template-columns: 1fr 1fr; margin-top: 54px; border-top: 1px solid var(--ink-line); border-bottom: 1px solid var(--ink-line); }
+.sheet-nav { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin-top: 54px; border-top: 1px solid var(--ink-line); border-bottom: 1px solid var(--ink-line); }
 .sn { display: block; padding: 20px 0 22px; text-decoration: none; color: var(--ink); min-height: 88px; }
 .sn-next { text-align: right; padding-left: 24px; border-left: 1px solid var(--ink-line); }
 .sn-prev { padding-right: 24px; }
@@ -540,6 +541,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 
   .foot { padding: 20px 22px calc(96px + env(safe-area-inset-bottom, 0px)); }
 }
+@media (max-width: 359px) { .sn-k { white-space: normal; line-height: 1.5; } }
 
 /* ═════════ reduced motion: everything is still ═════════ */
 @media (prefers-reduced-motion: reduce) {
