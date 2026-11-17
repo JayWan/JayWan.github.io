@@ -104,8 +104,9 @@ export default {
     const tdays = site.today.days;
     /* The river in miniature, lying on its side under the wordmark: honest, linear time from the day they met
        to today. One tick per letter, the line dashed over every silence, year marks below, a lamp where today is.
-       It says what the page is before anything is read: crowded years, empty years, and which end is now. */
-    const strip = h('div', { className: 'strip', 'aria-hidden': 'true' });
+       It says what the page is before anything is read: crowded years, empty years, and which end is now.
+       A drawing that carries meaning has a name for those who cannot see it; its marks are not read out one by one. */
+    const strip = h('div', { className: 'strip', role: 'img', 'aria-label': `${N} 封信，${dot(site.met)} 至 ${dot(today)}` });
     {
       const s0 = T(site.met), s1 = Math.max(T(today), s0 + DAY), pc = (t) => (clamp((t - s0) / (s1 - s0), 0, 1) * 100).toFixed(2) + '%';
       const put = (e, t, t2) => { e.style.left = pc(t); if (t2) e.style.right = `calc(100% - ${pc(t2)})`; strip.append(e); };
