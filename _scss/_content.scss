@@ -2,6 +2,12 @@
 // Content
 // --------------------------------------------------
 
+@use "variables" as *;
+@use "colors" as *;
+@use "z-index" as *;
+@use "mixins" as *;
+@use "typography" as *;
+
 // Post
 .postWrapper {
   position: relative;

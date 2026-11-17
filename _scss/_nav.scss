@@ -4,6 +4,10 @@
 //
 // Credit: Sidebar Toggle inspired by Lanyon theme by @mdo
 
+@use "colors" as *;
+@use "z-index" as *;
+@use "typography" as *;
+
 // Sidebar nav
 
 .sidebar {

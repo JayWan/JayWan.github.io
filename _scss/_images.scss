@@ -2,6 +2,8 @@
 // Images
 // --------------------------------------------------
 
+@use "typography" as *;
+
 .img {
   margin-top: $leading;
   background-repeat: no-repeat;

@@ -5,10 +5,10 @@
 // Credit: Bootstrap 3
 
 // Utilities
-@import "mixins/responsive-visibility";
-@import "mixins/vendor-prefixes";
+@forward "mixins/responsive-visibility";
+@forward "mixins/vendor-prefixes";
 
 // Layout
-@import "mixins/clearfix";
-@import "mixins/grid-framework";
-@import "mixins/grid";
+@forward "mixins/clearfix";
+@forward "mixins/grid-framework";
+@forward "mixins/grid";

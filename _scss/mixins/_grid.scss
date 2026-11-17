@@ -2,6 +2,9 @@
 //
 // Generate semantic grid columns with these mixins.
 
+@use "../variables" as *;
+@use "clearfix" as *;
+
 // Centered container element
 @mixin container-fixed($gutter: $grid-gutter-width) {
   margin-right: auto;

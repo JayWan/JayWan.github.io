@@ -2,6 +2,9 @@
 // Global
 // --------------------------------------------------
 
+@use "variables" as *;
+@use "z-index" as *;
+
 html,
 body {
   overflow-x: hidden;

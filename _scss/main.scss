@@ -1,29 +1,25 @@
 // Reset
-@import "normalize";
+@use "normalize";
 
-// Variables and mixins
-@import "variables";
-@import "colors";
-@import "z-index";
-@import "animations";
-@import "mixins";
+// Helper classes shipped with the animation mixins
+@use "animations";
 
 // Typography & images
-@import "typography";
-@import "images";
+@use "typography";
+@use "images";
 
 // Core
-@import "global";
-@import "scaffolding";
-@import "grid";
+@use "global";
+@use "scaffolding";
+@use "grid";
 
 // Components
-@import "nav";
-@import "hero";
-@import "flip-card";
-@import "content";
-@import "modal";
+@use "nav";
+@use "hero";
+@use "flip-card";
+@use "content";
+@use "modal";
 
 // Utility classes
-@import "utilities";
-@import "responsive-utilities";
+@use "utilities";
+@use "responsive-utilities";
