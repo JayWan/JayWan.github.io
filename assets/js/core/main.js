@@ -104,12 +104,14 @@ async function start() {
 
 /** The theme's stylesheet is render-blocking, so by now it has either loaded or failed.
  *  A theme without its CSS would be a page of unstyled text: treat that as a failed theme.
- *  Browsers give a failed <link> an empty sheet rather than none, so "loaded" means "has rules". */
+ *  Chrome and Safari give a failed <link> an empty sheet rather than none, so "loaded" means
+ *  "has rules"; a browser that gives it no sheet at all gets a moment to report the error. */
 function stylesheetLoaded() {
   const link = document.getElementById('theme-css');
   const hasRules = () => { try { return link.sheet.cssRules.length > 0; } catch { return false; } };
   if (!link) return Promise.resolve(false);
   if (hasRules()) return Promise.resolve(true);
+  if (link.sheet) return Promise.resolve(false);
   return new Promise((resolve) => {
     link.addEventListener('load', () => resolve(hasRules()));
     link.addEventListener('error', () => resolve(false));
