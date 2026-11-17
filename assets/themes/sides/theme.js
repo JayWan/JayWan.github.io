@@ -188,7 +188,7 @@ export default {
       P.play.disabled = !cur;
       if (cur) {
         P.no.replaceChildren(...noEl(cur, '').childNodes);
-        P.song.textContent = cur.song.title;
+        P.song.replaceChildren(...tx(cur.song.title));
         P.sub.replaceChildren(...(st.letter && st.error ? ['放不出来，再点一次试试'] : tx(cur.title)));
         P.meta.href = cur.url;
         P.meta.setAttribute('aria-label', `《${cur.song.title}》是《${cur.title}》的歌，去读这封信`);
@@ -294,7 +294,7 @@ export default {
         warm(a);
         const li = h('li', { class: 'sd-trk', 'data-side': s, 'data-quiet': l.quiet || null },
           noEl(l, 'sd-no'), a,
-          h('span', { class: 'sd-song' }, l.song ? [note(), l.song.title] : null),
+          h('span', { class: 'sd-song' }, l.song ? [note(), tx(l.song.title)] : null),
           h('time', { class: 'sd-date', datetime: l.date }, l.date.slice(5).replace('-', '.')),
           h('span', { class: 'sd-len' }, l.song && l.song.duration ? fmt.clock(l.song.duration) : ''),
           chip(s),
@@ -341,7 +341,7 @@ export default {
             h('div', {},
               h('p', { class: 'sd-cap-lbl sd-l' }, `${SIDE_NAME[sideOf(l)]} · ${dot(l.date)}`, d != null && h('span', { class: 'sd-cap-day' }, ` · 认识第 ${d} 天`)),
               h('h2', { class: 'sd-cap-title' }, tx(l.title)),
-              l.song && h('p', { class: 'sd-cap-song' }, note(), l.song.title, artistOf(l) ? ` · ${artistOf(l)}` : ''))),
+              l.song && h('p', { class: 'sd-cap-song' }, note(), tx(l.song.title), artistOf(l) ? ` · ${artistOf(l)}` : ''))),
           l.quote && h('p', { class: 'sd-cap-quote' }, l.quote));
       }
       function setOn(l) {
@@ -476,7 +476,7 @@ export default {
         h('span', {},
           h('p', { class: 'sd-pn-lbl sd-l' }, `${label} · ${SIDE_NAME[s]} · ${dot(l.date)}`),
           h('p', { class: 'sd-pn-title' }, tx(l.title)),
-          l.song && h('p', { class: 'sd-pn-song' }, note(), l.song.title)));
+          l.song && h('p', { class: 'sd-pn-song' }, note(), tx(l.song.title))));
       warm(a);
       return a;
     }
@@ -492,7 +492,7 @@ export default {
         ['日期', [dot(l.date), h('small', {}, [season, fmt.date(l.date, 'weekday')].filter(Boolean).join(' · '))]],
         l.place && ['地点', [l.place]],
         dayLines(l).length && [guest ? '这一天' : '天数', dayLines(l).map((t, i) => h('span', {}, guest && !i ? `他们${t}` : t))],
-        l.song && ['歌', [l.song.title, h('small', {}, [artistOf(l), l.song.duration && fmt.clock(l.song.duration)].filter(Boolean).join(' · '))]],
+        l.song && ['歌', [tx(l.song.title), h('small', {}, [artistOf(l), l.song.duration && fmt.clock(l.song.duration)].filter(Boolean).join(' · '))]],
         l.chars ? ['篇幅', [`${l.chars} 字`]] : null,
         ['编号', [guest ? '221–附' : `221–${pad3(trackNo.get(l))}`]],
       ].filter(Boolean);
@@ -509,7 +509,7 @@ export default {
         const btn = playBtn(l, 'sd-lplay');
         btn.addEventListener('click', () => player.toggle(l));
         songBox = h('div', { class: 'sd-sbox' }, btn,
-          h('div', {}, h('p', { class: 'sd-sname' }, l.song.title), h('p', { class: 'sd-sart' }, '这封信的歌', artistOf(l) ? ` · ${artistOf(l)}` : '', err)),
+          h('div', {}, h('p', { class: 'sd-sname' }, tx(l.song.title)), h('p', { class: 'sd-sart' }, '这封信的歌', artistOf(l) ? ` · ${artistOf(l)}` : '', err)),
           time, h('div', { class: 'sd-lprog' }, bar));
         band = { letter: l, bar, time, err };
       }
@@ -559,7 +559,7 @@ export default {
         bandEl,
         h('div', { class: 'sd-body' }, h('div', { class: 'sd-cols' },
           aside,
-          h('div', { class: 'sd-text' }, body, h('p', { class: 'sd-end' }, `${authorsOf(l).join(' & ')} · ${dot(l.date)}`)),
+          h('div', { class: 'sd-text' }, body, h('p', { class: 'sd-end' }, `${authorsOf(l).join('、')} · ${dot(l.date)}`)),
           h('aside', { class: 'sd-cred', 'aria-label': '署名' }, h('div', { class: 'sd-pin' },
             h('dl', { class: 'sd-credits' }, credits.map(([k, v]) => h('div', {}, h('dt', { class: 'sd-l' }, k), h('dd', {}, v)))))))),
         pn);

@@ -266,7 +266,7 @@ body { margin: 0; }
 .sd-credits div { padding: 11px 0 12px; border-bottom: 1px solid var(--rule); }
 .sd-credits dt { color: var(--ink-2); margin-bottom: 6px; }
 .sd-credits dd { margin: 0; font: 500 14px/1.6 var(--zh); }
-.sd-credits dd span, .sd-credits dd small { display: block; }
+.sd-credits dd > span, .sd-credits dd small { display: block; }
 .sd-credits dd small { font-size: 13px; font-weight: 400; color: var(--ink-2); }
 @media (min-height: 700px) { .sd-pin { position: sticky; top: 24px; } }
 
