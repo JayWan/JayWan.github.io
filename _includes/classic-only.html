@@ -1,0 +1,17 @@
+{%- comment -%}
+  Markup that only the classic theme may have: everything that would start a download or
+  needs jQuery (cover images, sidebar thumbnails, <audio autoplay>, the classic scripts).
+
+  How to use it: `capture` the markup into a variable, then include this file with
+  html=that variable (see index.html for the shortest example).
+
+  With JavaScript on, the content of <noscript> is plain text to the browser: nothing in it
+  is fetched, not even by the preload scanner. The tiny script right after it calls __c()
+  (defined in theme-boot.html), which writes that text into the page when the theme is
+  classic and does nothing otherwise. Written this way the markup is parsed exactly as if it
+  had been in the HTML all along, so the classic page is the page it has always been.
+  With JavaScript off, <noscript> shows its content, which is the classic site.
+
+  Do not put anything a new theme needs in here, and keep `.content-body` out of it.
+{%- endcomment -%}
+<noscript class="classic-only">{{ include.html }}</noscript><script>__c()</script>

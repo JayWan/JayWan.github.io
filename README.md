@@ -7,7 +7,7 @@
 需要安装以下两样东西，版本都写在 `mise.toml` 里：
 
 - **Ruby 3.4**：运行 Jekyll，整个网站（HTML、CSS、`letters.json`）都由它生成。
-- **Node.js 24**：只用来生成图片缩略图（sharp），不参与网站构建。
+- **Node.js 24**：生成封面的缩略图（sharp）和跑测试（Playwright），不参与网站构建。
 
 推荐用 [mise](https://mise.jdx.dev) 一次装好：在项目目录里运行 `mise install`。不用 mise 的话，自己装上面两个版本也可以，运行 `ruby -v` 和 `node -v` 确认。
 
@@ -19,7 +19,7 @@
 # 1. 安装 Ruby 依赖（Jekyll）
 bundle install
 
-# 2. 安装 Node.js 依赖（只有 sharp）
+# 2. 安装 Node.js 依赖（sharp 和 Playwright）
 npm install
 ```
 
@@ -46,12 +46,33 @@ npm run build
 生成的网站在 `_site/` 目录，和 GitHub Actions 上跑的是同一条命令。想在本地看构建结果：
 
 ```bash
-python3 -m http.server 4201 --bind 127.0.0.1 --directory _site
+npm run preview        # http://127.0.0.1:4201
 ```
+
+### 主题
+
+网站现在有好几套主题，每次到访自动挑一套：旧版（classic，就是原来的样子）、夜航（drift）、笺（folio）、Side A / Side B（sides）、绕日（orbit）。
+
+- **怎么挑**：离开网站超过 30 分钟再回来算一次新的到访，重新抽；同一次到访里刷新、点链接、后退都不会换。纪念日有固定的主题（2-21 绕日，11-28 夜航，2-6 和 7-4 Side A / Side B，8-12 笺，9-15 网站生日是旧版）。夜里 11 点到早上 6 点只抽深色的。其余时候轮流来，每套轮一遍才会重复。
+- **想看某一套**：在网址后面加 `?theme=名字`，比如 `http://localhost:4301/?theme=drift`。这次到访里会一直用它。`?theme=classic` 回到旧版，`?theme=random` 重新抽一次。在页面上直接敲 `221` 也会换到下一套。
+- **想停用某一套**：打开 `_data/themes.yml`，把那一套的 `enabled: true` 改成 `false`。除了 classic 都改成 `false`，就整个回到只有旧版的网站。纪念日和夜间时段也在这个文件里。
+- **出了问题怎么办**：某个主题加载失败或者报错，页面会自动换回旧版，不会白屏。浏览器太旧或者关掉了 JavaScript，看到的也是旧版。
+
+它的做法是：Jekyll 生成的还是旧版的 HTML；`<head>` 最前面的一小段脚本（`_includes/theme-boot.html`）先决定用哪个主题，抽到旧版就照原样加载，抽到别的就只加载那个主题自己的 CSS 和 JS，由它把页面重新画一遍。旧版的样式在 `_scss/`，新主题各自在 `assets/themes/<名字>/`，共用的部分在 `assets/js/core/`。
+
+要改主题或者新做一套，先看 [`assets/themes/README.md`](assets/themes/README.md)。
+
+### 测试
+
+```bash
+npm test
+```
+
+会先构建一遍网站，再用电脑上装的 Chrome 自动检查：每个主题的首页、信、404 能不能正常显示，有没有横向滚动，歌能不能放、换页时会不会断，主题坏掉时能不能回到旧版，选主题的规则对不对。大约一分钟。想连 iPhone 尺寸的 Safari 内核和 Firefox 一起测，先运行一次 `npx playwright install webkit firefox`。
 
 ### 样式
 
-入口是 `assets/css/main.scss`，各个模块在 `_scss/` 目录，由 Jekyll 自带的 Sass 编译成 `/assets/css/main.css`，仓库里不再有编译产物，也不需要单独编译 CSS。
+这一节说的是旧版（classic）的样式。入口是 `assets/css/main.scss`，各个模块在 `_scss/` 目录，由 Jekyll 自带的 Sass 编译成 `/assets/css/main.css`，仓库里不再有编译产物，也不需要单独编译 CSS。
 
 > 以前用 gulp 时生成在 `assets/css/` 里的 `main.css`、`main.min.css` 已经不再使用，Git 和 Jekyll 都会忽略它们，看到可以直接删掉。
 
@@ -59,14 +80,17 @@ python3 -m http.server 4201 --bind 127.0.0.1 --directory _site
 
 ### 图片
 
-封面图放在 `assets/images/hero/`，侧边栏用的缩略图在 `assets/images/thumbnail/`（同名文件，宽 350px）。
+封面图放在 `assets/images/hero/`。由它生成两样东西，都不用自己动手：
+
+- 旧版侧边栏用的缩略图，在 `assets/images/thumbnail/`（同名文件，宽 350px）。
+- 新主题用的几种尺寸（480 / 800 / 1200 / 1600px，AVIF 和 JPEG 各一份），在 `assets/m/`，不进 Git。新主题从不直接加载原图。
 
 ```bash
-npm run images              # 只生成缺少的缩略图
-npm run images -- --force   # 全部重新生成（比如替换了某张封面图之后）
+npm run images              # 只生成缺少的和封面换过的
+npm run images -- --force   # 全部重新生成（大约三分钟）
 ```
 
-`npm start` 和 `npm run build` 都会先跑一遍，GitHub Actions 也会，所以忘了提交缩略图也没关系。
+`npm start` 和 `npm run build` 都会先跑一遍，GitHub Actions 也会，所以忘了提交缩略图也没关系。同一个脚本还会读出每首歌的时长和演唱者，写进 `_data/media.json`（也不进 Git）。
 
 ## 写文章
 
@@ -81,18 +105,25 @@ layout: post
 title:  "木婚快乐"
 date:   2026-8-12 19:25:00     # 写信的日期和时间，不带时区
 excerpt: "一句话摘要"            # 可以留空 ""
-author: Pikajay                # 可省略，默认 Pikajay
+author: Pikajay                # Pikajay / Pikachi / 别的名字（新主题会把别人写的信当作客人的信）
 categories: Story
 image:
   feature: 32.jpg              # assets/images/hero/ 里的文件名
-  topPosition: -700px          # 文章页封面图的垂直偏移
-  heroPosition: "50% 40%"      # 可省略，首页卡片上封面图的位置
+  topPosition: -700px          # 旧版文章页封面图的垂直偏移
+  heroPosition: "50% 40%"      # 可省略，旧版首页卡片上封面图的位置
+  focus: [0.68, 0.6]           # 可省略，新主题裁切封面时要保住的中心点（横、纵，0–1），默认正中
 bgContrast: dark
 bgGradientOpacity: darker      # darker / lighter，可省略
 syntaxHighlighter: no
-bgm: 风之诗.mp3                 # assets/bgm/ 里的文件名
+bgm: 风之诗.mp3                 # assets/bgm/ 里的文件名，文件名就是新主题里显示的歌名
+quote: "你的双眸明亮，可能是灯火，可能是月光。"   # 可省略，从信里摘的一句，新主题的目录里会用
+place: "Oak Creek 家中"         # 可省略，写信的地方
+# standalone: true             # 信里自己写了 <script> 的才需要，表示这封信总是整页打开
+# quiet: true                  # 沉重的信才需要，新主题不会在它周围放俏皮的动效
 ---
 ```
+
+新的信发布之后，页脚里网站自己的那句话会知道它又被「喂」了一次。
 
 文章的网址是 `/story/年/月/日/文件名里的标题/`，例如 `/story/2026/08/12/木婚快乐/`：
 
@@ -102,7 +133,7 @@ bgm: 风之诗.mp3                 # assets/bgm/ 里的文件名
 
 ## 部署
 
-push 到 `master` 后由 `.github/workflows/jekyll.yml` 自动完成：按 `mise.toml` 安装 Ruby 和 Node.js → `bundle install` / `npm ci` → `npm run build` → 发布 `_site/` 到 GitHub Pages。
+push 到 `master` 后由 `.github/workflows/jekyll.yml` 自动完成：按 `mise.toml` 安装 Ruby 和 Node.js → `bundle install` / `npm ci` → 取回上一次生成的封面缩略图（只有新增或换过的封面需要重新生成）→ `npm run build` → 发布 `_site/` 到 GitHub Pages。
 
 ## License
 

@@ -1,0 +1,158 @@
+/*
+ * shared/widgets.css — loaded before theme.css under every new theme (never under classic).
+ *
+ * It holds the parts of a letter's own HTML that cannot work without CSS, so that no theme
+ * has to rediscover them:
+ *
+ *   0. safety nets                 covers never wider than their box; a "busy" pointer while a letter loads
+ *   1. letter content primitives   the photo blocks letters use (<div class="img img--14xLeading">)
+ *   2. the flip card               木婚快乐
+ *   3. the gift box                29, 28, π
+ *
+ * Only structure lives here. Everything visual reads a custom property with a neutral fallback:
+ * set the properties anywhere above the letter (on #theme-root, on .letter-body) to restyle,
+ * or simply override a rule in theme.css, which is loaded after this file.
+ *
+ *   --letter-leading     one line of the letter's rhythm; photo blocks are N of them tall   (1.5rem)
+ *   --flip-duration      (.7s)                 --flip-margin        (1.5rem 0)
+ *   --flip-front-bg      (#fafaf8)             --flip-back-bg       (#f5f0e8)
+ *   --flip-front-ink     (#23221f)             --flip-back-pad      (1.5rem)
+ *   --flip-front-border  (1px solid #e8e8e4)   --flip-photo-shadow  (0 2px 12px rgb(0 0 0 / .18))
+ *   --flip-front-pad     (2rem 1.5rem)         --flip-hint-ink      (currentColor at 45%)
+ *   --flip-focus         (currentColor)
+ *   --gift-margin        (3rem 0)              --gift-radius        (18px)
+ *   --gift-ink           (inherit)             --gift-shadow        (0 24px 64px rgb(0 0 0 / .4))
+ */
+
+/* ---------------------------------------------------------------- 0. safety nets */
+
+/* :where() keeps all of these at zero specificity: any rule in a theme wins without a fight. */
+
+/* A cover from ctx.img() carries the width / height of the original photo (4032 × 3024 …) so the
+   page does not jump while it loads. Left unsized by a theme, it would be as wide as the photo. */
+:where(#theme-root) :where(picture) > :where(img) { max-width: 100%; height: auto; }
+
+/* The core is waiting for a letter to arrive (see ctx.router): say so with the pointer at least.
+   A theme can do better with its own rule on html[data-navigating]. */
+:where(html[data-navigating]),
+:where(html[data-navigating]) :where(a, button) { cursor: progress; }
+
+/* ---------------------------------------------------------------- 1. letter content primitives */
+
+:where(.letter-body) :where(img, video) { max-width: 100%; height: auto; }
+
+/* Photos placed as backgrounds. The class says how many lines tall the block is (5x … 16x). */
+:where(.letter-body) .img { background: center / cover no-repeat; margin-top: var(--letter-leading, 1.5rem); }
+:where(.letter-body) .img--fullContainer img { width: 100%; }
+:where(.letter-body) .img--5xLeading { height: calc(5 * var(--letter-leading, 1.5rem)); }
+:where(.letter-body) .img--6xLeading { height: calc(6 * var(--letter-leading, 1.5rem)); }
+:where(.letter-body) .img--7xLeading { height: calc(7 * var(--letter-leading, 1.5rem)); }
+:where(.letter-body) .img--8xLeading { height: calc(8 * var(--letter-leading, 1.5rem)); }
+:where(.letter-body) .img--9xLeading { height: calc(9 * var(--letter-leading, 1.5rem)); }
+:where(.letter-body) .img--10xLeading { height: calc(10 * var(--letter-leading, 1.5rem)); }
+:where(.letter-body) .img--11xLeading { height: calc(11 * var(--letter-leading, 1.5rem)); }
+:where(.letter-body) .img--12xLeading { height: calc(12 * var(--letter-leading, 1.5rem)); }
+:where(.letter-body) .img--13xLeading { height: calc(13 * var(--letter-leading, 1.5rem)); }
+:where(.letter-body) .img--14xLeading { height: calc(14 * var(--letter-leading, 1.5rem)); }
+:where(.letter-body) .img--15xLeading { height: calc(15 * var(--letter-leading, 1.5rem)); }
+:where(.letter-body) .img--16xLeading { height: calc(16 * var(--letter-leading, 1.5rem)); }
+
+/* ---------------------------------------------------------------- 2. flip card */
+
+/*
+ * <div class="flip-card [is-flipped]">
+ *   <div class="flip-card-inner">            height is set by core/widgets.js to the showing face
+ *     <div class="flip-card-front"> text … <span class="flip-card-hint">…</span> </div>
+ *     <div class="flip-card-back"> <img> </div>
+ */
+.flip-card {
+  perspective: 1200px;
+  width: 100%;
+  margin: var(--flip-margin, 1.5rem 0);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.flip-card:focus-visible { outline: 2px solid var(--flip-focus, currentColor); outline-offset: 4px; }
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+  transition: transform var(--flip-duration, .7s) cubic-bezier(.4, .2, .2, 1), height .4s ease;
+}
+.flip-card.is-flipped .flip-card-inner { transform: rotateY(180deg); }
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  box-sizing: border-box;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  /* Belt and braces: the face that is turned away is also switched off half-way through the
+     turn, when the card is edge-on. Engines that do not cull back faces (software rendering)
+     would otherwise paint the photo over the text. It also takes the hidden face out of the
+     tab order and the accessibility tree. */
+  transition: visibility 0s linear calc(var(--flip-duration, .7s) / 2);
+}
+.flip-card-back,
+.flip-card.is-flipped .flip-card-front { visibility: hidden; }
+.flip-card.is-flipped .flip-card-back { visibility: visible; }
+
+.flip-card-front {
+  padding: var(--flip-front-pad, 2rem 1.5rem);
+  /* The default card is a light card with dark ink, whatever the theme around it: under a dark
+     theme, ink inherited from the page would be light text on this light paper. */
+  color: var(--flip-front-ink, #23221f);
+  background: var(--flip-front-bg, #fafaf8);
+  border: var(--flip-front-border, 1px solid #e8e8e4);
+}
+.flip-card-front > :first-child { margin-top: 0; }
+
+.flip-card-back {
+  transform: rotateY(180deg);
+  padding: var(--flip-back-pad, 1.5rem);
+  background: var(--flip-back-bg, #f5f0e8);
+}
+.flip-card-back img { display: block; width: 100%; height: auto; box-shadow: var(--flip-photo-shadow, 0 2px 12px rgb(0 0 0 / .18)); }
+
+.flip-card-hint {
+  display: block;
+  margin-top: 1.5rem;
+  font-size: .75rem;
+  letter-spacing: .15em;
+  text-align: center;
+  color: var(--flip-hint-ink, currentColor);
+  opacity: var(--flip-hint-opacity, .45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flip-card-inner,
+  .flip-card-front,
+  .flip-card-back { transition: none; }
+}
+
+/* ---------------------------------------------------------------- 3. gift box */
+
+/*
+ * The letter brings its own <style> and <script> (it is a `standalone` letter): a tap on
+ * #gift-container fires confetti on a fixed <canvas id="confetti-canvas"> and swaps the box for
+ * #gift-reveal. The rules below only repair what the letter's own CSS assumes about the classic
+ * page. They are prefixed with #theme-root to win over that inline <style>, which comes later
+ * in the document.
+ *
+ * The canvas is position: fixed. No ancestor of the letter may have transform, filter or
+ * perspective while it is on screen, or the confetti is trapped inside that ancestor.
+ */
+#theme-root .gift-scene { margin: var(--gift-margin, 3rem 0); }
+#theme-root #gift-container { -webkit-tap-highlight-color: transparent; }
+#theme-root #gift-container:focus-visible { outline: 2px solid var(--flip-focus, currentColor); outline-offset: 4px; }
+#theme-root .gift-anim { width: min(300px, 80vw); height: auto; aspect-ratio: 1; }
+#theme-root .float-img { max-width: min(320px, 90%); height: auto; border-radius: var(--gift-radius, 18px); box-shadow: var(--gift-shadow, 0 24px 64px rgb(0 0 0 / .4)); }
+#theme-root .reveal-words { color: var(--gift-ink, inherit); }
+
+@media (prefers-reduced-motion: reduce) {
+  #theme-root .float-img,
+  #theme-root .reveal-words { animation: none; }
+}

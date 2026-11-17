@@ -26,6 +26,14 @@ baseurl_featured_thumbnail: '/assets/images/thumbnail/'
 baseurl_javascripts: '/assets/javascripts/'
 icon:                '/assets/images/icon.png'
 
+# The dates the themes count from (they travel to every page inside the data island,
+# see _includes/letters-data.html). Quoted on purpose: they are plain "YYYY-MM-DD" strings.
+milestones:
+  met:               "2015-11-28"
+  together:          "2016-02-21"
+  married:           "2021-08-12"
+  born:              "2016-09-15"   # the day this site was born
+
 author:
   name:              Pikajay
   facebook:          username
@@ -48,6 +56,11 @@ exclude:
   - package-lock.json
   - mise.toml
   - scripts
+  - tests
+  - playwright.config.js
+  - test-results
+  - playwright-report
+  - "assets/themes/*.md"    # the theme author's guide and any notes kept next to a theme (at any depth)
   # CSS files the old gulp pipeline left in working copies (git-ignored). If Jekyll
   # copied them, they would overwrite the freshly compiled stylesheet.
   - assets/css/main.css

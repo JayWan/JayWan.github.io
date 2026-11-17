@@ -1,0 +1,12 @@
+{%- comment -%}
+  Sets `page_type` for the page being rendered: home | letter | 404 | other.
+  Used by theme-boot.html and letters-data.html. A page of type "other" (anything that is
+  not the home page, a letter or the 404 page) is always shown with the classic theme,
+  because the new themes only know how to draw those three.
+  (With `permalink: pretty` the file 404.html is built as /404/index.html, so its url is "/404/".)
+{%- endcomment -%}
+{%- if page.layout == 'post' -%}{%- assign page_type = 'letter' -%}
+{%- elsif page.url == '/' -%}{%- assign page_type = 'home' -%}
+{%- elsif page.url == '/404/' or page.url == '/404.html' -%}{%- assign page_type = '404' -%}
+{%- else -%}{%- assign page_type = 'other' -%}
+{%- endif -%}

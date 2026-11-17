@@ -2,4 +2,4 @@
 # The GitHub Actions workflow reads the same two lines, so CI and local stay in step.
 [tools]
 ruby = "3.4"   # Jekyll: builds the whole site, including the CSS
-node = "24"    # only for scripts/images.mjs (sharp)
+node = "24"    # scripts/images.mjs (sharp) and the tests (Playwright); not needed to build the pages

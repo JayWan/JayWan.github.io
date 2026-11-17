@@ -1,0 +1,69 @@
+# 主题登记表。每次“到访”自动挑一个主题，规则写在 _includes/theme-boot.html 里，
+# 给主题作者的说明在 assets/themes/README.md。
+#
+# 想让某个主题暂时不出现：把它的 enabled 改成 false（改一个词，push 即可）。
+# 想整个关掉换肤、只留旧版：把 classic 以外的 enabled 都改成 false。
+#
+#   id       目录名：assets/themes/<id>/theme.css + theme.js。两个文件不存在的主题不会被抽到。
+#   name     界面上显示的名字
+#   ground   底色。页面一打开先铺这个颜色，样式表到达之前不会闪白
+#   dark     是不是深色主题（夜里只抽深色的）
+#   fonts    用到的字体，每个名字对应 assets/fonts/<名字>.css（有哪些见 assets/fonts/README.md），只在这个主题下加载。
+#            文件不存在的名字会被跳过（页面改用 theme.css 里写的后备字体），npm test 会指出写错的名字
+#   dates    这个主题的日子（访客本地日期，"月-日"）。那天新的到访一定是它
+#   enabled  false = 不参加抽选，纪念日也不出现；仍然可以用 ?theme=<id> 预览
+#   hidden   true  = 永远不参加抽选，只能用 ?theme=<id> 打开（契约测试用的 probe）
+
+idle: 30            # 离开超过多少分钟，再回来算一次新的到访（重新抽主题）
+night: [23, 6]      # 夜里 23:00 – 05:59 只从深色主题里抽
+
+themes:
+  - id: classic
+    name: 旧版
+    ground: "#ffffff"
+    dark: false
+    fonts: []
+    dates: ["09-15"]              # 网站自己的生日
+    enabled: true
+
+  - id: drift
+    name: 夜航
+    ground: "#14130f"
+    dark: true
+    fonts: [serif-sc, sans-sc-400, mono]
+    dates: ["11-28"]              # 认识
+    enabled: true
+
+  - id: folio
+    name: 笺
+    ground: "#F4F1EA"
+    dark: false
+    fonts: [fangsong, garamond]
+    dates: ["08-12"]              # 结婚
+    enabled: true
+
+  - id: sides
+    name: Side A / Side B
+    ground: "#EFEBE2"
+    dark: false
+    fonts: [sans-sc, grotesk]
+    dates: ["02-06", "07-04"]     # 两个人的生日
+    enabled: true
+
+  - id: orbit
+    name: 绕日
+    ground: "#0B3566"
+    dark: true
+    fonts: [serif-sc, text]
+    dates: ["02-21"]              # 在一起
+    enabled: true
+
+  # 契约测试用的参考主题：最朴素的实现，把 ctx 的每一项都用了一遍。永远不会被抽到。
+  - id: probe
+    name: 探针
+    ground: "#f7f6f2"
+    dark: false
+    fonts: []
+    dates: []
+    enabled: true
+    hidden: true
