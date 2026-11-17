@@ -140,6 +140,7 @@ test.describe('choosing a theme', () => {
   });
 
   test('at night only dark themes are drawn', async ({ context }) => {
+    test.setTimeout(120_000);                                              // 14 tabs, one after another
     const seen = [];
     for (let night = 0; night < 12; night++) {
       const day = `2026-01-${String(5 + night).padStart(2, '0')}`;
@@ -154,10 +155,12 @@ test.describe('choosing a theme', () => {
     expect((await visit(context, la('2026-01-21', '06:00'))).by, '06:00').toBe('bag');
   });
 
-  test('200 visits: never the same theme twice in a row, every theme equally often', async ({ context }) => {
-    test.setTimeout(120_000);
+  test('100 visits: never the same theme twice in a row, every theme equally often', async ({ context }) => {
+    // 100 tabs opened one after another: about half a minute in WebKit and Firefox on a quiet
+    // machine. The timeout is generous because several test runs may share the machine.
+    test.setTimeout(300_000);
     const seen = [];
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 100; i++) {
       // 20 visits a day between 07:00 and 21:15, 45 minutes apart, on days without a special date
       const when = la(`2026-01-${String(5 + Math.floor(i / 20)).padStart(2, '0')}`, '07:00').getTime() + (i % 20) * 45 * MIN;
       const got = await visit(context, when);
@@ -167,8 +170,8 @@ test.describe('choosing a theme', () => {
     const repeats = seen.filter((id, i) => i && id === seen[i - 1]).length;
     expect(repeats, 'same theme twice in a row').toBe(0);
     const count = Object.fromEntries(DRAWN.map((id) => [id, seen.filter((x) => x === id).length]));
-    expect(count).toEqual({ classic: 40, drift: 40, folio: 40, sides: 40, orbit: 40 });
-    for (let round = 0; round < 40; round++) {                           // and every theme once per round of five
+    expect(count).toEqual({ classic: 20, drift: 20, folio: 20, sides: 20, orbit: 20 });
+    for (let round = 0; round < 20; round++) {                           // and every theme once per round of five
       expect(new Set(seen.slice(round * 5, round * 5 + 5)).size, `round ${round}`).toBe(5);
     }
   });

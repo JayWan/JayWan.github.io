@@ -39,7 +39,7 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   reporter: 'list',
-  timeout: 30_000,
+  timeout: 45_000,          // most tests take a second or two; the margin is for a machine that is busy with other things
   expect: { timeout: 7_000 },
   use: {
     baseURL: `http://127.0.0.1:${process.env.TEST_PORT}`,
