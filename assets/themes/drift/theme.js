@@ -168,10 +168,13 @@ export default {
       it.w = w;
       it.a.style.width = w + 'px';
       if (!it.p.cover) return;
+      // derivatives only; only what the first screen shows is fetched at once. On a 3x screen a print asks for 2x:
+      // behind the grain nobody sees the difference, and the first screen of a phone stays within its weight.
+      const sizes = Math.round(w * Math.min(1, 2 / (window.devicePixelRatio || 1))) + 'px';
       if (!it.pic) {
-        it.pic = ctx.img(it.p.cover, { sizes: w + 'px', lazy: i >= EAGER });     // derivatives only; only what the first screen shows is fetched at once
+        it.pic = ctx.img(it.p.cover, { sizes, lazy: i >= EAGER });
         it.ph.append(it.pic);
-      } else it.pic.querySelectorAll('source, img').forEach((n) => { n.sizes = w + 'px'; });
+      } else it.pic.querySelectorAll('source, img').forEach((n) => { n.sizes = sizes; });
     }
 
     /* ───────── notes on the axis: lamps (today, the three zero points), measured silences, year heads ─────────

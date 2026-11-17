@@ -420,9 +420,6 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 
 /* ───────── footer ───────── */
 .foot { position: relative; z-index: 2; padding: 30px 24px calc(120px + env(safe-area-inset-bottom, 0px)); text-align: center; }
-/* Not drawn until the reader gets near it: its words need two more font files (about 76 KB) that the first
-   screen should not pay for. 163px is its real height without the padding, so the page does not change length. */
-@supports (content-visibility: auto) { .foot { content-visibility: auto; contain-intrinsic-size: auto 163px; } }
 .foot-name { margin: 0; font: 500 14px/1 var(--serif); letter-spacing: .34em; text-indent: .34em; color: var(--text-2); }
 .foot-hunger { margin: 22px auto 0; max-width: 30em; font: 400 16px/1.9 var(--serif); color: var(--text); text-wrap: balance; }
 .foot .theme-switcher { margin: 26px 0 0; }
