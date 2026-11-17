@@ -1,4 +1,4 @@
-# Sample workflow for building and deploying a Jekyll site to GitHub Pages
+# Builds the site with Jekyll and deploys it to GitHub Pages on every push to master.
 name: Deploy Jekyll site to Pages
 
 on:
@@ -27,31 +27,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+      # Ruby and Node versions both come from mise.toml, the same file local development uses.
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.4'
-          bundler-cache: true
-          cache-version: 0
+          ruby-version: mise.toml
+          bundler-cache: true # runs `bundle install` and caches the gems
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version-file: mise.toml
+          cache: npm
       - name: Install npm dependencies
         run: npm ci
-      - name: Compile CSS
-        run: npm run styles
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v5
-      - name: Build with Jekyll
-        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
-        env:
-          JEKYLL_ENV: production
+      # Creates missing thumbnails, then runs `jekyll build` (HTML, CSS and letters.json) into _site/
+      - name: Build
+        run: npm run build
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5 # uploads _site/
 
   # Deployment job
   deploy:
@@ -63,4 +57,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

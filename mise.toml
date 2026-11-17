@@ -1,0 +1,5 @@
+# Tool versions for local development (https://mise.jdx.dev). `mise install` sets them up.
+# The GitHub Actions workflow reads the same two lines, so CI and local stay in step.
+[tools]
+ruby = "3.4"   # Jekyll: builds the whole site, including the CSS
+node = "24"    # only for scripts/images.mjs (sharp)
