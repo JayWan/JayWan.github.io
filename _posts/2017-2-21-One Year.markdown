@@ -3,15 +3,18 @@ layout: post
 title:  "One Year"
 date:   2017-1-21 00:30:00
 excerpt: ""
+author: Pikajay
 categories: Story
 tags:  mickey
 image:
   feature: 13.jpg
   topPosition: -300px
+  focus: [0.5, 0.5]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 开不了口.mp3
+quote: "我也不想成为你的故事，想成为你的生活"
 ---
 
 可爱又亲爱还挚爱的范雅琪：

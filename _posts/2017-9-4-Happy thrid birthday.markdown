@@ -3,15 +3,18 @@ layout: post
 title:  "祝安贝儿第三个生日快乐"
 date:   2017-9-4 00:00:00
 excerpt: "Mickey first appeared animated in color in Parade of the Award Nominees in 1932, however the film strip was..."
+author: Pikajay
 categories: Story
 tags:  mickey
 image: 
   feature: 17.jpg
   topPosition: 0px
+  focus: [0.5, 0.5]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 风.mp3
+quote: "没什么高音，没什么炫技，就这样简简单单地从头唱到尾"
 ---
 
 祝安贝儿第三个生日快乐🎉 暨劳动节快乐👻

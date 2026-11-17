@@ -3,16 +3,19 @@ layout: post
 title:  "致我的快乐修狗"
 date:   2023-3-14
 excerpt: "..."
+author: Pikajay
 categories: Story
 tags:  random
 image:
   feature: 24.png
   topPosition: -400px
   heroPosition: "50% 40%"
+  focus: [0.5, 0.5]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 自然醒.mp3
+quote: "我觉得理想的爱情是能清楚看到彼此的差异，并去热烈地拥抱这些差异。"
 ---
 
 > 說來這個事情也奇怪 <br>

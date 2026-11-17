@@ -8,10 +8,12 @@ categories: Story
 image:
   feature: 30.png
   topPosition: -50px
+  focus: [0.66, 0.4]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 春夏秋冬.mp3
+quote: "相比这颗星球，我更爱你，你是我在这茕茕孑立的星球上最爱的人。"
 ---
 
 > “想和你谈个东西可以吗？” <br>

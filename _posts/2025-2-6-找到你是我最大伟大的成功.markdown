@@ -9,10 +9,12 @@ tags:  HBD
 image:
   feature: 26.png
   topPosition: -300px
+  focus: [0.48, 0.52]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 找到你是我最伟大的成功.mp3
+quote: "我爱你的阳光明媚，也爱你的阴暗潮湿，爱你的春风得意，也爱你的破碎狼狈。"
 ---
 > 我不孤独 在有你的旅途<br>
 > 我就心无旁骛<br>

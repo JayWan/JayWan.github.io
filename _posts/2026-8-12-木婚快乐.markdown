@@ -8,10 +8,13 @@ categories: Story
 image:
   feature: 32.jpg
   topPosition: -700px
+  focus: [0.68, 0.6]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 风之诗.mp3
+quote: "你的双眸明亮，可能是灯火，可能是月光。"
+place: "Oak Creek 家中"
 ---
 
 <div class="flip-card">

@@ -3,15 +3,18 @@ layout: post
 title:  "和小天使的三百天"
 date:   2016-12-16 00:30:00
 excerpt: "和小天使的三百天"
+author: Pikajay
 categories: Story
 tags:  mickey
 image:
   feature: 11.jpg
   topPosition: -300px
+  focus: [0.38, 0.6]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: No One But You.mp3
+quote: "我书桌上属于你的那一角也永远是整齐的。"
 ---
 
 <blockquote class="u--startsWithDoubleQuote">标题的正确打开方式应该是这样的</blockquote>

@@ -8,10 +8,13 @@ categories: Story
 image:
   feature: 31.png
   topPosition: -700px
+  focus: [0.52, 0.45]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: Best part of me.mp3
+quote: "就这样将宇宙的祝福赠给我们的小宝吧，还有，以后多了一个借口去吃各种各样的派。"
+standalone: true
 ---
 
 嘿，你，还有你，29岁生日快乐，28周生日快乐！

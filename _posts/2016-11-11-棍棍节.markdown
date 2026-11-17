@@ -3,15 +3,18 @@ layout: post
 title:  "棍棍节"
 date:   2016-11-11 00:00:00
 excerpt: "棍棍节"
+author: Pikajay
 categories: Story
 tags:  mickey
 image:
   feature: 10.jpg
   topPosition: -500px
+  focus: [0.5, 0.5]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: Funny Day.mp3
+quote: "就像已经准备好了一个人面对寒冬，却发现屋子里的火炉早已生起"
 ---
 
 一年一度的棍棍节又到啦，可是明天要考试 (ง •̀_•́)ง 

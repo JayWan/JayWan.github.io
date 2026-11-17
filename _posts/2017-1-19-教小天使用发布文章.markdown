@@ -3,15 +3,18 @@ layout: post
 title:  "教小天使发布文章"
 date:   2017-1-19 00:30:00
 excerpt: "教小天使发布文章"
+author: Pikajay
 categories: Story
 tags:  mickey
 image:
   feature: 12.jpg
   topPosition: -300px
+  focus: [0.6, 0.42]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 胆小鬼.mp3
+quote: "u supposed to be out of my list, but life makes a miracle."
 ---
 
 <b>“我要问你一个问题”<br>

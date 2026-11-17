@@ -3,14 +3,17 @@ layout: post
 title:  "万天万岁！"
 date:   2024-11-19 18:00:00
 excerpt: ""
+author: Pikajay
 categories: Story
 image:
   feature: 25.jpg
   topPosition: -300px
+  focus: [0.73, 0.35]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 致明日的舞.mp3
+quote: "在我之前10148天的生命中，已经有三分之一有你，之后的每一天，都会有你。"
 ---
 
 > 搖曳裡 到曠野 到晚空 <br>

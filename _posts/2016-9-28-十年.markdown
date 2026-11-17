@@ -3,15 +3,18 @@ layout: post
 title:  "十年"
 date:   2016-9-28 00:00:00
 excerpt: "十年你我..."
+author: Pikajay
 categories: Story
 tags:  mickey
 image:
   feature: 8.jpg
   topPosition: 0px
+  focus: [0.52, 0.35]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 菊次郎的夏天.mp3
+quote: "泣你次日拂晓将如约而至，同我共进早餐。"
 ---
 
 

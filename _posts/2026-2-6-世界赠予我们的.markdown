@@ -9,10 +9,13 @@ tags:  HBD
 image:
   feature: 29.jpg
   topPosition: -1500px
+  focus: [0.66, 0.45]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 世界赠予我的.mp3
+quote: "依然希望我们的生命有很多很多个好天气，很多很多个良夜"
+quiet: true
 ---
 >世界贈予我蟲鳴 也贈予我雷霆<br>
 >贈我彎彎一枚月 也贈予我晚星

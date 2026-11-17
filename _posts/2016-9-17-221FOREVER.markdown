@@ -3,15 +3,18 @@ layout: post
 title:  "221 FOREVER"
 date:   2016-9-17 00:00:00
 excerpt: "Mickey Mouse is a funny animal cartoon character and the official mascot of..."
+author: Pikajay
 categories: Story
 tags:  mickey
 image:
   feature: 7.jpg
   topPosition: 0px
+  focus: [0.5, 0.3]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 寂静之声.mp3
+quote: "尽管爱永远说不完，还是要用力去说吧。"
 ---
 
 ### 永远说不完的爱

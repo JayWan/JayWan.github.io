@@ -4,15 +4,19 @@ title:  "Hang Zhou"
 date:   2016-6-8 01:00:00
 last_modified_at:  2016-6-10 01:00:00
 excerpt: "Mickey Mouse is a funny animal cartoon character and the official mascot of..."
+author: Pikajay
 categories: Story
 tags:  mickey
 image:
   feature: 6.jpg
   topPosition: -200px
+  focus: [0.48, 0.72]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 落花流水.mp3
+quote: "此去经年，然60年后还来这里，还是我们俩。"
+place: "杭州"
 ---
 ### 江南忆，最忆是杭州
 

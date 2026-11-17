@@ -3,15 +3,18 @@ layout: post
 title:  "The Very Step"
 date:   2016-1-17 00:00:00
 excerpt: "Mickey Mouse is a funny animal cartoon character and the official mascot of..."
+author: Pikajay
 categories: Story
 tags:  mickey
 image:
   feature: 3.jpg
   topPosition: -100px
+  focus: [0.62, 0.5]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: I Still Carry On.mp3
+quote: "现在我知道我永远不会后悔那时的决定，Forever."
 ---
 <blockquote class="u--startsWithDoubleQuote">“I know it’s far away.But I’ll still carry on.” <br/> - I still carry on</blockquote>
 

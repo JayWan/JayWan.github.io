@@ -3,15 +3,18 @@ layout: post
 title:  "七夕&一点九周年快乐"
 date:   2017-8-28 00:00:01
 excerpt: "Mickey first appeared animated in color in Parade of the Award Nominees in 1932, however the film strip was..."
+author: Pikajay
 categories: Story
 tags:  mickey
 image: 
   feature: 16.jpg
   topPosition: 0px
+  focus: [0.7, 0.56]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 名前.mp3
+quote: "一切都那么稀松而平常，但是你对着我微笑时眼里的星星，告诉我这一切都太不平常了。"
 ---
 
 身在异乡，又同居一室。我能做的只有给你一顿丰盛的早餐和一个深情的吻啦！

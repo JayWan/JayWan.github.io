@@ -3,15 +3,18 @@ layout: post
 title:  "八周年"
 date:   2016-10-21 3:51:00
 excerpt: "八年你我..."
+author: Pikajay
 categories: Story
 tags:  mickey
 image:
   feature: 9.png
   topPosition: 0px
+  focus: [0.7, 0.55]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: Through the Arbor.mp3
+quote: "因为它是个伪命题 - 你就是我的一切啊。"
 ---
 
 八周年，祝大天使万年杰和小天使范雅琪的周年路，永远没有尽头。

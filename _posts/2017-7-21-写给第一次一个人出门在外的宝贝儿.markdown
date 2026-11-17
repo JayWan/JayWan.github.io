@@ -3,15 +3,18 @@ layout: post
 title:  "写给第一次一个人出门在外的宝贝儿"
 date:   2017-7-21 00:30:00
 excerpt: "Mickey first appeared animated in color in Parade of the Award Nominees in 1932, however the film strip was..."
+author: Pikajay
 categories: Story
 tags:  mickey
 image: 
   feature: 14.jpg
   topPosition: 10px
+  focus: [0.46, 0.4]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 成都.mp3
+quote: "旅行呀，就是带着自己所爱之人的牵挂与祈福，在另一片土地欣赏同一片天空。"
 ---
 
 今天听宝贝儿委屈地讲电话真的感觉无从安慰起呢，这种无力是我讨厌的，但有时候我们不得不面对这些东西。摸着宝贝儿的头，给你一个用力的拥抱，自然是好的，可是最终能让自己内心充实的，也只能是强大的自己哇。

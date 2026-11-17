@@ -3,15 +3,19 @@ layout: post
 title:  "Happy New Year!"
 date:   2016-1-1 01:00:00
 excerpt: "Mickey first appeared animated in color in Parade of the Award Nominees in 1932, however the film strip was..."
+author: Pikajay
 categories: Story
 tags:  mickey
 image:
   feature: 2.jpg
   topPosition: 0px
+  focus: [0.45, 0.52]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 为你我受冷风吹.mp3
+quote: "在我的想象中，有一轮赤红日，与众不同奇妙最奇妙，只因身边这个人。"
+place: "南京·紫金山"
 ---
 <blockquote class="u--startsWithDoubleQuote">“A blessing from new year” <br/> - 2016.1.1日记</blockquote>
 

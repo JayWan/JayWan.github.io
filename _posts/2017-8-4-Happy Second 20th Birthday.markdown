@@ -3,15 +3,18 @@ layout: post
 title:  "祝宝贝儿第二个二十岁生日快乐"
 date:   2017-8-4 10:30:00
 excerpt: "Mickey first appeared animated in color in Parade of the Award Nominees in 1932, however the film strip was..."
+author: Pikajay
 categories: Story
 tags:  mickey
 image: 
   feature: 15.jpg
   topPosition: -200px
+  focus: [0.45, 0.48]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 海胆.mp3
+quote: "我的心像海胆，blingbling地发着光呢！"
 ---
 
 今天是个开心的日子呀——Eason的新歌上线啦，宝贝儿回家见到粑粑麻麻啦，我也把CalID创建好啦，宝贝儿的第二个二十岁生日也如期而至啦！啦啦啦啦啦啦，忍不住跳起了愉快的小舞蹈呢！

@@ -9,11 +9,12 @@ author: Pikachi
 image:
   feature: 23.jpg
   topPosition: 0px
+  focus: [0.48, 0.42]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 任我行.mp3
-author: Pikachi
+quote: "希望你自由地活着，永远在看花的路上。"
 ---
 
 Hey, 宝贝儿，AKA Pikajay, 生日快乐！按照往常我会在这里舒展舒展纸张，提笔写上一句，展信佳！但这一次我想用你一直温暖我的方式在键盘间敲下我想对26岁的你说的一些话。

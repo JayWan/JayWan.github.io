@@ -3,16 +3,19 @@ layout: post
 title:  "致三月的你"
 date:   2019-3-19 00:00:00
 excerpt: "..."
+author: Pikajay
 categories: Story
 tags:  mickey
 image:
   feature: 21.jpg
   topPosition: -200px
+  focus: [0.55, 0.6]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 特别的人.mp3
 jQuery: yes
+quote: "我希望你的眼里仍是曾经的浩瀚星辰。等我。"
 ---
 
 三月的范雅琪，你好呀。

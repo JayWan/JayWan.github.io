@@ -3,15 +3,18 @@ layout: post
 title:  "致: 我和小天使的1000个日日夜夜"
 date:   2018-8-24 00:00:00
 excerpt: "..."
+author: Pikajay
 categories: Story
 tags:  mickey
 image: 
   feature: 20.jpg
   topPosition: -200px
+  focus: [0.5, 0.42]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 1000 Days.mp3
+quote: "我和你相识的第1000天，也像流水一样，平静温柔，如期而至。"
 ---
 
 许久没有经营我们的网站，多久呢，八个月。自己意识到这点的时候可谓是唏嘘不已，八个月的时光，转眼即逝，而我和你相识的第1000天，也像流水一样，平静温柔，如期而至。

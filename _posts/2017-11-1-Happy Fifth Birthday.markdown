@@ -3,15 +3,18 @@ layout: post
 title:  "祝安贝儿第五个生日快乐"
 date:   2017-11-1 10:00:00
 excerpt: "Mickey first appeared animated in color in Parade of the Award Nominees in 1932, however the film strip was..."
+author: Pikajay
 categories: Story
 tags:  mickey
 image: 
   feature: 18.png
   topPosition: -100px
+  focus: [0.52, 0.45]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: Take me hand.mp3
+quote: "我们耿耿于怀彼此手中的苹果，又念念不忘彼此眼中的星斗"
 ---
 
 祝安倍儿第五个生日快乐！傻逼快递怎么今天就送过来啦，打乱了我所有的计划T_T。

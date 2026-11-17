@@ -3,15 +3,19 @@ layout: post
 title:  "Chang Zhou"
 date:   2016-2-27 01:00:00
 excerpt: "In Mickey's early films he was often characterized not as a hero, but as an ineffective young suitor to Minnie Mouse..."
+author: Pikajay
 categories: Story
 tags:  mickey
 image:
   feature: 4.jpg
   topPosition: -300px
+  focus: [0.5, 0.5]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 娱乐天空.mp3
+quote: "沿着京杭大运河走，好像可以走到老一样"
+place: "常州"
 ---
 
 <blockquote class="u--startsWithDoubleQuote">“以后你就再也没有做出过这么详细的攻略了。” <br/> - 范雅琪</blockquote>

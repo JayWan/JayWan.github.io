@@ -3,15 +3,18 @@ layout: post
 title:  "两年不见，你还好吗"
 date:   2021-7-4 01:00:00
 excerpt: "..."
+author: Pikajay
 categories: Story
 tags:  birthday
 image:
   feature: 22.png
   topPosition: 0px
+  focus: [0.5, 0.55]
 bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: Welcome To New York.mp3
+quote: "不论这一战打成什么样，你永远可以回头看看见你的家。"
 ---
 
 生日快乐，安贝儿！不知此刻的你是忐忑的，欣喜的，悲伤的，亦或是平静的？但不论怎么样，我希望你是有底气的，有背水一战和孤注一掷的底气，因为，你知道不论这一战打成什么样，你永远可以回头看看见你的家。因为我和儿几，女鹅，还有森林银会一直站在你身后呀！
