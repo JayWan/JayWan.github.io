@@ -278,6 +278,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .song-err{min-height:1.5em;font:14px/1.5 var(--fs);letter-spacing:.08em;color:var(--red)}
 
 .counts{margin-top:14px;padding-top:20px;border-top:1px solid var(--rule)}
+.side-in>.counts:first-child{margin-top:0;padding-top:0;border-top:0}   /* 没有封面也没有歌的信 */
 .counts>div{display:grid;grid-template-columns:4.2em 1fr;align-items:baseline}
 .counts dt{font:14px/2.1 var(--fs);letter-spacing:.3em;color:var(--ink-2)}
 .counts dd{font:14px/2.1 var(--fs);letter-spacing:.12em;color:var(--ink-2);white-space:nowrap}
