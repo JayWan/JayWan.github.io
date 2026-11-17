@@ -58,7 +58,9 @@ export default defineConfig({
     }] : []),
     ...(hasFirefox ? [{
       name: 'firefox',
-      use: { browserName: 'firefox', viewport: { width: 1440, height: 900 } },
+      // Firefox follows <link rel="next"> ahead of time, and those links name the public site:
+      // without this pref every test of a letter page would send a request to the live server.
+      use: { browserName: 'firefox', viewport: { width: 1440, height: 900 }, launchOptions: { firefoxUserPrefs: { 'network.prefetch-next': false } } },
     }] : []),
   ],
 });
