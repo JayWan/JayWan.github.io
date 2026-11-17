@@ -100,7 +100,7 @@ export default {
         h('a', { className: 'bar-link', href: letters.latest.url }, '最新一封'),
         driftToggle));
 
-    const lost = h('p', { className: 'lost', hidden: true }, h('b', {}, '这一页没有信。'), h('span', {}, '信都在下面这条河里。'));
+    const lost = h('p', { className: 'lost', hidden: true }, h('b', {}, '404'), h('span', {}, '没有信'));   // drawn like a year head: a number and what it holds
     const tdays = site.today.days;
     /* The river in miniature, lying on its side under the wordmark: honest, linear time from the day they met
        to today. One tick per letter, the line dashed over every silence, year marks below, a lamp where today is.
@@ -118,8 +118,8 @@ export default {
       strip.append(h('b', {}));
     }
     const hero = h('section', { className: 'hero' },
-      lost,
       h('h1', {}, site.title),
+      lost,
       h('p', { className: 'odo-today' }, `截至今天 ${dot(today)}`),
       h('dl', { className: 'odo' }, [['认识', site.met, tdays.met], ['在一起', site.together, tdays.together], ['结婚', site.married, tdays.married]]
         .filter((row) => row[1] && row[2] != null)
@@ -565,7 +565,7 @@ export default {
         if (w > 0 && hh > 0) { im.style.setProperty('--w', w + 'px'); im.style.setProperty('--r', (w / hh).toFixed(4)); }
       });
       S.sign.replaceChildren(h('b', {}, names(p).join(' 和 ')), `${dot(p.date)}${p.days.met != null && p.role !== 'guest' ? ` · 认识的第 ${p.days.met} 天` : ''}`);   // the count is the couple's: a guest signs with the date alone
-      S.nav.replaceChildren(navCell(p.prev, 'sn-prev', '上一封', '没有了，这是第一封'), navCell(p.next, 'sn-next', '下一封', '还没写'));
+      S.nav.replaceChildren(navCell(p.prev, 'sn-prev', '上一封', '没有了'), navCell(p.next, 'sn-next', '下一封', '还没写'));
     }
 
     /* ───────── the song: one shared player, never started by anything but a click ───────── */
