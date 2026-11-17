@@ -217,6 +217,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
   padding:5px;border:1px solid var(--rule);background:var(--paper-lit)}
 .body img[style*="width"]{max-height:none}
 .body figure figcaption{font-size:14px;line-height:var(--lh);color:var(--ink-2)}
+.body figure .fo-hint{font-size:13px;letter-spacing:.2em;color:var(--red)}
 .body div.img{border:5px solid var(--paper-lit);outline:1px solid var(--rule);background-color:var(--paper-lit)}
 
 /* 翻转卡片：一张小一号的笺，自己也有横格 */

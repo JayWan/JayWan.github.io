@@ -528,9 +528,42 @@ export default {
           feet(l)));
       return letterEl;
     }
+    /* 读者要求少动（prefers-reduced-motion）时，信里的动图停在第一帧，点一下才动；再点一下停住。 */
+    function still(img) {
+      if (img.dataset.still || !img.naturalWidth) return;
+      const k = Math.min(1, 1200 / img.naturalWidth);
+      const c = h('canvas', { width: Math.round(img.naturalWidth * k), height: Math.round(img.naturalHeight * k) });
+      let frame;
+      try { c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); frame = c.toDataURL('image/png'); } catch { return; }
+      const moving = img.currentSrc || img.src, fig = img.closest('figure');
+      const hint = fig && fig.appendChild(h('figcaption', { class: 'fo-hint' }));
+      const set = (on) => {
+        img.dataset.still = on ? 'off' : 'on';
+        img.src = on ? moving : frame;
+        img.setAttribute('aria-label', (img.alt ? img.alt + '。' : '') + (on ? '动图，点一下停住' : '动图，点一下让它动'));
+        if (hint) hint.textContent = on ? '点图停住' : '点图，让它动起来';
+      };
+      img.removeAttribute('srcset');
+      img.tabIndex = 0;
+      img.setAttribute('role', 'button');
+      img.style.cursor = 'pointer';
+      const flip = () => set(img.dataset.still === 'on');
+      img.addEventListener('click', flip);
+      img.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } });
+      set(false);
+    }
+    function stillAll(el) {
+      if (!ctx.env.reducedMotion) return;
+      for (const img of el.querySelectorAll('img[data-gif]')) {
+        if (img.dataset.still || img.closest('.flip-card, .gift-scene')) continue;
+        if (img.complete && img.naturalWidth) still(img);
+        else img.addEventListener('load', () => still(img), { once: true });
+      }
+    }
     /** 搬进文档之后才能量：翻转卡片按新宽度重量一次，图和卡片凑整行 */
     function settle(contentEl) {
       ctx.widgets.init(contentEl);
+      stillAll(contentEl);
       snapAll(contentEl);
       fit();
     }
@@ -647,7 +680,7 @@ export default {
     window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { layoutHome(); fit(); }, 120); });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layoutHome(); fit(); });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && root.dataset.view === 'letter' && !e.defaultPrevented && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '')) router.back('/');
+      if (e.key === 'Escape' && root.dataset.view === 'letter' && !e.defaultPrevented && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '')) (router.home ? router.home() : router.back('/'));
     });
 
     show(router.current);
