@@ -6,6 +6,7 @@
 //   - every control that starts a song has the attribute data-play
 //   - the home view links to letters with ordinary <a href="{letter.url}">
 
+import { gzipSync } from 'node:zlib';
 import { test, expect } from '@playwright/test';
 import { themeIds, samplePages, getIsland, watch, open, themeOf, expectNoSidewaysScroll, firstLetterLink, rewriteIsland } from './helpers.mjs';
 
@@ -49,6 +50,26 @@ for (const theme of themeIds) {
         expect(seen.originals(), 'covers only through ctx.img(), never the originals').toEqual([]);
       });
     }
+
+    test('the first view of the home page weighs at most 700 KB', async ({ page, baseURL }) => {
+      // ARCHITECTURE §8: HTML + CSS + JS + fonts + the images of the first screen, cold cache.
+      // Counted the way GitHub Pages sends them: text gzipped, everything else as it is.
+      const responses = [];
+      page.on('response', (response) => responses.push((async () => {
+        try {
+          const body = await response.body();
+          const text = /^(text\/|application\/(json|javascript|xml)|image\/svg)/.test(response.headers()['content-type'] || '');
+          return { url: response.url().replace(baseURL, ''), bytes: text ? gzipSync(body).length : body.length };
+        } catch { return null; }                                           // a redirect, or a request that was cancelled
+      })()));
+      await open(page, '/', theme);
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(500);
+      const loaded = (await Promise.all(responses)).filter(Boolean).sort((x, y) => y.bytes - x.bytes);
+      const total = loaded.reduce((sum, file) => sum + file.bytes, 0);
+      const heaviest = loaded.slice(0, 6).map((file) => `${Math.round(file.bytes / 1024)} KB ${file.url}`).join('\n  ');
+      expect(total, `the home page transfers ${Math.round(total / 1024)} KB in ${loaded.length} files; the heaviest:\n  ${heaviest}\n`).toBeLessThanOrEqual(700 * 1024);
+    });
 
     test('the flip card turns over and back', async ({ page, request }) => {
       await open(page, (await samplePages(request)).flip, theme);

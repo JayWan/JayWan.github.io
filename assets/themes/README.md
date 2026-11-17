@@ -385,6 +385,7 @@ type Route =
 - 段落、`<br>`、`<b>`、`<em>`、链接
 - `<blockquote>`：多数是歌词，每行一个 `<br>`
 - `<blockquote class="largeQuote">`：大号的引语（2021 年那封里网站自己的留言就是它）
+- `<blockquote class="u--startsWithDoubleQuote">`（22 处）：以 `“` 开头的引语。旧版用 `text-indent: -0.4em` 把引号悬挂到版心外面；新主题可以照做，也可以不管
 - `<img>`，有的包在 `<div align="center">` 或 `<p style="text-align:center">` 里，有的带内联的 `width`
 - `<div class="img img--fullContainer img--14xLeading" style="background-image:url(…)">`：用背景图放的照片和 GIF，高度由类名决定（5x–16x）
 - 「木婚快乐」里的 `.flip-card`，「29, 28, π」里的礼物盒（内联 `<style>`、`<script>` 和一块 `position: fixed` 的 `<canvas>`）
@@ -409,7 +410,7 @@ type Route =
 | 属性 | 默认值 | 作用 |
 |---|---|---|
 | `--letter-leading` | `1.5rem` | 正文的一行；照片块的高度是它的整数倍 |
-| `--flip-front-bg` / `--flip-front-ink` / `--flip-front-border` / `--flip-front-pad` | `#fafaf8` / 继承 / `1px solid #e8e8e4` / `2rem 1.5rem` | 卡片正面（文字那面） |
+| `--flip-front-bg` / `--flip-front-ink` / `--flip-front-border` / `--flip-front-pad` | `#fafaf8` / `#23221f` / `1px solid #e8e8e4` / `2rem 1.5rem` | 卡片正面（文字那面）。默认是一张浅色的卡片配深色的字，放在深色主题里也读得清；要改就底色和字色一起改 |
 | `--flip-back-bg` / `--flip-back-pad` / `--flip-photo-shadow` | `#f5f0e8` / `1.5rem` / 一道浅影 | 卡片背面（照片那面） |
 | `--flip-hint-ink` / `--flip-hint-opacity` | 当前文字色 / `.45` | 卡片底部那行提示 |
 | `--flip-duration` / `--flip-margin` / `--flip-focus` | `.7s` / `1.5rem 0` / 当前文字色 | 翻转时长、外边距、键盘焦点框 |
@@ -497,7 +498,7 @@ npx playwright test --ui                     # 带界面，能一步步看
 - 礼物盒点开后彩纸铺满整个屏幕（验证的就是「祖先没有 transform」）
 - 首页 → 点一封信（不换页）→ 点 `[data-play]` 歌响了 → 后退（不换页，回到原来的滚动位置，歌还在放）→ 前进
 - 402px 宽、`prefers-reduced-motion: reduce` 下各种页面都不溢出
-- 两个文件没有超出体积上限
+- 两个文件没有超出体积上限；首页冷缓存打开、读者什么都还没做时，一共传输不超过 700 KB（文本按 gzip 后算；超了的话，测试会列出最重的几个文件）
 
 测试靠三个约定找到东西：正文容器叫 `.letter-body`；放歌的控件带 `data-play`；首页用普通的 `<a href="{letter.url}">` 链接到信。
 
