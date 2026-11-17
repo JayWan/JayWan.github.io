@@ -39,7 +39,9 @@ export default {
       title: h('a', { className: 'p-bar-title' }),
       time: h('span', { className: 'p-bar-time' }),
       seek: h('input', { type: 'range', className: 'p-bar-seek', min: 0, step: 1, value: 0, 'aria-label': '进度', oninput: (e) => player.seek(Number(e.target.value)) }),
-      toggle: h('button', { type: 'button', className: 'p-play', 'aria-label': '播放 / 暂停', onclick: () => player.toggle() }),
+      // The bar is fixed to the bottom of the screen: on a phone, pause is under the thumb wherever
+      // the reader is in the letter. It carries data-play like every control that can start a song.
+      toggle: h('button', { type: 'button', className: 'p-play', 'data-play': '', 'aria-label': '播放 / 暂停', onclick: () => player.toggle() }),
     };
     bar.el.append(bar.toggle, bar.title, bar.seek, bar.time);
 
@@ -82,50 +84,75 @@ export default {
 
     // ---- views ----
     function homeView() {
-      const items = [...letters].reverse().map((letter) => {
+      const card = (letter) => {
         const link = h('a', { className: 'p-card', href: letter.url },
           // Covers only through ctx.img(): derivatives, lazy, width/height, never the original file.
           ctx.img(letter.cover, { sizes: '96px', widths: [480], className: 'p-thumb' }),
           h('span', { className: 'p-card-text' },
             h('strong', {}, letter.title),
-            h('small', {}, `No. ${letter.no} · ${fmt.date(letter.date, 'dot')} · ${byline(letter)}${letter.standalone ? ' · 整页打开' : ''}`),
+            // letter.date is the day the letter was really written; the same facts on every letter
+            h('small', {}, `No. ${letter.no} · ${fmt.date(letter.date, 'dot')} · ${fmt.season(letter.date)} · ${byline(letter)}${letter.standalone ? ' · 整页打开' : ''}`),
             letter.quote && h('q', {}, letter.quote)));
         // Warm the cache while the finger or the pointer is on its way down.
         link.addEventListener('pointerenter', () => router.prefetch(link.href));
         link.addEventListener('touchstart', () => router.prefetch(link.href), { passive: true });
         // A quiet letter (the miscarriage one) gets no playful motion around it.
-        return h('li', { 'data-role': letter.role, ...(letter.quiet && { 'data-quiet': '' }) }, link, playButton(letter));
-      });
+        return h('li', { 'data-role': letter.role, 'data-no': letter.no, ...(letter.quiet && { 'data-quiet': '' }) }, link, playButton(letter));
+      };
+      // Newest first, so the newest letter is one tap away from the first screen. letters.years
+      // also lists the years in which nobody wrote: say so in plain words (「这一年没有写信」 or
+      // 「没有信」, never 「无信」, which also reads as "faithless").
+      const rows = [...letters.years].reverse().flatMap(({ year, letters: ofYear }) => [
+        h('li', { className: 'p-year' }, ofYear.length ? `${year} 年 · ${ofYear.length} 封` : `${year} 年 · 这一年没有写信`),
+        ...[...ofYear].reverse().map(card),
+      ]);
+      // From the list a letter is opened with a new history entry (go() adds one here).
       const lucky = h('button', { type: 'button', className: 'p-lucky', onclick: () => router.go(letters[Math.floor(Math.random() * letters.length)].url) }, '随便读一封');
-      return h('section', { className: 'p-home' }, lucky, h('ol', { className: 'p-list', reversed: true }, items));
+      return h('section', { className: 'p-home' }, lucky, h('ol', { className: 'p-list' }, rows));
+    }
+
+    /** Back on the list: mark the letter that was read last. The core has it in router.lastRead and,
+     *  because show() leaves the scrolling to the core, also brings its link on screen. */
+    function markLastRead(view) {
+      const last = router.lastRead;
+      view.querySelectorAll('li[data-no]').forEach((li) => li.classList.toggle('is-last-read', Boolean(last) && li.dataset.no === String(last.no)));
     }
 
     function letterView({ letter, contentEl }) {
       const { met, together, married } = letter.days;   // null = that day had not come yet
       const facts = [
-        `${fmt.date(letter.date)} ${fmt.date(letter.date, 'weekday')}`,
+        // time is null when the letter's real day is not the one in its address (「One Year」)
+        `${fmt.date(letter.date)} ${fmt.date(letter.date, 'weekday')}${letter.time ? ' ' + letter.time : ''}`,
+        fmt.season(letter.date),          // 春 夏 秋 冬 by the month; never an astronomical season
         letter.place,
         byline(letter),
         met != null && `认识第 ${met} 天`,
         together != null && `在一起第 ${together} 天`,
         married != null && `结婚第 ${married} 天`,
       ].filter(Boolean);
+      // letter.days holds the letter's own number where it states one (「和小天使的三百天」 says 300).
       // Move the live node Jekyll rendered into our layout. Never clone it, never rebuild it from
-      // HTML: the letter's own scripts have already run against this very node. The wrapper is
-      // .letter-body, and nothing above it may have transform / filter / perspective.
+      // HTML: the letter's own scripts have already run against this very node. The core has
+      // already run ctx.prose.prepare() on it (figures, lyrics, sizes; see theme.css). The wrapper
+      // is .letter-body, and nothing above it may have transform / filter / perspective.
       const body = h('div', { className: 'letter-body' }, contentEl);
       ctx.widgets.init(contentEl);                       // re-measure the flip card in its new width
       return h('article', { className: 'p-letter', 'data-role': letter.role, ...(letter.quiet && { 'data-quiet': '' }) },
         // data-back: if the reader came here from the list, this link is the Back button (they land
         // where they left the list, and no new history entry is made); otherwise it is a plain link.
         h('a', { className: 'p-back', href: '/', 'data-back': '' }, '← 所有的信'),
-        ctx.img(letter.cover, { sizes: '(max-width: 760px) 100vw, 720px', lazy: false, lqip: true, className: 'p-cover' }),
+        // cover.own === false: a picture found online, not a photo of theirs. It is kept small.
+        ctx.img(letter.cover, { sizes: '(max-width: 760px) 100vw, 720px', lazy: false, lqip: true, className: letter.cover && !letter.cover.own ? 'p-cover is-borrowed' : 'p-cover' }),
         h('h1', {}, letter.title),
         h('p', { className: 'p-facts' }, facts.join(' · ')),
         letter.song && h('p', { className: 'p-song' }, playButton(letter), h('span', {}, `${letter.song.title}${letter.song.artist ? ' — ' + letter.song.artist : ''}（${fmt.clock(letter.song.duration)}）`)),
         body,
+        // Previous / next are ordinary links: from one letter to another the core replaces the
+        // history entry instead of adding one, so Back from any letter leads to the list.
+        // And a way back to the list at the END of the letter, not only at the top.
         h('nav', { className: 'p-near', 'aria-label': '前后的信' },
           letter.prev && h('a', { href: letter.prev.url, rel: 'prev' }, `← ${letter.prev.title}`),
+          h('a', { className: 'p-home-link', href: '/', 'data-back': '' }, '回到所有的信'),
           letter.next && h('a', { href: letter.next.url, rel: 'next' }, `${letter.next.title} →`)));
     }
 
@@ -136,6 +163,7 @@ export default {
     let first = true;
     function show(route) {
       const view = route.type === 'letter' ? letterView(route) : route.type === 'home' ? (home ||= homeView()) : lostView();
+      if (route.type === 'home') markLastRead(view);
       main.replaceChildren(view);
       root.dataset.view = route.type;
       paint(player.state);                               // new buttons need the current state
@@ -143,6 +171,12 @@ export default {
       first = false;
       // Returning nothing lets the core set the scroll position (top for a link, the old place for Back).
     }
+
+    // Esc on a letter = "back to the list": router.home() is the Back button when the list is the
+    // previous history entry, and a soft navigation to "/" otherwise.
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !event.defaultPrevented && router.current.type === 'letter') router.home();
+    });
 
     show(router.current);       // the page we landed on: { type, letter, contentEl } just like a route
     return { show };
