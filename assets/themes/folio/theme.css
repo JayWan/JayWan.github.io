@@ -234,6 +234,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 /* 礼物盒：盒子八行高，拆开后图九行、字一行，都落在格线上；图不浮动（彩纸是信自己的，照旧） */
 #theme-root .body .gift-scene{display:block;min-height:0;text-align:center;text-indent:0;line-height:var(--lh)}
 #theme-root .body .gift-anim{width:auto;height:calc(var(--lh) * 8);max-width:100%}
+#theme-root .body #gift-container{transition:none}
 #theme-root .body #gift-container::after{content:"礼物 · 点一下拆开";display:block;font-size:13px;line-height:var(--lh);letter-spacing:.2em;color:var(--red)}
 #theme-root .body .float-img{box-sizing:border-box;width:auto;height:calc(var(--lh) * 9);max-width:100%;object-fit:contain;padding:5px;border:1px solid var(--rule);background:var(--paper-lit);animation:none;vertical-align:top}
 #theme-root .body .reveal-words{margin:0;font-size:inherit;line-height:var(--lh);text-indent:0;text-align:center;animation:none}
@@ -282,7 +283,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .counts dd .pen{font-size:17.5px;letter-spacing:.03em;color:var(--ink)}
 
 /* 信末的一小叶：上一封 | 目录 | 下一封，和目录是同一套格子 */
-.feet{padding-top:calc(var(--lh) * 1.5);display:flex;justify-content:flex-end;--cell-h:324px;--t:21px;--wari:14.5px;--pad:20px;--foot:46px}
+.feet{padding-top:calc(var(--lh) * 1.5);display:flex;justify-content:flex-end;--cell-h:340px;--t:21px;--wari:14.5px;--pad:20px;--foot:46px}
 .feet .cols{width:372px;row-gap:0}
 .feet .latest-k{margin-bottom:12px}
 .feet .day{font-size:17px}
@@ -305,6 +306,16 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(--red)}
 
 /* ══════════════ 窄一些的桌面 ══════════════ */
+@media (min-width:1600px){
+  :root{--page:1392px;--cell-h:556px;--t:31px;--wari:16.5px;--tian:200px}
+  .mei{font-size:17px}
+  .half p{font-size:18px}
+  .name{font-size:68px}
+  .letter{--lh:38px;--fz:20px}
+  .sheet{grid-template-columns:284px 60px minmax(0,796px) 252px}
+  .tiji-title{font-size:43px}
+  .tiji-quote{font-size:18px}
+}
 @media (max-width:1343px){ :root{--page:1200px} }
 @media (max-width:1239px){ :root{--n:10} .leaf--title :is(.cell--gap,.cell--flh){display:none} }
 @media (max-width:1059px){ :root{--n:8} .leaf--title .fl-a{display:none} }
@@ -386,13 +397,23 @@ html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(-
   .plate figcaption .n{font-size:14px}
   .song-t{font-size:20px;margin-top:9px}
   .counts{justify-content:space-between;gap:10px;margin:8px 0 22px}
-  .feet{--cell-h:292px;--t:19px}
+  .feet{--cell-h:318px;--t:19px}
   .feet .cols{width:100%}
   .now-t{font-size:16px}
+}
+/* 列窄到放不下「夹注接在第二行下面」时，夹注改放在两行的下面 */
+@media (min-width:720px) and (max-width:859px){
+  .t--two .wari--in{display:none}
+  .wari--out{display:block}
+}
+@media (max-width:389px){
+  :root{--t:20px;--wari:12.5px}
+  .col.is-long .wari{line-height:1.08}
 }
 @media (max-width:349px){ :root{--n:5} .leaf--title .fl-b{display:none} }
 
 /* 这个主题本来就不动；保险起见 */
 @media (prefers-reduced-motion:reduce){
-  #theme-root *,#theme-root *::before,#theme-root *::after{scroll-behavior:auto !important}
+  #theme-root *,#theme-root *::before,#theme-root *::after{scroll-behavior:auto !important;animation:none !important;transition:none !important}
+  #theme-root #confetti-canvas{visibility:hidden !important}   /* 礼物照样拆得开，只是不撒彩纸 */
 }
