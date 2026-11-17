@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:,">
+<title>221 FOREVER · 字体样张</title>
+<link rel="stylesheet" href="serif-sc.css">
+<link rel="stylesheet" href="sans-sc.css">
+<link rel="stylesheet" href="sans-sc-400.css">
+<link rel="stylesheet" href="fangsong.css">
+<link rel="stylesheet" href="mono.css">
+<link rel="stylesheet" href="garamond.css">
+<link rel="stylesheet" href="grotesk.css">
+<link rel="stylesheet" href="text.css">
+<style>
+/* Every sample falls back to a Kai (brush) face on purpose: a character that is NOT drawn by an
+   F221 font stands out at once. The report at the bottom says the same thing in words. */
+:root {
+  --miss: "AR PL UKai CN", "Kaiti SC", "STKaiti", "KaiTi", cursive;
+  --serif: "F221 Serif", var(--miss);
+  --sans: "F221 Sans", var(--miss);
+  --sans400: "F221 Sans 400", var(--miss);
+  --fs: "F221 Fangsong", var(--miss);
+  --ink: #1d1b18; --dim: #7a746a; --rule: #ddd6c9; --paper: #f7f4ee; --red: #a03a29;
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { margin: 0 auto; padding: 32px 20px 80px; max-width: 1080px; color: var(--ink);
+  font: 400 16px/1.7 "F221 Sans 400", var(--miss); font-synthesis: none; }
+h1 { font: 600 28px/1.3 var(--serif); margin: 0 0 6px; }
+h2 { font: 600 19px/1.4 var(--serif); margin: 52px 0 14px; padding-top: 14px; border-top: 1px solid var(--ink); }
+p { margin: 0; }
+.note { color: var(--dim); font-size: 13.5px; margin: 6px 0 14px; max-width: 46em; }
+.row { display: grid; grid-template-columns: 150px 1fr; gap: 4px 18px; padding: 9px 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
+.row > i { font: 400 11.5px/1.5 "F221 Mono", monospace; font-style: normal; color: var(--dim); }
+.row > div { font-size: 21px; line-height: 1.6; min-width: 0; overflow-wrap: anywhere; }
+.row > div small { display: block; font-size: 15px; color: var(--dim); }
+.serif { font-family: var(--serif); } .sans { font-family: var(--sans); } .sans400 { font-family: var(--sans400); } .fs { font-family: var(--fs); }
+.w300 { font-weight: 300; } .w400 { font-weight: 400; } .w500 { font-weight: 500; } .w600 { font-weight: 600; }
+.w700 { font-weight: 700; } .w800 { font-weight: 800; } .w900 { font-weight: 900; }
+.vert { display: flex; flex-wrap: wrap; gap: 28px; }
+.vert figure { margin: 0; }
+.vert figcaption { font: 400 11.5px/1.5 "F221 Mono", monospace; color: var(--dim); margin-bottom: 8px; }
+.v { writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; text-orientation: mixed; height: 330px; font-size: 22px; line-height: 1.9;
+  padding: 14px 10px; background: #fffdf8; border: 1px solid var(--rule); letter-spacing: .04em; }
+.tcy { -webkit-text-combine: horizontal; text-combine-upright: all; }
+/* the stacks the themes use: Latin family first, Chinese family second */
+.st-folio { font-family: "F221 Garamond", "F221 Fangsong", var(--miss); }
+.st-folio :lang(en), .st-folio:lang(en) { font-family: "F221 Garamond En", "F221 Fangsong", var(--miss); }
+.st-orbit { font-family: "F221 Text", "F221 Serif", var(--miss); }
+.st-orbit :lang(en), .st-orbit:lang(en) { font-family: "F221 Text En", "F221 Serif", var(--miss); }
+.st-sides { font-family: "F221 Grotesk", "F221 Sans", var(--miss); }
+.st-sides :lang(en), .st-sides:lang(en) { font-family: "F221 Grotesk En", "F221 Sans", var(--miss); }
+.st-drift { font-family: "F221 Mono", "F221 Sans 400", var(--miss); }
+.st-bad { font-family: "F221 Garamond En", "F221 Fangsong", var(--miss); }
+.it { font-style: italic; }
+.syn { font-synthesis: weight style; }
+.osf { font-variant-numeric: oldstyle-nums; } .tab { font-variant-numeric: tabular-nums lining-nums; } .zero { font-feature-settings: "zero"; }
+.narrow { font-stretch: 62%; } .cond { font-stretch: 75%; }
+.big { font-size: 64px; line-height: 1; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+td, th { text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 400; color: var(--dim); }
+td.s { font-size: 17px; line-height: 1.5; word-break: break-all; }
+td.m { font: 400 11.5px/1.6 "F221 Mono", monospace; white-space: nowrap; }
+button { font: inherit; padding: 8px 16px; background: none; border: 1px solid var(--ink); color: inherit; cursor: pointer; min-height: 44px; }
+#report { font: 400 12.5px/1.7 "F221 Mono", "F221 Sans 400", monospace; white-space: pre-wrap; background: #fffdf8; border: 1px solid var(--rule); padding: 14px; overflow-wrap: anywhere; }
+.bad { color: var(--red); }
+@media (max-width: 640px) { .row { grid-template-columns: 1fr; } .row > div { font-size: 19px; } .big { font-size: 44px; } }
+</style>
+</head>
+<body>
+
+<h1>221 FOREVER · 字体样张</h1>
+<p class="note">这一页用到了 <code>assets/fonts/</code> 里的每一个字族。凡是没有被 F221 字体画出来的字，会以楷体出现（故意的，一眼能看出来）；页面底部的报告用文字再说一遍。说明见同目录 README.md。</p>
+
+<h2>一　中文字族与字重</h2>
+<p class="note">每行依次是：首页切片（a）里的字、题记切片（q）、正文切片（b 与 l）、还没有哪封信用过的常用字（c）、繁体与粤语字（t）、假名与符号（s）。</p>
+
+<div class="row"><i>F221 Serif 300</i><div class="serif w300" data-check>装修好了，钥匙在门垫下面。你的双眸明亮，可能是灯火，可能是月光。<small>没想到这么快就五周年了，要不是咱们听肥杰的博客提醒——玫瑰、葡萄、柠檬、鹦鹉；願妳記得，風繼續吹。いのちの名前 カタカナ 2026 → π ≈ 3.14</small></div></div>
+<div class="row"><i>F221 Serif 400</i><div class="serif w400" data-check>装修好了，钥匙在门垫下面。你的双眸明亮，可能是灯火，可能是月光。<small>没想到这么快就五周年了，要不是咱们听肥杰的博客提醒——玫瑰、葡萄、柠檬、鹦鹉；願妳記得，風繼續吹。いのちの名前 カタカナ 2026 → π ≈ 3.14</small></div></div>
+<div class="row"><i>F221 Serif 500</i><div class="serif w500" data-check>装修好了，钥匙在门垫下面。你的双眸明亮，可能是灯火，可能是月光。<small>没想到这么快就五周年了，要不是咱们听肥杰的博客提醒——玫瑰、葡萄、柠檬、鹦鹉；願妳記得，風繼續吹。</small></div></div>
+<div class="row"><i>F221 Serif 600</i><div class="serif w600" data-check>装修好了，钥匙在门垫下面。你的双眸明亮，可能是灯火，可能是月光。<small>没想到这么快就五周年了，要不是咱们听肥杰的博客提醒——玫瑰、葡萄、柠檬、鹦鹉；願妳記得，風繼續吹。</small></div></div>
+<div class="row"><i>F221 Serif 700</i><div class="serif w700" data-check>装修好了，钥匙在门垫下面。你的双眸明亮，可能是灯火，可能是月光。<small>没想到这么快就五周年了，要不是咱们听肥杰的博客提醒——玫瑰、葡萄、柠檬、鹦鹉；願妳記得，風繼續吹。</small></div></div>
+
+<div class="row"><i>F221 Sans 400</i><div class="sans w400" data-check>装修好了，钥匙在门垫下面。你的双眸明亮，可能是灯火，可能是月光。<small>没想到这么快就五周年了，要不是咱们听肥杰的博客提醒——玫瑰、葡萄、柠檬、鹦鹉；願妳記得，風繼續吹。いのちの名前 カタカナ 2026 → π ≈ 3.14</small></div></div>
+<div class="row"><i>F221 Sans 500</i><div class="sans w500" data-check>装修好了，钥匙在门垫下面。你的双眸明亮，可能是灯火，可能是月光。<small>没想到这么快就五周年了，要不是咱们听肥杰的博客提醒——玫瑰、葡萄、柠檬、鹦鹉；願妳記得，風繼續吹。</small></div></div>
+<div class="row"><i>F221 Sans 600</i><div class="sans w600" data-check>装修好了，钥匙在门垫下面。你的双眸明亮，可能是灯火，可能是月光。<small>没想到这么快就五周年了，要不是咱们听肥杰的博客提醒——玫瑰、葡萄、柠檬、鹦鹉；願妳記得，風繼續吹。</small></div></div>
+<div class="row"><i>F221 Sans 700</i><div class="sans w700" data-check>装修好了，钥匙在门垫下面。你的双眸明亮，可能是灯火，可能是月光。<small>没想到这么快就五周年了，要不是咱们听肥杰的博客提醒——玫瑰、葡萄、柠檬、鹦鹉；願妳記得，風繼續吹。</small></div></div>
+<div class="row"><i>F221 Sans 900</i><div class="sans w900" data-check>装修好了，钥匙在门垫下面。你的双眸明亮，可能是灯火，可能是月光。<small>没想到这么快就五周年了，要不是咱们听肥杰的博客提醒——玫瑰、葡萄、柠檬、鹦鹉；願妳記得，風繼續吹。</small></div></div>
+<div class="row"><i>F221 Sans 400（只有常规体的那一份）</i><div class="sans400 w400" data-check>装修好了，钥匙在门垫下面。你的双眸明亮，可能是灯火，可能是月光。<small>没想到这么快就五周年了，要不是咱们听肥杰的博客提醒——玫瑰、葡萄、柠檬、鹦鹉；願妳記得，風繼續吹。</small></div></div>
+
+<div class="row"><i>F221 Fangsong 400</i><div class="fs w400" data-check>装修好了，钥匙在门垫下面。你的双眸明亮，可能是灯火，可能是月光。<small>没想到这么快就五周年了，要不是咱们听肥杰的博客提醒——玫瑰、葡萄、柠檬、鹦鹉；願妳記得，風繼續吹。いのちの名前 カタカナ 2026 → π ≈ 3.14</small></div></div>
+
+<h2>二　竖排</h2>
+<p class="note">标点应在字格的右上角，引号变成直角引号「」『』，破折号与省略号竖过来，括号与书名号转向；西文侧排，两位数字横排在一格里（纵中横）。</p>
+<div class="vert">
+  <figure><figcaption>F221 Fangsong</figcaption>
+    <p class="v fs" data-check>二〇二六年八月十二日，木婚快乐。他说：“你的双眸明亮，可能是灯火，可能是月光。”她笑了——没有回答……（Oak Creek 家中）这是第<span class="tcy">31</span>封，《风之诗》；‘五年’、十年，Side A 与 Side B！真的吗？</p></figure>
+  <figure><figcaption>F221 Garamond + F221 Fangsong（西文在前的字体栈）</figcaption>
+    <p class="v st-folio" data-check>二〇二六年八月十二日，木婚快乐。他说：“你的双眸明亮，可能是灯火，可能是月光。”她笑了——没有回答……（Oak Creek 家中）这是第<span class="tcy">31</span>封，《风之诗》；‘五年’、十年，Side A 与 Side B！真的吗？</p></figure>
+  <figure><figcaption>F221 Serif 400 / 600</figcaption>
+    <p class="v serif" data-check>你我同绕日，十度春秋。“相比这颗星球，我更爱你”——<b class="w600">你是我在这茕茕孑立的星球上最爱的人</b>……（2026·二月）第<span class="tcy">29</span>封，在一起整十年。</p></figure>
+  <figure><figcaption>F221 Sans 400 / 700</figcaption>
+    <p class="v sans" data-check>万天万岁！“之后的每一天，都会有你。”——<b class="w700">认识第 3279 天</b>……（Side B）《任我行》、《陀飞轮》；好吗？</p></figure>
+</div>
+
+<h2>三　西文字族排在前面时，中文标点归中文字体</h2>
+<p class="note">弯引号、破折号、省略号、间隔号应该和上面纯中文字体的样子一致（宋体、黑体里各占一个字宽；仿宋的引号本来就窄）。字母与数字来自西文字族。最后一行是反例：把这些标点交给西文字体会怎样。</p>
+<div class="row"><i>folio<br>Garamond → Fangsong</i><div class="st-folio" data-check>“你的双眸明亮”——可能是灯火……可能是月光。南京·紫金山，2016 年 1 月 1 日，第 2 封 ‘Happy New Year!’<small class="it" lang="en">“Don’t you know… it’s a long, long way” — <span lang="en">lang="en" 用 F221 Garamond En，引号归西文</span></small></div></div>
+<div class="row"><i>folio<br>以弯引号开头的段落</i><div class="st-folio" data-check>“尽管爱永远说不完，还是要用力去说吧。”<small class="syn">“同一句，允许浏览器合成字形（font-synthesis: weight style）。”</small></div></div>
+<div class="row"><i>folio<br>斜体语境（英文歌词）</i><div class="st-folio it" data-check>“斜体只给西文”——中文不该被拉斜…… <span lang="en">“Don’t you know…”</span><small class="syn">“允许合成时（font-synthesis: weight style），中文会被浏览器拉斜”—— <span lang="en">so keep it off.</span></small></div></div>
+<div class="row"><i>orbit<br>Text → Serif</i><div class="st-orbit" data-check>“你我同绕日”——十度春秋……黄赤交角 ε = 23.44°，第 29 封 · 2026-02-21 <span class="w300">3,653</span> <span class="w600">天</span><small lang="en">“We’re all in the gutter…” — <i class="it">lang="en"</i> 用 F221 Text En</small></div></div>
+<div class="row"><i>sides<br>Grotesk → Sans</i><div class="st-sides" data-check>“Side A / Side B”——他写的 27 封……她写的 4 封。陈奕迅 · 《任我行》 No. 23<small lang="en">“Welcome To New York — it’s been waitin’ for you”</small></div></div>
+<div class="row"><i>drift<br>Mono → Sans 400</i><div class="st-drift" data-check>2026-08-12 · 第 31 封 · 认识第 3,910 天 —— “木婚快乐”……</div></div>
+<div class="row"><i>drift<br>只用 Serif（西文也由它画）</i><div class="serif" data-check>Happy 26th Birthday Pi——他说 <b class="w600">“29, 28, π”</b> 是 2026 年的第 3 封 <span class="w300">Story Begins Here</span>……<small lang="en">“We Wish You a Merry Christmas” — it’s the 19th letter</small></div></div>
+<div class="row"><i>反例<br>Garamond En → Fangsong</i><div class="st-bad">“你的双眸明亮”——可能是灯火……可能是月光。南京·紫金山</div></div>
+
+<h2>四　数字</h2>
+<div class="row"><i>F221 Text<br>lining / oldstyle / tabular</i><div class="st-orbit" data-check>0123456789 <span class="osf">0123456789</span> <span class="tab">1,234,567.89</span> <span class="w300">300</span> <span class="w500">500</span> <span class="w600">600</span> <span class="w700">700</span> <span class="it">italic 2026</span></div></div>
+<div class="row"><i>F221 Garamond<br>lining / oldstyle / tabular</i><div class="st-folio" data-check>0123456789 <span class="osf">0123456789</span> <span class="tab">1,234,567.89</span> <span class="it osf">italic 1989–2026</span></div></div>
+<div class="row"><i>F221 Grotesk<br>宽度 62 / 75 / 100 %</i><div class="st-sides" data-check><span class="big narrow w800 tab">31</span> <span class="big cond w700 tab">31</span> <span class="big w900 tab">31</span> <span class="w400">400</span> <span class="w500">500</span> <span class="w600">600</span> <span class="w700">700</span> <span class="w800">800</span> <span class="w900">900</span></div></div>
+<div class="row"><i>F221 Mono<br>300 / 400 / 500</i><div class="st-drift" data-check><span class="w300 big">3910</span> <span class="w400">2015-11-28 01:00</span> <span class="w500">3,910 d</span> <span class="zero">0O 1lI</span></div></div>
+<div class="row"><i>中文字族自带的数字</i><div data-check><span class="serif">宋 0123456789</span>　<span class="sans">黑 0123456789</span>　<span class="fs">仿宋 0123456789</span></div></div>
+
+<h2>五　西文</h2>
+<div class="row"><i>F221 Text</i><div class="st-orbit" lang="en" data-check><span class="w300">The quick brown fox</span> <span class="w400">jumps over</span> <span class="w500">the lazy dog</span> <span class="w600">— “it’s” fine</span> <span class="it">Sphinx of black quartz, judge my vow.</span></div></div>
+<div class="row"><i>F221 Garamond</i><div class="st-folio" lang="en" data-check>The quick brown fox jumps over the lazy dog — “it’s” fine. <span class="it">Sphinx of black quartz, judge my vow.</span></div></div>
+<div class="row"><i>F221 Grotesk</i><div class="st-sides" lang="en" data-check><span class="w400">The quick brown fox</span> <span class="w500">jumps over</span> <span class="w700">the lazy dog</span> <span class="w900">SIDE A</span> <span class="narrow w800">SIDE B · TRACK 29</span></div></div>
+<div class="row"><i>F221 Mono</i><div class="st-drift" lang="en" data-check><span class="w300">The quick brown fox</span> <span class="w400">jumps over</span> <span class="w500">the lazy dog</span></div></div>
+
+<h2>六　切片</h2>
+<p class="note">中文字族按 <code>unicode-range</code> 切成小文件，页面用到哪一片才下载哪一片。按下面的按钮会把每一片都用上一遍（六百多个文件，约 9 MB），只为检查，平时不必。</p>
+<p><button type="button" id="all">加载并列出全部切片</button></p>
+<table id="slices" hidden><thead><tr><th>字族</th><th>文件</th><th>字数</th><th>样字</th></tr></thead><tbody></tbody></table>
+
+<h2>七　报告</h2>
+<p class="note">由脚本根据 <code>document.fonts</code> 生成：哪些字体文件已经载入；带 <code>data-check</code> 的样张里有没有字不在任何已载入的 F221 字体里。</p>
+<pre id="report">（需要 JavaScript）</pre>
+
+<script>
+(function () {
+  'use strict';
+  // "U+4E00-4E05, U+5000" -> [[0x4E00, 0x4E05], [0x5000, 0x5000]]
+  function parseRange(text) {
+    return text.split(',').map(function (part) {
+      var m = /U\+([0-9A-F?]+)(?:-([0-9A-F]+))?/i.exec(part);
+      if (!m) return null;
+      if (m[1].indexOf('?') >= 0) return [parseInt(m[1].replace(/\?/g, '0'), 16), parseInt(m[1].replace(/\?/g, 'F'), 16)];
+      var lo = parseInt(m[1], 16);
+      return [lo, m[2] ? parseInt(m[2], 16) : lo];
+    }).filter(Boolean);
+  }
+  function has(ranges, cp) {
+    for (var i = 0; i < ranges.length; i++) if (cp >= ranges[i][0] && cp <= ranges[i][1]) return true;
+    return false;
+  }
+  // every @font-face rule of the page, with its file name
+  function rules() {
+    var out = [];
+    Array.prototype.forEach.call(document.styleSheets, function (sheet) {
+      var list;
+      try { list = sheet.cssRules; } catch (e) { return; }
+      Array.prototype.forEach.call(list, function (rule) {
+        if (!rule.style || !/font-face/i.test(rule.cssText.slice(0, 12))) return;
+        var src = /url\(["']?([^"')]+)/.exec(rule.style.getPropertyValue('src') || '');
+        out.push({
+          family: (rule.style.getPropertyValue('font-family') || '').replace(/["']/g, '').trim(),
+          style: rule.style.getPropertyValue('font-style') || 'normal',
+          weight: rule.style.getPropertyValue('font-weight') || '400',
+          file: src ? src[1].replace(/^.*\/fonts\//, '') : '?',
+          ranges: parseRange(rule.style.getPropertyValue('unicode-range') || 'U+0-10FFFF')
+        });
+      });
+    });
+    return out;
+  }
+  function faces() {
+    var out = [];
+    document.fonts.forEach(function (f) {
+      out.push({ family: f.family.replace(/["']/g, '').trim(), style: f.style, weight: f.weight, status: f.status, ranges: parseRange(f.unicodeRange) });
+    });
+    return out;
+  }
+  function report() {
+    var all = faces(), css = rules(), lines = [];
+    var loaded = all.filter(function (f) { return f.status === 'loaded'; });
+    var failed = all.filter(function (f) { return f.status === 'error'; });
+    // match loaded faces back to files (same family, style, weight and first range)
+    var files = loaded.map(function (f) {
+      var hit = css.filter(function (r) { return r.family === f.family && r.style === f.style && r.weight === f.weight && r.ranges.length && f.ranges.length && r.ranges[0][0] === f.ranges[0][0] && r.ranges.length === f.ranges.length; })[0];
+      return f.family + ' ' + f.weight + (f.style === 'italic' ? ' italic' : '') + ' <- ' + (hit ? hit.file : '?');
+    });
+    lines.push('@font-face 规则 ' + all.length + ' 条；已载入 ' + loaded.length + ' 个；失败 ' + failed.length + ' 个');
+    files.sort().forEach(function (l) { lines.push('  ' + l); });
+    var misses = 0;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-check]'), function (el) {
+      var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), node, bad = {};
+      while ((node = walker.nextNode())) {
+        var cs = getComputedStyle(node.parentElement);
+        var stack = cs.fontFamily.split(',').map(function (s) { return s.replace(/["']/g, '').trim(); }).filter(function (s) { return /^F221 /.test(s); });
+        var italic = cs.fontStyle === 'italic';
+        Array.from(node.nodeValue).forEach(function (ch) {
+          var cp = ch.codePointAt(0);
+          if (cp <= 0x20 || cp === 0xA0 || cp === 0x3000) return;
+          var state = 'none';
+          for (var i = 0; i < stack.length && state === 'none'; i++) {
+            var mine = all.filter(function (f) { return f.family === stack[i] && has(f.ranges, cp); });
+            var styled = mine.filter(function (f) { return (f.style === 'italic') === italic; });
+            if (styled.length) mine = styled;
+            if (mine.length) state = mine.some(function (f) { return f.status === 'loaded'; }) ? 'ok' : 'pending';
+          }
+          if (state !== 'ok') bad[ch] = state;
+        });
+      }
+      var keys = Object.keys(bad);
+      if (keys.length) {
+        misses += keys.length;
+        var label = (el.closest('.row, figure') || el).querySelector('i, figcaption');
+        lines.push('漏字 [' + (label ? label.textContent.replace(/\s+/g, ' ').trim() : '?') + '] ' + keys.map(function (k) { return k + (bad[k] === 'pending' ? '(未载入)' : '(无此字)'); }).join(' '));
+      }
+    });
+    lines.push(misses ? '有 ' + misses + ' 个字没有落在已载入的 F221 字体里（见上）' : '样张里的每一个字都落在已载入的 F221 字体里。');
+    var pre = document.getElementById('report');
+    pre.textContent = lines.join('\n');
+    pre.className = misses || failed.length ? 'bad' : '';
+    document.documentElement.setAttribute('data-fonts', misses || failed.length ? 'miss' : 'ok');
+    return lines.join('\n');
+  }
+  window.specimenReport = report;
+  document.getElementById('all').addEventListener('click', function () {
+    var body = document.querySelector('#slices tbody'), seen = {};
+    body.textContent = '';
+    rules().forEach(function (r) {
+      if (!/^F221 (Serif|Sans|Sans 400|Fangsong)$/.test(r.family) || seen[r.file]) return;
+      seen[r.file] = 1;
+      var chars = [], count = 0;
+      r.ranges.forEach(function (x) { count += x[1] - x[0] + 1; });
+      var step = Math.max(1, Math.floor(count / 28)), n = 0;
+      r.ranges.forEach(function (x) { for (var cp = x[0]; cp <= x[1]; cp++) { if (n++ % step === 0 && cp > 0x20 && chars.length < 28) chars.push(String.fromCodePoint(cp)); } });
+      var tr = document.createElement('tr');
+      [[r.family, ''], [r.file, 'm'], [String(count), 'm'], [chars.join(''), 's']].forEach(function (cell, i) {
+        var td = document.createElement('td'); td.textContent = cell[0]; td.className = cell[1];
+        if (i === 3) { td.style.fontFamily = '"' + r.family + '", var(--miss)'; td.setAttribute('data-check', ''); }
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+    document.getElementById('slices').hidden = false;
+    document.fonts.ready.then(function () { setTimeout(function () { document.fonts.ready.then(report); }, 300); });
+  });
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () { setTimeout(function () { document.fonts.ready.then(report); }, 300); });
+    window.addEventListener('load', function () { setTimeout(report, 1500); });
+  }
+})();
+</script>
+</body>
+</html>

@@ -17,3 +17,7 @@ _data/media.json
 tests/.site/
 test-results/
 playwright-report/
+# source fonts and the Python environment of scripts/fonts.py (the generated fonts in assets/fonts/ ARE committed)
+.fonts-src/
+.venv-fonts/
+__pycache__/

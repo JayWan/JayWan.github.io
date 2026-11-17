@@ -1,0 +1,41 @@
+# Interface characters for scripts/fonts.py: everything here goes into slice "a" of the Chinese
+# families, the slice every first view downloads. Lines starting with # are comments; every other
+# character counts (order and repetition do not matter). scripts/fonts.py also reads the real
+# sources (assets/themes, assets/js/core, _data/themes.yml, _includes, _layouts, index.html,
+# 404.html), so this file only has to hold what cannot be found there.
+
+# Dates, numbers, units
+〇零一二三四五六七八九十百千万亿两廿卅第 年月日号时分秒天周星期岁 今天昨天明天前后 上午下午凌晨早晚夜
+春夏秋冬 东南西北 公里 度 ℃ ° × · — …… ～ № ← → ↑ ↓ ♪
+
+# Words an interface is made of
+信封首歌曲播放暂停继续上下一返回目录首页全部更多收起展开关闭打开查看原图主题换切旧版新
+作者写给致读阅字数分钟来自地点时间日期他她它我你们的了是在有和与不也这那就都还很没人个
+认识相遇在一起结婚恋爱出生周年生日快乐纪念至今已经共同 第一次 最新 最早 加载中 失败 重试
+找不到页面迷路回家 这里什么也没有
+
+# The names of the themes and of the people
+旧版 夜航 笺 绕日 Side A / Side B 221 FOREVER Pikajay Pikachi Claude 安贝儿 小天使 宝贝儿
+
+# The site's own voice (the 2021 letter: 喂我吃东西 = somebody adds a new letter)
+饿饱吃喂饭东西肚子好久没有人来看我啦呀吧呢吗嘛哦嗯咕噜已经多少次再不就要瘦扁新鲜热乎刚才更新
+写一封等想念谢谢款待上一顿下一顿距离过去了记得常回来 喂我吃东西 学起来怎么喂我吃饭
+
+# Letter no. 32 (written by Claude after the redesign; front matter known in advance)
+装修好了，钥匙在门垫下面 无限不循环
+
+# Characters found in the four mockups on 2026-11-17 (markup, scripts and generated text; comments removed)
+# drift 夜航
+©·–←→、。一三上下不与两个也了二五亲今会保信停先六关再写出到刻十原合周响四回在地多天她好婚子实导封展年度开式张或截手才拆按挤排播放新方日时是暂曲最有本条来样
+歌正每没河流浮漂点照片版物留的盒相着礼稿空第结给自至航要认识试话起还这进那都里间顺首，；
+# folio 笺
+©·–—‘’“”…、。〇」』一七三上下不与两个为乐九书二五人今以伟你使例信停儿八六再写凡出切列到功动十印原句右叶同向吗周和哪四图在处夕外夜大天头好婚子安宝封小展
+岁左年并度录快恋成我截扉执批找拼指按换插播收放数无日春是暂最月本来某标次歌每没漏点照片版生用画白的目相眉码祝秋空笔第笺绕给自致色见识读贝贴近还配里门集非面页首鼠
+！（），：；？～
+# sides Side A / Side B
+©·–←→♪。《》あじつのや一三上下不之乐也书了他以会伦信停光全内写出击切到前十原双可号同名听周和咏嘉器回国图在地声大天太奕套她婚子字宥导封就尾幅年広序建张忆恋
+押按换播放数新方日明星是暂曲最有期杰林格梁橋歌正没点王现琪的目相看真第筛篇紀结绿编署群航色荣莲菲蓝表认议识说读赵迅还这选道郎部配里间附陈集雷面页顺首，
+# orbit 绕日
+©°·–“”№→。一三上下与为之乐了二于五交今他以任会位信俯倾入六其内再冬出分切到前北十历原及双句右后向吸周四回图圈在地夏外天她婚季封尚就左已年序度弧当往心念意
+或执把指换排摘撞播放数整新无日时星春是晒曲最月期未本来极次正此每点片版环珀球琥由的目相看示秋移笔第约纪线经结绕置自至色节蓝行表视角认识读调赤走起距轨转轻过近这进
+远逆道那配针间附面顺题黄（），：
