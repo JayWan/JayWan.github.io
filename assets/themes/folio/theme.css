@@ -201,7 +201,8 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .body blockquote.largeQuote{font-size:calc(var(--fz) + 1px);color:var(--ink);letter-spacing:.04em}
 .body .q-en{font-style:italic;letter-spacing:0;font-size:1.06em}
 .body blockquote+blockquote{margin-top:0}
-@supports (text-wrap:pretty){ @media (min-width:720px){ .body :is(p,blockquote,li){text-wrap:pretty} } }
+/* 段末不留孤字。只给 Chrome：WebKit 的 pretty 会让两端对齐的中文每行早断三四个字、右边空出一条（hanging-punctuation 只有 WebKit 认识，借它来分辨） */
+@supports (text-wrap:pretty) and (not (hanging-punctuation:first)){ @media (min-width:720px){ .body :is(p,blockquote,li){text-wrap:pretty} } }
 @supports (text-autospace:normal){ .body{text-autospace:normal} }
 .body :is(h1,h2,h3,h4,h5,h6){margin:var(--lh) 0 0;font-weight:400;font-family:var(--fs);line-height:var(--lh)}
 .body :is(h1,h2,h3){font-size:24px;letter-spacing:.12em}
