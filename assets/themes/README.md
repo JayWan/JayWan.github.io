@@ -471,8 +471,10 @@ type Route =
 ## 十、本地预览和测试
 
 ```bash
-npm start                        # http://localhost:4301
+npm start                        # http://localhost:4301，改了文件会自动刷新
 ```
+
+4301 被占用时（比如同一台机器上还有别人在跑），换个端口：`bundle exec jekyll serve --port 4311 --livereload-port 35731`；或者只构建一次，用小服务器看：`bundle exec jekyll build --destination /tmp/site && node tests/server.mjs --dir /tmp/site --port 4311`。下面的地址相应换掉端口。
 
 - `http://localhost:4301/?theme=<id>` 强制用某个主题，并在本次到访里一直用它（之后的刷新、跳转都不用再带参数）。
 - `?theme=classic` 回到旧版，`?theme=random` 重新抽一次，`?theme=probe` 看参考主题。
