@@ -76,6 +76,9 @@ function byline(letter) {
   return role === 'guest' ? `${letter.author} · 访客` : `${letter.author} 执笔`;
 }
 
+// 图上的两个记号，图例、读数栏和信的末尾都用它们：⊕ = 今日，◇ = 认识 · 在一起 · 结婚
+const G_TODAY = '<circle cx="7" cy="7" r="4.6" class="s"/><path d="M2.4 7h9.2M7 2.4v9.2" class="s"/>';
+const G_EVT = '<path d="M7 3.2L10.8 7 7 10.8 3.2 7z" class="s"/>';
 const ARROW = '<path d="M0 5h14M10 1l4 4-4 4" fill="none" stroke="currentColor"/>';
 const RING = 2 * Math.PI * 19;
 const PLAY = `<circle class="p-ring" cx="22" cy="22" r="19"/><circle class="p-prog" cx="22" cy="22" r="19" transform="translate(22 22) scale(-1 1) rotate(-90) translate(-22 -22)" stroke-dasharray="${f1(RING)}" stroke-dashoffset="${f1(RING)}"/><circle class="p-dot" cx="22" cy="3" r="2.4"/><path class="i-play" d="M18.2 14.6v14.8L30 22z"/><path class="i-pause" d="M16.6 15h3.6v14h-3.6zM23.8 15h3.6v14h-3.6z"/>`;
@@ -125,7 +128,8 @@ export default {
         if (tr && tr.bottom > hr.top && tr.right > hr.left) R = Math.min(R, Math.hypot(cx - (tr.right - hr.left - 4), cy - (tr.bottom - hr.top - 6)) - 2);
         band = 20; rOut = R - band - 16; rIn = R * 0.25; dotR = Math.max(3.2, Math.min(4.4, R / 82)); sunR = 9;
       }
-      if (big) svg.style.setProperty('--z', f1(Math.min(1.3, Math.max(1, R / 290))));     // 图大了，图上的字跟着大
+      const z = big ? f1(Math.min(1.3, Math.max(1, R / 290))) : 1;                       // 图大了，图上的字跟着大
+      if (big) svg.style.setProperty('--z', z);
       const step = (rOut - rIn) / Math.max(1, Y1 - Y0);
       const rOf = (y) => rOut - (Math.min(Math.max(y, Y0), Y1) - Y0) * step;
       const P = (deg, r) => { const a = deg * Math.PI / 180; return [f1(cx + r * Math.cos(a)), f1(cy - r * Math.sin(a))]; };
@@ -212,10 +216,13 @@ export default {
           if (to > from) S('path', { d: arc(r, helio(from), to >= d31 ? helioT(d31 + DAY) : helio(to)), class: 'ring' }, gRings);
           if (to < d31) S('path', { d: arc(r, helio(Math.max(to, j1)), helioT(d31 + DAY)), class: 'ring off' }, gRings);
         }
-        // 年份写在 6 点钟方向；手机上只标首尾和每五年
+        // 年份写在 6 点钟方向，由外向内一年一环；手机上只标首尾和每五年。那里正好有一封信时，年份往旁边让
         if (!mini && (big || y === Y0 || y === Y1 || ((y - Y0) % 5 === 0 && Y1 - y > 1))) {
-          const py = P(270, r);
-          text(phone ? String(y).slice(2) : String(y), py[0], py[1] + 0.3, 't-year halo', gOut);
+          const half = (phone ? 11 : 12.5 * z) + dotR + 3;
+          let dx = 0;
+          letters.forEach((l, i) => { const a = geo[i].a * Math.PI / 180, x = r * Math.cos(a); if (l.year === y && Math.sin(a) < 0 && Math.abs(x) < half) dx = x > 0 ? x - half : x + half; });
+          const py = P(360 - Math.acos(Math.max(-1, Math.min(1, dx / r))) * 180 / Math.PI, r);
+          text(String(y), py[0], py[1] + 0.3, 't-year halo', gOut);
         }
       }
 
@@ -275,12 +282,12 @@ export default {
         todayAt = { x: tp[0], y: tp[1] };
       }
 
-      // 前进方向
-      if (big) {
-        const rr = R + 12, e = P(212, rr), tl = P(208.8, rr + 3.2), trr = P(208.8, rr - 3.2);
-        S('path', { d: arc(rr, 198, 212), class: 'la' }, gOut);
-        S('path', { d: `M${tl[0]} ${tl[1]}L${e[0]} ${e[1]}L${trr[0]} ${trr[1]}`, class: 'la' }, gOut);
-      }
+      // 前进方向：尺外两支相对的箭头，逆时针
+      if (!mini) [16, 196].forEach((a) => {
+        const rr = R + (big ? 12 : 7), w = big ? 4 : 3.2, k = w * 2.6 / rr * 180 / Math.PI, t = P(a + 18, rr), u = P(a + 18 - k, rr + w), v = P(a + 18 - k, rr - w);
+        S('path', { d: arc(rr, a, a + 18 - k / 2), class: 'la' }, gOut);
+        S('path', { d: `M${u[0]} ${u[1]}L${t[0]} ${t[1]}L${v[0]} ${v[1]}Z`, class: 'ah' }, gOut);
+      });
 
       /** 从 a 那天到 b 那天连续扫过的轨迹：中间每满一年就是一整圈 */
       function tracePath(a, b) {
@@ -487,8 +494,8 @@ export default {
         li(icon(12, 12, GLYPH.her, 'g'), '她 Pikachi', count('her')),
         count('both') ? li(icon(12, 12, GLYPH.both, 'g'), '合写', count('both')) : null,
         count('guest') ? li(icon(12, 12, GLYPH.guest, 'g'), '访客', count('guest')) : null,
-        li(icon(14, 14, '<circle cx="7" cy="7" r="4.6" class="s"/><path d="M2.4 7h9.2M7 2.4v9.2" class="s"/>', 'g'), '今日'),
-        li(icon(14, 14, '<path d="M7 3.2L10.8 7 7 10.8 3.2 7z" class="s"/>', 'g'), '认识 · 在一起 · 结婚'),
+        li(icon(14, 14, G_TODAY, 'g'), '今日'),
+        li(icon(14, 14, G_EVT, 'g'), '认识 · 在一起 · 结婚'),
         li(icon(14, 14, '<path d="M0 7h14" class="s" stroke-dasharray="1.2 3"/>', 'g'), '每年都会经过的五个日子'),
         li(icon(14, 14, '<path d="M1 9.5A7 7 0 0 1 13 9.5" class="s"/>', 'g sunny'), '自上一封走过的弧'));
       const tilt = letters.byNo(29) && /绕日/.test(letters.byNo(29).title) ? letters.byNo(29) : null;
@@ -498,23 +505,25 @@ export default {
             h('h1', { lang: 'en' }, site.title),
             h('p', { class: 'plate-title' }, '绕日图'),
             h('p', { class: 'plate-no' }, '图版 I'),
-            h('p', { class: 'plate-desc' }, `${letters.length} 封信的日心轨道`, h('br'), h('span', {}, `${Y0} – ${Y1}`))),
+            h('p', { class: 'plate-desc' }, `${Y0} – ${Y1}`)),
           chartHost,
-          h('p', { class: 'chartnote' }, h('span', {}, '自黄道北极俯视，逆时针前进。'), h('span', {}, '冬至在正上，1 月 1 日在其左约 11°。'), h('span', {}, `年环由外向内：${Y0} → ${Y1}。`)),
+          // 公转：逆时针，一圈 360°，365.24 天。和右边的自转倾角是一对小图
+          h('figure', { class: 'tilt orb' },
+            icon(64, 64, '<circle cx="32" cy="32" r="21" class="h2" stroke-dasharray="1 3"/><path d="M50.2 42.5A21 21 0 1 0 14.2 43.1" class="h1"/><path d="M17.1 47.3L15.8 39.1L9.9 43.3Z" class="hf"/><circle cx="50.2" cy="42.5" r="2.6" class="hf"/><circle cx="32" cy="32" r="3.4" class="hs"/>'),
+            h('figcaption', {}, h('b', {}, '360°'), '365.24 d')),
           tilt && h('figure', { class: 'tilt' },
             icon(64, 64, '<path d="M4 32h56M32 5v54" class="h2" stroke-dasharray="1 3"/><circle cx="32" cy="32" r="13" class="h1"/><path d="M21.2 56.8L42.8 7.2M32 13A19 19 0 0 1 39.6 14.6" class="h1"/><ellipse cx="32" cy="32" rx="13" ry="3.4" class="h2" transform="rotate(-23.5 32 32)"/>'),
             h('figcaption', {}, h('b', {}, '23.5°'), '地球自转倾角，', h('br'), '“撞出了春夏秋冬”。', h('a', { href: tilt.url }, `№ ${tilt.no}`)))),
           legend,
           readout),
         h('section', { class: 'tablecol', 'aria-label': '星历表' },
-          h('header', { class: 'eph-head' }, h('h2', {}, '星历表'), h('p', {}, `一行一封。T+ 为自认识那天（${dots(site.met)}）起的整日数。`), sort),
+          h('header', { class: 'eph-head' }, h('h2', {}, '星历表'), sort),
           eph));
 
       function today() {
         const last = letters.latest, lp = lapOf(TODAY), d = site.today.date, away = Math.max(0, Math.round((TODAY - geo[last.index].ms) / DAY));
         readout.replaceChildren(h('div', { class: 'ro ro-today' },
-          h('p', { class: 'ro-kicker' }, h('strong', {}, '今日读数'), h('span', {}, `${dots(d)} ${fmt.date(d, 'weekday')}`),
-            h('span', { class: 'ro-tip' }, touch ? '点图上哪里都行，会落到最近的一封信上。' : '把指针移到图上的点或右表的行，在此读出那封信。')),
+          h('p', { class: 'ro-kicker' }, h('strong', {}, icon(14, 14, G_TODAY, 'g'), '今日读数'), h('span', {}, `${dots(d)} ${fmt.date(d, 'weekday')}`)),
           h('dl', { class: 'strip' },
             cell('自认识', [h('span', { class: 'tp' }, 'T+'), String(site.today.days.met), h('i', {}, 'd')], `${dots(site.met)} 起`),
             lp && cell('圈次', `第 ${lp.n} 圈`, `本圈已走 ${lp.deg}°`),
