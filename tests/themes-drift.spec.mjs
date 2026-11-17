@@ -1,0 +1,238 @@
+// 夜航 (drift): what this theme promises beyond the contract every theme is tested for in
+// themes.spec.mjs. Each test is one of the defects the mockup was sent back for.
+
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { expect, test } from '@playwright/test';
+import { open, root } from './helpers.mjs';
+
+const present = ['theme.js', 'theme.css'].every((file) => existsSync(path.join(root, 'assets/themes/drift', file)));
+
+/** The river as it is laid out: one row per print, newest first. offsetTop / offsetHeight are layout
+ *  values, so the idle drift and the scroll parallax (transforms) do not blur the measurement. */
+const river = (page) => page.evaluate(() => {
+  const order = [...window.__theme.ctx.letters].reverse();
+  const days = (a, b) => Math.round((Date.parse(a) - Date.parse(b)) / 864e5);
+  const rows = [...document.querySelectorAll('#theme-root .prints .item')].map((a, i) => {
+    const letter = order[i];
+    const frame = a.querySelector('.frame');
+    return {
+      no: letter.no,
+      date: letter.date,
+      names: letter.authors && letter.authors.length ? letter.authors : [letter.author],
+      found: Boolean(letter.cover) && letter.cover.own === false,
+      guest: letter.role === 'guest',
+      layer: Number(/\bz(\d)\b/.exec(a.className)[1]),
+      width: frame.offsetWidth,
+      paper: getComputedStyle(frame).backgroundColor,
+      top: a.offsetTop,
+      bottom: a.offsetTop + a.offsetHeight,
+      caption: a.querySelector('.cap').textContent,
+    };
+  });
+  const silences = [];
+  for (let i = 1; i < rows.length; i++) {
+    const length = days(rows[i - 1].date, rows[i].date);
+    if (length <= 180) continue;
+    const above = Math.max(...rows.slice(0, i).map((row) => row.bottom));
+    const below = Math.min(...rows.slice(i).map((row) => row.top));
+    silences.push({ days: length, band: below - above });
+  }
+  return { rows, silences, labels: [...document.querySelectorAll('#theme-root .note.gap')].map((n) => n.textContent), viewport: window.innerHeight };
+});
+
+const phone = async (browser, baseURL) => {
+  const context = await browser.newContext({ baseURL, viewport: { width: 402, height: 874 }, hasTouch: true });
+  return { context, page: await context.newPage() };
+};
+const pathOf = (page) => page.evaluate(() => decodeURIComponent(location.pathname));
+const scrollY = (page) => page.evaluate(() => Math.round(window.scrollY));
+/** Where a letter's print is on screen (top of its frame), or null when it is not drawn. */
+const printTop = (page, no) => page.evaluate((n) => {
+  const { letters } = window.__theme.ctx;
+  const a = [...document.querySelectorAll('#theme-root .prints .item')][letters.length - n];
+  return Math.round(a.querySelector('.frame').getBoundingClientRect().top);
+}, no);
+/** Bring a letter's print near the top of the screen and click it. */
+async function openFromRiver(page, no) {
+  await page.evaluate((n) => {
+    const { letters } = window.__theme.ctx;
+    const a = [...document.querySelectorAll('#theme-root .prints .item')][letters.length - n];
+    window.scrollTo(0, a.getBoundingClientRect().top + window.scrollY - 200);
+  }, no);
+  const url = await page.evaluate((n) => window.__theme.ctx.letters.byNo(n).url, no);
+  await page.locator(`#theme-root .prints .item[href="${url}"]`).click({ position: { x: 60, y: 60 } });
+  await expect.poll(() => pathOf(page)).toBe(url);
+  await expect(page.locator('#theme-root .sheet .letter-body .content-body')).toBeVisible();
+  // the sheet has arrived at the top of the screen and the page has stopped moving
+  await page.waitForFunction(() => {
+    const top = Math.round(document.querySelector('#theme-root .sheet').getBoundingClientRect().top);
+    const still = window.__sheetTop === top;
+    window.__sheetTop = top;
+    return still && top <= 40;
+  }, null, { polling: 120 });
+  return url;
+}
+/** A synthetic touch on the time ruler (the handlers only read pointer events). */
+const touchRuler = (page, steps) => page.evaluate((list) => {
+  const track = document.querySelector('#theme-root .ruler-track');
+  const box = track.getBoundingClientRect();
+  for (const [type, fx, dy = 0] of list) {
+    track.dispatchEvent(new PointerEvent(type, { pointerId: 7, pointerType: 'touch', isPrimary: true, clientX: box.left + box.width * fx, clientY: box.top + box.height / 2 + dy, bubbles: true, cancelable: true }));
+  }
+}, steps);
+
+test.describe('夜航 (drift)', () => {
+  test.skip(!present, 'the drift theme is not in this checkout');
+
+  for (const size of ['desktop', 'phone']) {
+    test(`the river on a ${size}: depth, found pictures, who wrote it, silences to scale`, async ({ browser, baseURL }) => {
+      const context = await browser.newContext(size === 'phone'
+        ? { baseURL, viewport: { width: 402, height: 874 }, hasTouch: true, reducedMotion: 'reduce' }
+        : { baseURL, viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
+      const page = await context.newPage();
+      await open(page, '/', 'drift');
+      await page.evaluate(() => document.fonts.ready);
+      const { rows, silences, labels, viewport } = await river(page);
+
+      // authorship is stated on every print, the same way for everyone
+      for (const row of rows) for (const name of row.names) expect(row.caption, `no. ${row.no} names ${name}`).toContain(name);
+      // pictures found online are never framed as the couple's prints: far layer, no paper border
+      for (const row of rows.filter((r) => r.found)) {
+        expect(row.layer, `no. ${row.no}: a found picture stays on the far layer`).toBe(0);
+        expect(row.paper, `no. ${row.no}: a found picture has no paper border`).toBe('rgba(0, 0, 0, 0)');
+      }
+      for (const row of rows.filter((r) => r.guest)) expect(row.layer, 'a guest letter is a far print').toBe(0);
+      const widest = (layer) => Math.max(...rows.filter((r) => r.layer === layer).map((r) => r.width));
+      if (size === 'desktop') expect(widest(2) / widest(0), 'near prints are at least 2.2 times the far ones').toBeGreaterThanOrEqual(2.2);
+      else expect(widest(2), 'on a phone depth is width').toBeGreaterThan(widest(0));
+
+      // silence is to scale: the longer the gap, the longer the empty stretch, and the 838 days are the longest on the page
+      const byDays = [...silences].sort((a, b) => a.days - b.days);
+      for (let i = 1; i < byDays.length; i++) expect(byDays[i].band, `${byDays[i].days} days are emptier than ${byDays[i - 1].days}`).toBeGreaterThan(byDays[i - 1].band);
+      const longest = byDays[byDays.length - 1];
+      expect(longest.days).toBe(838);
+      expect(longest.band, 'the longest silence is most of a screen of nothing').toBeGreaterThanOrEqual(viewport * 0.6);
+      expect(labels.find((text) => text.startsWith('838')), 'it is labelled plainly').toContain('没有信');
+      await context.close();
+    });
+  }
+
+  test('the time ruler: nothing moves on touch-down, a tap jumps and can be undone, a drag along it scrubs', async ({ browser, baseURL }) => {
+    const { context, page } = await phone(browser, baseURL);
+    await open(page, '/', 'drift');
+    await page.evaluate(() => window.scrollTo(0, 5000));
+    const start = await scrollY(page);
+
+    await touchRuler(page, [['pointerdown', 0.8]]);
+    expect(await scrollY(page), 'touch-down alone').toBe(start);
+    await touchRuler(page, [['pointercancel', 0.8]]);
+    expect(await scrollY(page), 'a touch the browser took for a swipe').toBe(start);
+    await touchRuler(page, [['pointerdown', 0.8], ['pointermove', 0.8, -8], ['pointermove', 0.8, -20], ['pointermove', 0.8, -40], ['pointerup', 0.8, -40]]);
+    expect(await scrollY(page), 'a vertical swipe that starts on the ruler').toBe(start);
+
+    await touchRuler(page, [['pointerdown', 0.3], ['pointerup', 0.3]]);
+    await expect.poll(() => scrollY(page), 'a tap jumps to the nearest letter').not.toBe(start);
+    const undo = page.locator('#theme-root .ruler-undo');
+    await expect(undo, 'and offers the way back').toBeVisible();
+    expect((await undo.boundingBox()).height).toBeGreaterThanOrEqual(44);
+    await undo.click();
+    await expect.poll(() => scrollY(page)).toBe(start);
+
+    await touchRuler(page, [['pointerdown', 0.8], ['pointermove', 0.77, 1], ['pointermove', 0.7, 1], ['pointermove', 0.6, 1]]);
+    await expect.poll(() => scrollY(page), 'a deliberate drag along the ruler scrubs').not.toBe(start);
+    await touchRuler(page, [['pointerup', 0.6, 1]]);
+    await context.close();
+  });
+
+  test('reading on past the end of a letter closes it: no dimmed dead zone, nothing jumps', async ({ browser, baseURL }) => {
+    const { context, page } = await phone(browser, baseURL);
+    await open(page, '/', 'drift');
+    await openFromRiver(page, 22);
+    // one screen past the foot of the sheet
+    await page.evaluate(() => {
+      const sheet = document.querySelector('#theme-root .sheet').getBoundingClientRect();
+      window.scrollTo(0, sheet.bottom + window.scrollY + 60);
+    });
+    const before = await page.evaluate(() => {
+      const a = [...document.querySelectorAll('#theme-root .prints .item:not(.is-open)')].find((item) => { const box = item.getBoundingClientRect(); return box.top > 60 && box.top < window.innerHeight; });
+      return a ? { href: a.getAttribute('href'), top: Math.round(a.getBoundingClientRect().top) } : null;
+    });
+    expect(before, 'the river is under the letter').not.toBeNull();
+    await expect.poll(() => pathOf(page), 'the letter closes itself').toBe('/');
+    await expect(page.locator('#theme-root .sheet')).toBeHidden();
+    const look = () => page.evaluate((href) => {
+      const a = [...document.querySelectorAll('#theme-root .prints .item')].find((item) => item.getAttribute('href') === href);
+      return { top: Math.round(a.getBoundingClientRect().top), opacity: getComputedStyle(a).opacity, open: document.getElementById('theme-root').classList.contains('has-open') };
+    }, before.href);
+    const after = await look();
+    expect(Math.abs(after.top - before.top), 'what the reader was looking at stays where it was').toBeLessThanOrEqual(3);
+    expect(after.open).toBe(false);
+    await expect.poll(async () => (await look()).opacity, 'the river is at full strength again').toBe('1');
+    await context.close();
+  });
+
+  test('closing lands on the print of the letter just read, wherever the reader came from', async ({ browser, baseURL }) => {
+    const { context, page } = await phone(browser, baseURL);
+    await open(page, '/', 'drift');
+    // 「最新一封」 on the first screen, then 「合上」 in the dock: not back to the masthead
+    const latest = await page.evaluate(() => { const { letters } = window.__theme.ctx; return { no: letters.latest.no, url: letters.latest.url, standalone: letters.latest.standalone }; });
+    test.skip(latest.standalone, 'the newest letter loads its own page');
+    await page.locator('#theme-root .bar-link').click();
+    await expect.poll(() => pathOf(page)).toBe(latest.url);
+    await page.locator('#theme-root .dock-close').click();
+    await expect.poll(() => pathOf(page)).toBe('/');
+    await expect.poll(() => printTop(page, latest.no), 'its print is in the upper part of the screen').toBeGreaterThanOrEqual(0);
+    expect(await printTop(page, latest.no)).toBeLessThan(874 * 0.6);
+
+    // from a letter far down the river, the foot of the sheet has the way back too
+    await openFromRiver(page, 9);
+    const close = page.locator('#theme-root .sheet-close2');
+    await close.scrollIntoViewIfNeeded();
+    expect((await close.boundingBox()).height).toBeGreaterThanOrEqual(44);
+    await close.click();
+    await expect.poll(() => pathOf(page)).toBe('/');
+    await expect.poll(() => printTop(page, 9)).toBeGreaterThanOrEqual(0);
+    expect(await printTop(page, 9)).toBeLessThan(874 * 0.6);
+    await context.close();
+  });
+
+  test('previous and next keep one step between the letter and the river', async ({ page }) => {
+    await open(page, '/', 'drift');
+    test.skip(!(await page.evaluate(() => typeof window.__theme.ctx.router.home === 'function')), 'the core has no router.home() yet');
+    await openFromRiver(page, 26);
+    const next = page.locator('#theme-root .sheet-nav .sn-next');
+    await next.scrollIntoViewIfNeeded();
+    await next.click();
+    const second = await page.evaluate(() => window.__theme.ctx.letters.byNo(27).url);
+    await expect.poll(() => pathOf(page)).toBe(second);
+    await expect.poll(() => page.evaluate(() => Math.round(document.querySelector('#theme-root .sheet').getBoundingClientRect().top)), 'the next letter starts at its top').toBeLessThanOrEqual(40);
+    await page.goBack();
+    await expect.poll(() => pathOf(page), 'one Back leaves for the river').toBe('/');
+    const vh = await page.evaluate(() => window.innerHeight);
+    await expect.poll(() => printTop(page, 27), 'at the letter just read').toBeGreaterThan(-200);
+    expect(await printTop(page, 27)).toBeLessThan(vh);
+  });
+
+  test('an opened letter: the first lines are on screen one, Home stays inside the letter', async ({ page }) => {
+    const width = await page.evaluate(() => window.innerWidth);
+    for (const no of [26, 25, 6]) {           // a wide cover, a tall one, a found one
+      const url = await (async () => { await open(page, '/', 'drift'); return page.evaluate((n) => window.__theme.ctx.letters.byNo(n).url, no); })();
+      await open(page, url, 'drift');
+      const first = await page.evaluate(() => {
+        const body = document.querySelector('#theme-root .letter-body .content-body');
+        const block = [...body.children].find((el) => el.getBoundingClientRect().height > 0);
+        return Math.round(block.getBoundingClientRect().top);
+      });
+      if (width >= 1100) expect(first, `no. ${no}: where the body begins`).toBeLessThan(await page.evaluate(() => window.innerHeight) - 36);
+    }
+    // Home is the top of the letter, not the top of the river
+    const top = () => page.evaluate(() => Math.round(document.querySelector('#theme-root .sheet').getBoundingClientRect().top));
+    await page.evaluate(() => window.scrollBy(0, 1200));
+    await page.locator('#theme-root .sheet').focus();
+    await page.keyboard.press('Home');
+    await expect.poll(top).toBeGreaterThanOrEqual(0);
+    expect(await top()).toBeLessThanOrEqual(40);
+    await expect(page.locator('#theme-root .sheet .letter-body .content-body')).toBeVisible();
+  });
+});

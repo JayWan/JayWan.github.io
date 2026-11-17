@@ -642,13 +642,16 @@ export default {
     /* Walked past the end of an open letter (or back above it). At once the river is at full strength again
        (no dimmed dead zone). The sheet itself is taken away only when the scroll has come to rest and no finger
        is down: that moves the page under the reader, and iOS does not keep a scroll position set mid-fling. */
-    let away = 0, rest = 0, touching = false;
+    let away = 0, rest = 0, touching = false, lastSeen = 0;
     const walked = (on) => { root.classList.toggle('walked', on); root.classList.toggle('has-open', Boolean(openL) && !on); };
     const settle = () => {
       clearTimeout(rest);
       if (!openL || !root.classList.contains('walked')) return;
       if (sheetInView()) { walked(false); return; }
       if (touching || performance.now() - lastScroll < 140) { rest = setTimeout(settle, 150); return; }
+      // The page came to rest at its very top a moment after the letter was on screen: a tap on the iOS status bar
+      // (or the Home key). With a letter open, "the top" is the top of this letter.
+      if (window.scrollY <= 1 && performance.now() - lastSeen < 2000 && sheetTarget() > innerHeight) { window.scrollTo(0, sheetTarget()); walked(false); return; }
       closing = 'silent';
       goHome();
     };
@@ -664,7 +667,7 @@ export default {
       new IntersectionObserver((es) => {
         clearTimeout(away);
         if (!openL) return;
-        if (es[es.length - 1].isIntersecting) walked(false); else away = setTimeout(leave, 320);
+        if (es[es.length - 1].isIntersecting) walked(false); else { lastSeen = performance.now(); away = setTimeout(leave, 320); }
       }).observe(sheet);
     }
     addEventListener('touchstart', () => { touching = true; }, { passive: true });
@@ -675,6 +678,10 @@ export default {
       const t = e.target;
       if (t && t.closest && t.closest('input, textarea, select, [contenteditable], [role="slider"]')) return;
       if (e.key === 'Escape') goHome();
+      else if (e.key === 'Home' || e.key === 'End') {      // the open letter is the page: Home and End stay inside it
+        e.preventDefault();
+        window.scrollTo(0, e.key === 'Home' ? sheetTarget() : Math.max(sheetTarget(), Math.round(sheet.getBoundingClientRect().bottom + window.scrollY - innerHeight + 40)));
+      }
       else if (e.key === 'ArrowLeft' && openL.prev) router.go(openL.prev.url, { replace: true });
       else if (e.key === 'ArrowRight' && openL.next) router.go(openL.next.url, { replace: true });
     });
