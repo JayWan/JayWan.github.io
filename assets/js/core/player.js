@@ -26,7 +26,8 @@ const TIME_EVENT_MS = 250;   // 'time' fires at most 4 times per second
  *   player.seek(seconds)
  *   player.next() / prev()  the next / previous letter that has a song, and play it
  *   player.on('change', fn) letter, playing, loading, error or duration changed.   fn(state)
- *   player.on('time', fn)   the position moved (throttled).                        fn(state)
+ *                           Redraw everything on it, the position included (a new song starts at 0).
+ *   player.on('time', fn)   the position moved; at most 4 times a second.          fn(state)
  *                           on() returns a function that removes the listener.
  */
 export function createPlayer(letters, site) {
@@ -36,12 +37,16 @@ export function createPlayer(letters, site) {
   const state = { letter: null, playing: false, time: 0, duration: 0, loading: false, error: null };
   const changed = () => { syncSession(); events.emit('change', state); };
 
+  // 'time' is throttled on both edges: it fires at once if the last one is old enough, otherwise
+  // once more when the quarter second is up, so the last position always gets through (a seek,
+  // the end of the song) without ever firing more than four times a second.
   let lastTime = 0;
-  const ticked = (force) => {
-    const now = Date.now();
-    if (!force && now - lastTime < TIME_EVENT_MS) return;
-    lastTime = now;
-    events.emit('time', state);
+  let trailing = 0;
+  const emitTime = () => { trailing = 0; lastTime = Date.now(); events.emit('time', state); };
+  const ticked = () => {
+    const wait = TIME_EVENT_MS - (Date.now() - lastTime);
+    if (wait <= 0) emitTime();
+    else if (!trailing) trailing = setTimeout(emitTime, wait);
   };
 
   function load(letter) {
@@ -75,12 +80,12 @@ export function createPlayer(letters, site) {
   audio.addEventListener('durationchange', () => {
     if (Number.isFinite(audio.duration) && audio.duration > 0) { state.duration = audio.duration; changed(); }
   });
-  audio.addEventListener('timeupdate', () => { state.time = audio.currentTime; ticked(false); });
-  audio.addEventListener('seeked', () => { state.time = audio.currentTime; ticked(true); });
+  audio.addEventListener('timeupdate', () => { state.time = audio.currentTime; ticked(); });
+  audio.addEventListener('seeked', () => { state.time = audio.currentTime; ticked(); });
   audio.addEventListener('ended', () => {
     state.playing = false;
     state.time = 0;                   // the next play starts from the top; nothing else starts by itself
-    ticked(true);
+    ticked();
     changed();
   });
   audio.addEventListener('error', () => {
@@ -112,7 +117,7 @@ export function createPlayer(letters, site) {
       const t = Math.min(Math.max(0, Number(seconds) || 0), max);
       try { audio.currentTime = t; } catch { /* not seekable yet */ }
       state.time = t;
-      ticked(true);
+      ticked();
     },
     next() { const l = withSong(state.letter, 'next'); if (l) player.toggle(l); },
     prev() { const l = withSong(state.letter, 'prev'); if (l) player.toggle(l); },

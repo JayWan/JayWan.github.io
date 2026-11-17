@@ -34,7 +34,7 @@
   Storage keys:  sessionStorage f221:now {id,t,by}   this tab's theme, t = when it was last on screen
                  localStorage   f221:cur {id,t}      the latest theme shown in any tab
                  localStorage   f221:bag [ids]       themes not yet shown in this round
-                 sessionStorage f221:err  "id: why"  last fallback reason (printed by main.js)
+                 sessionStorage f221:err  "id — why" last fallback reason (printed by main.js)
 
   Keep it small (it is inline on every page) and ES5: a syntax error here would leave the page blank.
   The script is squeezed at build time (see the filter chain at the bottom), so: no // comments,
@@ -133,7 +133,7 @@ html:not([data-theme="classic"]) body>:not(#theme-root):not(script):not(style){d
   var X = w.__theme = { id: id, by: by, v: C.v, page: C.page, themes: T };
   X.fail = function (why) {
     if (id === 'classic' || X.dead) return;
-    X.dead = 1; save('classic', Date.now(), 'fallback'); set(S, 'err', id + ' / ' + why);
+    X.dead = 1; save('classic', Date.now(), 'fallback'); set(S, 'err', id + ' — ' + why);
     p = new URL(location.href); p.searchParams.set('theme', 'classic'); location.replace(p.href);
   };
   w.__c = function () { var x = d.currentScript; x = x && x.previousElementSibling; if (id === 'classic' && x) d.write(x.textContent); };
