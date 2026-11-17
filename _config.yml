@@ -31,10 +31,19 @@ author:
 fb_admins:           your facebook profile id
 fb_appid:            your facebook app id
 
-# Server
+# Styles: assets/css/main.scss + the partials in _scss/ are compiled by Jekyll itself
+sass:
+  sass_dir:          _scss
+  style:             expanded
+  sourcemap:         development   # source maps while developing, none in the production build
+
+# Build
 destination:         ./_site
-exclude:             [".editorconfig", ".gitignore", ".jekyll-cache", "gulpfile.mjs", "package.json", "package-lock.json", "node_modules", "README.md"]
-port:                7000
+exclude:             ["README.md", "package.json", "package-lock.json", "mise.toml", "scripts"]
+
+# Dev server (`bundle exec jekyll serve`): http://localhost:4301 with live reload
+port:                4301
+livereload:          true
 
 defaults:
   -

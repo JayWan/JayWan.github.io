@@ -1,3 +1,9 @@
+---
+# The two dashed lines above make Jekyll compile this file to /assets/css/main.css.
+# Partials live in _scss/ (see `sass.sass_dir` in _config.yml). Each partial
+# declares what it needs with @use; the order below is the order of the output.
+---
+
 // Reset
 @use "normalize";
 
