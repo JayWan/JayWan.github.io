@@ -6,8 +6,9 @@
   - letters are oldest first; `no` is the letter's number counted from the first one
   - `url` is the readable form ("/story/2026/08/12/木婚快乐/"); song.src and cover.orig are
     percent-encoded and can go straight into src=""
-  - every string goes through `jsonify`, and at the very end every "<" becomes <, so a
-    title or quote containing "</script>" or "<!--" can never close the element early
+  - every string goes through `jsonify`, and at the very end every "<" is replaced by its JSON
+    escape (backslash, u003c), so a title or quote containing "</script>" or "<!--" can never
+    close the element early
   - `site.data.media` comes from `node scripts/images.mjs`; when it is missing, the fields
     that depend on it are null / [] and the core falls back to the original image
   - `chars` comes from _plugins/letter_chars.rb
@@ -35,4 +36,4 @@
 {%- endfor -%}
 ]}
 {%- endcapture -%}
-<script type="application/json" id="letters-data">{{ island | replace: "<", "<" }}</script>
+<script type="application/json" id="letters-data">{{ island | replace: "<", "\u003c" }}</script>

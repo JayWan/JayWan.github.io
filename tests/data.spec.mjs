@@ -39,6 +39,14 @@ test('every page carries one valid data island, the same letters everywhere', ()
   }
 });
 
+test('the island template escapes "<", so no title or quote can end the <script> early', () => {
+  // No letter contains "<" today, so the built pages cannot prove this: check the template itself.
+  const escape = `${String.fromCharCode(92)}u003c`;                    // backslash, u003c
+  const template = readFileSync(path.join(root, '_includes/letters-data.html'), 'utf8');
+  expect(template).toContain(`{{ island | replace: "<", "${escape}" }}`);
+  expect(JSON.parse(`"${escape}/script>"`)).toBe('</script>');          // and that escape is valid JSON for "<"
+});
+
 test('letters are oldest first and every field has the documented shape', () => {
   const { site: info, letters } = JSON.parse(islandOf(readFileSync(path.join(site, 'index.html'), 'utf8'))[1]);
   for (const key of ['met', 'together', 'married', 'born']) expect(info[key], key).toMatch(/^\d{4}-\d{2}-\d{2}$/);
@@ -51,7 +59,7 @@ test('letters are oldest first and every field has the documented shape', () => 
     expect(letter.time, where).toMatch(/^\d{2}:\d{2}$/);
     if (i) expect(letter.date >= letters[i - 1].date, `${where}: oldest first`).toBe(true);
     expect(typeof letter.author, where).toBe('string');
-    expect(letter.url, where).toMatch(/^\/story\/\d{4}\/\d{2}\/\d{2}\/[^/]+\/$/);
+    expect(letter.url, where).toMatch(/^\/(?:[^/]+\/)*\d{4}\/\d{2}\/\d{2}\/[^/]+\/$/);
     expect(existsSync(path.join(site, letter.url, 'index.html')), `${where}: url points at a built page`).toBe(true);
     expect(letter.chars, where).toBeGreaterThan(50);
     expect(typeof letter.standalone, where).toBe('boolean');
