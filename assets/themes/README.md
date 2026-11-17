@@ -53,9 +53,22 @@ _data/themes.yml                 登记表里的一项：名字、底色、深�
 | `name` | 界面上显示的名字（换主题的那排链接用它） |
 | `ground` | 底色。CSS 到达之前页面先铺这个颜色，所以它要和 `theme.css` 里 `html` 的背景一致 |
 | `dark` | 是不是深色主题。夜里只抽深色的；它也决定 `color-scheme` |
-| `fonts` | 字体名列表。每个名字对应 `assets/fonts/<名字>.css`（由字体那部分工作提供），只在这个主题下加载，排在 `theme.css` 之前。`theme.css` 里直接用其中定义的 `font-family` |
+| `fonts` | 字体名列表。每个名字对应 `assets/fonts/<名字>.css`，只在这个主题下加载，排在 `theme.css` 之前。有哪些字体、CSS 里该写的 `font-family` 名字（都以 `F221` 开头）、字体栈怎么排，见 [`assets/fonts/README.md`](../fonts/README.md)。文件不存在的名字在构建时会被跳过，页面改用字体栈里的后备字体，不会出现 404；写错的名字由 `npm test` 指出 |
 | `dates` | 这个主题的日子，`"月-日"`。那天新的到访一定是它 |
 | `enabled` | `false` 就不参加抽选，仍可用 `?theme=<id>` 预览 |
+| `hidden` | `true` 就永远不参加抽选，只能用 `?theme=<id>` 打开（`probe` 就是这样） |
+
+一项写出来是这样（四个新主题的已经写好，字体名也对好了，一般不用改）：
+
+```yaml
+  - id: drift
+    name: 夜航
+    ground: "#14130f"
+    dark: true
+    fonts: [serif-sc, sans-sc-400, mono]   # 一行写完的 [列表]
+    dates: ["11-28"]
+    enabled: true
+```
 
 ## 三、最小骨架
 
@@ -103,6 +116,11 @@ body { margin: 0; font: 17px/1.75 serif; }
 ```
 
 在 `_data/themes.yml` 里加一项，然后打开 `http://localhost:4301/?theme=demo`。
+
+两件容易踩到的事：
+
+- **旧版的 DOM 还在文档里，只是被隐藏了**（`article.postWrapper`、`footer.section--footer`、分享浮层等等）。所以找元素一律从 `ctx.root` 出发：`root.querySelector('footer')`，不要写 `document.querySelector('footer')`，后者会先找到旧版的那个。
+- **数据里的文字不是 HTML。** 有一封信的标题是 `七夕&一点九周年快乐`，另一封是 `29, 28, π`。用 `textContent` 或 `append('文字')` 放进页面；如果用 `innerHTML` 拼字符串，标题、摘句、地点、歌名都要先转义。
 
 ## 四、ctx 里有什么
 
@@ -192,6 +210,8 @@ interface Cover {
 
 `song.title` 是 mp3 的文件名去掉扩展名（他们就是这样给歌起名的）。`song.duration` 是秒，可能带小数；`artist` 来自 mp3 的 ID3 标签，有几首没有。
 
+**`song`、`cover`、`quote`、`place` 都可能是 `null`，作者也不只有两个人。** 现在的 31 封信恰好每一封都有歌、封面和摘句，作者只有 Pikajay 和 Pikachi，所以照着现有数据写，很容易写出 `letter.song.title` 这样的代码；下一封信只要没配歌，整个主题就会抛异常、全站退回旧版。测试会把数据改写成「有一封客人写的信、有一封没有歌没有封面没有摘句的信」再把每个主题跑一遍（见[第十节](#十本地预览和测试)）。
+
 ### `ctx.page`
 
 ```ts
@@ -236,7 +256,9 @@ interface ImgOptions {
 .thumb img { width: 100%; height: 100%; object-fit: cover; object-position: var(--fx) var(--fy); }
 ```
 
-`cover` 是 `null`（信没有封面）时返回一个空的 `<picture class="is-empty">`，版式代码不用特判。
+`cover` 是 `null`（信没有封面）时返回一个空的 `<picture class="is-empty">`（里面没有 `<img>`），版式代码不用特判；需要占位的话给 `.is-empty` 写样式。
+
+`<img>` 上的 `width` / `height` 属性是原图的尺寸（比如 4032 × 3024），平均色和模糊小图也在 `<img>` 上。`shared/widgets.css` 给 `#theme-root picture > img` 垫了一层 `max-width: 100%; height: auto`（优先级为零），所以不写任何样式时封面也不会撑破版面；要裁成固定比例就像上面那样自己写宽高。`<picture>` 本身是行内元素，通常要给它 `display: block`。
 
 ### `ctx.player`
 
@@ -264,37 +286,50 @@ interface Player {
 
 - `'change'`：除了进度以外的任何变化。收到后把整个播放界面重画一遍最省事。
 - `'time'`：进度变了，每秒最多 4 次。
+- `on()` 只是登记，不会立刻回调一次；`state` 始终是同一个对象，随时可以读。刚画出来的按钮自己读一次 `player.state`（`probe` 在每次 `show` 之后调一次 `paint(player.state)`）。
+- 状态的组合：刚点了一首新歌是 `playing: false, loading: true`，出声后变成 `playing: true, loading: false`；换歌时也是先回到 `playing: false`。
+- 没有歌的信传给 `toggle()` 什么都不会发生；什么都没加载时 `toggle()`、`play()`、`seek()` 也什么都不做。`next()` / `prev()` 到了头就停住，不会绕回去。
+- 常驻的播放键（没有歌在放时也看得见的那种）要自己决定放哪一首，例如 `player.toggle(player.state.letter || ctx.page.letter || letters.latest)`。
+- `error` 是 `'failed'`（文件取不到）时，再调一次 `toggle()` 或 `play()` 会重新加载文件，所以出错的界面留一个能再点的播放键就够了。`'blocked'` 是浏览器不让出声（没有手势），同样再点一次即可。
+- `seek()` 会夹在 0 和总时长之间；在歌加载完之前调用，等于指定从哪里开始放。
 - **只在用户的点击里调用 `toggle()` / `play()`**。浏览器不允许没有手势就出声，核心也绝不自动播放。
 - 一首歌放完就停，不会自动放下一首。一封信，一首歌。
 - 按播放之前不会请求任何音频数据。
 - 核心已经接好了 Media Session（锁屏和耳机上的播放控制）。
-- **每一个能开始放歌的控件都要带 `data-play` 属性**（值随意），测试靠它找到播放键。
+- **每一个能开始放歌的控件都要带 `data-play` 属性**（值随意），测试靠它找到播放键：在信的页面上，测试会点第一个看得见的 `[data-play]`，这一下必须让这封信的歌开始加载。
 
 ### `ctx.router`
 
 ```ts
 interface Router {
-  go(url: string): Promise<boolean>;   // 等同于点了一个链接。true = 没有换页
-  prefetch(url: string): void;         // 提前把一封信取回来（指针移上去或手指按下时调用）
-  current: Route;                      // 现在屏幕上的这一页
-  soft: boolean;                       // mount 返回了 show 之后为 true
+  go(url: string): Promise<boolean>;     // 等同于点了一个链接。true = 没有换页
+  back(url?: string): Promise<boolean>;  // 「回到目录」，默认 url 是 '/'。见下面
+  prefetch(url: string): void;           // 提前把一封信的 HTML 取回来（指针移上去或手指按下时调用）
+  current: Route;                        // 现在屏幕上的这一页
+  soft: boolean;                         // mount 返回了 show 之后为 true
 }
 
 type Route =
-  | { type: 'home'; url: string; scrollY: number }
-  | { type: 'letter'; url: string; letter: Letter; contentEl: HTMLElement; scrollY: number }
-  | { type: '404'; url: string; scrollY: number };      // 只可能是进来时的那一页
+  | { type: 'home'; url: string; hash: string; scrollY: number }
+  | { type: 'letter'; url: string; hash: string; letter: Letter; contentEl: HTMLElement; scrollY: number }
+  | { type: '404'; url: string; hash: string; scrollY: number };      // 只可能是进来时的那一页
 ```
 
-`mount()` 返回 `{ show(route) }` 之后，核心会接管这样的点击：同源的 `<a>`，路径是 `/` 或某封信的地址，没有查询参数，没有 `target`、`download`，没有按着修饰键。其他链接照常跳转。
+`mount()` 返回 `{ show(route) }` 之后，核心会接管这样的点击：同源的 `<a>`（HTML 的和 SVG 里的都算），路径是 `/` 或某封信的地址，没有查询参数，没有 `target`、`download`，没有按着修饰键。其他链接照常跳转。指向**当前这一页**里某个锚点的链接（`href="#某个id"`）也不接管，由浏览器自己滚过去，所以「跳到正文」这样的链接可以照常写。
 
 一次不换页的跳转做这些事：取回那封信的页面 → 取出 `.content-body` → `ctx.widgets.init` → `history.pushState` → 改 `document.title` → 更新 `ctx.page` → 调 `show(route)` → 等它结束（可以返回 Promise）→ 设置滚动位置。
 
-- 滚动位置：点链接过去是顶部，后退 / 前进是当时离开的位置，这个值在 `route.scrollY` 里。主题想自己管滚动（比如信是原地展开的），就让 `show` 返回 `false`（或 resolve 成 `false`），核心便不再动它。无论谁来管，**后退之后读者必须回到离开时的位置**。
+- **滚动位置**：点链接过去是顶部，后退 / 前进是当时离开的位置，这个值在 `route.scrollY` 里（记的是 `window.scrollY`）。链接带着锚点（`/story/…/#某个id`）时 `route.hash` 是 `"#某个id"`，核心会滚到那个元素。主题想自己管滚动（比如信是原地展开的），就让 `show` 返回 `false`（或 resolve 成 `false`），核心便不再动它。无论谁来管，**后退之后读者必须回到离开时的位置**。`show(route)` 被调用的那一刻，页面还停在上一个视图的滚动位置，需要的话可以在函数开头读 `window.scrollY`。
+- **`show()` 不会重叠。** 上一次 `show` 返回的 Promise 还没结束时（比如转场动画还在放），下一次跳转会等它，最多等 2 秒；这期间读者又点了几次，只有最后一次会被画出来。所以 `show` 里不用防备「画到一半又被调用」，但也因此**只在确实需要核心等待时才返回 Promise**（等的是「滚动位置可以设置了」这一刻，不必等整段动画放完），并且它一定要结束。
+- **「回到目录」**：给链接加上 `data-back` 属性，`<a href="/" data-back>`。读者如果正是从目录点进这封信的，这个链接就等同于后退键：回到目录离开时的位置，也不会多出一条历史记录；如果不是（直接打开的信、从上一封翻过来的），它就是一个普通的链接，去目录的顶部。键盘的 Esc 等其他入口用 `router.back('/')`，效果相同。
+- **等待中的提示**：信还在路上时，`<html>` 上有 `data-navigating` 属性，取到就去掉。`shared/widgets.css` 只把指针改成了「忙」，主题可以用 `html[data-navigating] …` 画自己的提示（给它加一点 `animation-delay`，网快的时候就不会闪一下）。超过 8 秒还没取到，就改成整页跳转。
+- `prefetch` 只取 HTML，不会下载信里的照片（有的一张就 4 MB）；照片要到这封信真的被打开时才开始加载。所以可以放心在 `pointerenter` / `touchstart` 上调用。
 - 取回来的信在本次到访里一直缓存着，再次打开拿到的是同一个节点。
-- `standalone` 的信，以及任何失败，都退回成一次真正的页面跳转。最坏的情况永远是「像普通网站一样」。
+- `standalone` 的信，以及任何失败（包括 `show` 抛异常），都退回成一次真正的页面跳转。最坏的情况永远是「像普通网站一样」。
 - `mount()` 不返回 `show` 也可以：所有链接都整页跳转，只是歌会在换页时停。
 - 换完视图后把焦点移到新内容上（`probe` 的做法：`main.focus({ preventScroll: true })`），键盘和读屏用户才知道页面换了。
+- `router.current` 始终是同一个对象，跳转时原地更新；传给 `show` 的 `route` 则每次都是新的。要记住「上一页是什么」就自己存需要的字段，不要存 `router.current` 本身。
+- 主题可以用 `history.pushState` / `replaceState` 记同一页里的状态（选中了哪一封、浮层开没开），路径没变时核心不会插手，`popstate` 由主题自己处理。写的时候把已有的状态带上：`history.replaceState({ ...history.state, sel: 12 }, '', '#12')`。
 
 ### `ctx.ui`
 
@@ -333,7 +368,7 @@ type Route =
 2. 页面解析。旧版的 DOM 是隐藏的（`body` 下除了 `#theme-root`、`script`、`style` 以外的一切都是 `display: none !important`）。信的页面里 `.content-body` 是活的，信自带的内联脚本此时已经执行。
 3. `<body>` 末尾：核心读数据、组装 `ctx`、引入 `theme.js`、调用 `mount(ctx)`。
 4. `mount` 结束（可以是 async）后：路由开始工作，`<html>` 上出现 `data-theme-ready="<id>"`。需要「JS 就绪后才开始」的入场动画用它来开启，不要用它来隐藏内容。
-5. 之后每次站内跳转：`show(route)`。
+5. 之后每次站内跳转：`show(route)`。一次只有一个 `show` 在跑（见 [`ctx.router`](#ctxrouter)）。
 
 **失败时**：`theme.css` 没加载到、`theme.js` 引入失败、`mount` 抛异常或 reject、`mount` 结束时 `ctx.root` 还是空的、5 秒内 `mount` 没结束且什么都没画，任何一种都会让页面以 classic 重新加载一次，并在本次到访里一直用 classic。失败原因会打印在重新加载后的控制台里（`[221] fell back to the classic theme because …`）。
 
@@ -359,8 +394,9 @@ type Route =
 1. **搬，不要克隆，不要用 HTML 重建。** 信自带的脚本已经对着这个节点执行过了。
 2. 正文外面包的那层元素 class 必须是 **`letter-body`**。
 3. 读信的时候，`.letter-body` 的**任何祖先都不能有 `transform`、`filter`、`perspective`**（`will-change: transform`、`contain: paint`、`backdrop-filter` 也一样）。否则礼物盒那块固定定位的画布会被困在那个祖先里。入场动画结束后要把 `transform` 清掉，不能留一个 `translateY(0)`。
-4. 如果要改动正文（比如给西文包一层 `<span>`），要做成可重复执行的：同一个节点在本次到访里会被反复交给 `show`。不要动带 `id` 的元素。
+4. 如果要改动正文（比如给西文包一层 `<span>`），要做成可重复执行的：同一个节点在本次到访里会被反复交给 `show`。不要动带 `id` 的元素（kramdown 给每个标题都生成了 `id`，礼物盒的脚本也按 `id` 找元素）。
 5. **每个主题都要把全部的信过一遍**，看有没有横向溢出，两封特别的信是不是正常。
+6. 礼物盒那封信自带的 `<style>` 只要这封信在页面上就对整页生效。它用到的名字不要再用：类名 `gift-scene`、`gift-anim`、`gift-hint`、`float-img`、`reveal-words`，动画名 `hint-pulse`、`float-bob`、`pop-in`（主题里也叫 `pop-in` 的 `@keyframes` 会在读这封信时被它的那一份盖掉）。
 
 `shared/widgets.css` 在每个新主题下都会先于 `theme.css` 加载，里面是正文离不开的结构性样式，主题不用重写：
 
@@ -385,6 +421,8 @@ type Route =
 
 **客人写的信（`role === 'guest'`）。** 第 32 封是 Claude 写的，孩子也出生了，所以不要假设只有两个作者。每个主题用自己的语言给客人的信一个安静的位置（唱片的附赠曲目、一颗路过的天体、一篇跋、一张标着「Claude 写的」的相片），不要藏起来，也不要比他们俩的信更显眼。
 
+这个仓库里现在还没有客人的信。想看效果：把任意一封信 front matter 里的 `author:` 临时改成 `Claude`，重新构建（看完改回去，不要提交）。按 `role` 查表的代码要给 `guest` 留一项，或者有默认值：`({ him: 'A', her: 'B' })[letter.role]` 在客人的信上是 `undefined`。
+
 **沉重的信（`quiet === true`）。** 现在是 2026-02-06 的「世界赠予我们的」，写的是流产。它周围不要有俏皮的动效：不漂、不弹、不抖，悬停放大也不要。照常排版即可。
 
 **自带脚本的信（`standalone === true`）。** 现在是「29, 28, π」。它总是整页加载（核心会处理），主题不需要做什么，照常给它一个普通链接。整页加载之后它和别的信一样通过 `ctx.page` 交给主题。
@@ -395,7 +433,7 @@ type Route =
 
 - `ctx.ui.hunger()` 按最新一封信距今的天数给出网站现在的状态，共五档：刚吃过、还不饿、有点饿、很饿、破纪录（比至今最长的 838 天空白还久）。文字统一写在 `core/eggs.js`，口吻是它自己的：第一人称，有点气鼓鼓，短，不煽情。**每个主题都要在页脚显示 `text`**，用主题自己的字体和位置；不要改写它，也不要给它加修饰。`level`（0–4）可以用来决定样式。
 - 控制台里有几句问候（所有主题，包括 classic）。
-- 在页面上敲 `221`（焦点不在输入框里时）会换到下一个主题，敲 `pi` 会在角落里显示「在一起第 N 天」对应的 π 的第 N 位起的十位数字。主题不用为它们做任何事，只是不要占用这两个按键序列。
+- 在页面上敲 `221`（焦点不在输入框里时）会换到下一个主题，敲 `pi` 会在角落里显示「在一起第 N 天」对应的 π 的第 N 位起的十位数字。主题不用为它们做任何事，只是不要占用这两个按键序列。那行数字是核心临时放进 `#theme-root` 的一个 `position: fixed` 的小块（`#egg-pi`），不用管它。
 - 纪念日本身也是彩蛋：02-21 是 orbit，11-28 是 drift，02-06 和 07-04 是 sides，08-12 是 folio，09-15（网站的生日）是 classic。
 
 ## 九、规矩
@@ -452,7 +490,9 @@ npx playwright test --ui                     # 带界面，能一步步看
 对 `assets/themes/` 里**每一个有文件的主题**，测试会检查（`tests/themes.spec.mjs`）：
 
 - 首页、一封普通的信、沉重的那封、两封特别的信、404 页：画进了 `#theme-root`，没有报错，没有横向滚动，没有请求站外的任何东西，没有请求封面原图，按播放之前没有请求音频
+- 首页上有 `ctx.ui.hunger().text` 那句话，有 `ctx.ui.switcher()`
 - 信的正文在 `.letter-body` 里面
+- 把数据改写成「最新的一封是客人写的、有一封没有歌没有封面没有摘句没有地点」之后，首页和这两封信照样画得出来，没有报错（整页打开和不换页跳转都试）
 - 翻转卡片点一下翻过去，用键盘能翻回来
 - 礼物盒点开后彩纸铺满整个屏幕（验证的就是「祖先没有 transform」）
 - 首页 → 点一封信（不换页）→ 点 `[data-play]` 歌响了 → 后退（不换页，回到原来的滚动位置，歌还在放）→ 前进
