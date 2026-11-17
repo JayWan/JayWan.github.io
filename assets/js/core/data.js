@@ -66,7 +66,7 @@ function picturesOf(map) {
  *                     A count the letter states about itself wins over the computed one: the couple
  *                     sometimes counts inclusively (「和小天使的三百天」 says 300, the calendar says 299).
  *             prev / next   the neighbouring letters or null (not enumerable, so JSON.stringify stays flat)
- *           and on the array itself: byUrl(url), byNo(no), latest
+ *           and on the array itself: byUrl(url), byNo(no), latest, years
  * page      { type, url } as written by Jekyll
  * pictures  every picture used inside a letter: { 'file.jpg': { w, h, base, widths } } (base is null
  *           and widths is [] when the picture has no derivatives)
@@ -104,12 +104,21 @@ export function enrich(island, now = new Date()) {
     byPath.set(normPath(letter.url), letter);
   });
 
+  // Every year from the first letter's to the newest one's, also the years in which nobody wrote
+  // (2020 and 2022 so far): a theme that lays the letters out by year must not skip those.
+  const years = [];
+  if (letters.length) {
+    for (let year = letters[0].year; year <= letters[letters.length - 1].year; year++) years.push({ year, letters: letters.filter((l) => l.year === year) });
+  }
+
   // Helpers live on the array as non-enumerable properties: for…of, map and length stay those of a plain array.
   Object.defineProperties(letters, {
     /** The letter at this URL or path (encoded or not, absolute or not), or null. */
     byUrl: { value: (url) => byPath.get(normPath(url)) || null },
     byNo: { value: (no) => letters[Number(no) - 1] || null },
     latest: { value: letters[letters.length - 1] || null },
+    /** [{ year, letters }] oldest first, with an entry (letters: []) for every year without a letter. */
+    years: { value: years },
   });
 
   return { site, letters, page: { ...island.page }, pictures: picturesOf(island.pictures) };

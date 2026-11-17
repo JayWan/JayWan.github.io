@@ -58,7 +58,9 @@ small, .p-days, .p-facts, .p-fine { color: var(--soft); font-size: .8125rem; }
 /* The cover is cropped to a square around its safe centre: --fx / --fy come from ctx.img(). */
 .p-thumb { flex: none; width: 6rem; aspect-ratio: 1; }
 .p-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: var(--fx) var(--fy); border-radius: 3px; }
-.p-list li[data-role="guest"] strong::after { content: " · 客人"; font-weight: 400; color: var(--soft); }
+.p-list .p-year { padding: 1.25rem 0 .35rem; font-size: .8125rem; color: var(--soft); letter-spacing: .08em; }
+/* the letter the reader has just come back from (router.lastRead) */
+.p-list li.is-last-read .p-card strong { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .3em; }
 /* Motion only when the reader has not asked for less, and never around a quiet letter. */
 .p-motion .p-list li:not([data-quiet]) .p-thumb img { transition: transform .3s ease; }
 @media (hover: hover) { .p-motion .p-list li:not([data-quiet]) .p-card:hover .p-thumb img { transform: scale(1.04); } }
@@ -71,11 +73,14 @@ small, .p-days, .p-facts, .p-fine { color: var(--soft); font-size: .8125rem; }
 /* ---- letter ---- */
 .p-back { display: inline-block; padding: .75rem 0; font-size: .875rem; }
 .p-cover img { display: block; width: 100%; height: auto; max-height: 70vh; object-fit: cover; object-position: var(--fx) var(--fy); }
+/* a cover that is not their own photo (cover.own === false) is kept small */
+.p-cover.is-borrowed img { max-height: 12rem; }
 .p-letter h1 { margin: 1.5rem 0 .25rem; font-size: 1.75rem; line-height: 1.3; overflow-wrap: anywhere; }
 .p-facts { margin: 0; }
 .p-song { display: flex; align-items: center; gap: .75rem; margin: 1rem 0 0; font-size: .9375rem; }
 .p-near { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1rem; margin-top: 3rem; font-size: .9375rem; }
 .p-near a { padding: .6rem 0; }
+.p-near .p-home-link { flex: 1 0 100%; order: 3; text-align: center; padding: .75rem 0; }
 
 /* The letter's own HTML. Paragraphs, lyrics in <blockquote>, <blockquote class="largeQuote">,
    photos, GIFs, the flip card and the gift box: check all of them in every theme. */

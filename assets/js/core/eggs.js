@@ -62,6 +62,14 @@ export const fmt = {
       default: return `${y}年${m}月${d}日`;
     }
   },
+  /** season('2026-08-12') → '夏'. By the month, northern hemisphere, the way people speak of it:
+   *  3–5 春 · 6–8 夏 · 9–11 秋 · 12–2 冬. Not the astronomical seasons: a letter written on 8 June
+   *  that says 夏花烂漫 is a summer letter, although the solstice is two weeks away.
+   *  Accepts 'YYYY-MM-DD' or a Date (its local month); anything else gives ''. */
+  season(day) {
+    const month = day instanceof Date ? day.getMonth() + 1 : Number(String(day).slice(5, 7));
+    return month >= 1 && month <= 12 ? '冬冬春春春夏夏夏秋秋秋冬'[month - 1] : '';
+  },
   /** days(4007) → '4007 天' the way the couple writes it (no thousands separator); days(null) → '' */
   days(n) { return n == null ? '' : `${n} 天`; },
   /** clock(241.6) → '4:01' */
