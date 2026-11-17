@@ -467,8 +467,13 @@ export default {
         if (p.closest('.flip-card-back, .gift-scene')) continue;
         const t = p.textContent.trim();
         if (!t && p.querySelector('img') && !p.querySelector('p, div')) p.classList.add('fo-fig');
-        else if (p.tagName === 'P' && t.length < 80 && (!p.nextElementSibling || p.nextElementSibling.matches('.flip-card-hint')) && /^(\d{4}\s*年\s*\d|-{4,})/.test(t)) p.classList.add('fo-sign');
-        else if (p.tagName === 'P' && /^-{4,}.*-{4,}$/.test(t)) p.classList.add('fo-sign');
+        else if (p.tagName === 'P' && t.length < 80 && (!p.nextElementSibling || p.nextElementSibling.matches('.flip-card-hint')) && /^(\d{4}\s*年\s*\d|[-–—]{4,})/.test(t)) p.classList.add('fo-sign');
+        else if (p.tagName === 'P' && /^[-–—]{4,}.*[-–—]{4,}$/.test(t)) p.classList.add('fo-sign');
+        /* 落款两头那一长串横线（「------ 2月20日 小雨 ------」，排版时已变成破折号）：字留着，画成两道短线，窄屏上才不会折成两行 */
+        if (p.classList.contains('fo-sign') && !p.querySelector('.fo-rule') && p.childNodes.length === 1 && p.firstChild.nodeType === 3) {
+          const m = p.firstChild.nodeValue.match(/^(\s*)([-–—]{4,})(\s*)([\s\S]*?)(\s*)([-–—]{4,})?(\s*)$/);
+          if (m && m[4]) p.replaceChildren(...[m[1], h('span', { class: 'fo-rule' }, m[2]), m[3] + m[4] + m[5], m[6] && h('span', { class: 'fo-rule' }, m[6]), m[7]].filter(Boolean));
+        }
       }
     }
     /* 图、卡片这些不是字的东西：把它占的高度凑成整行，后面的字才落回格线上 */
