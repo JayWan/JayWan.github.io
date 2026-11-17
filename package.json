@@ -2,7 +2,7 @@
   "name": "forever221",
   "version": "4.0.0",
   "private": true,
-  "description": "221 FOREVER. The site is built by Jekyll (Ruby); Node is only used for image derivatives.",
+  "description": "221 FOREVER. The site is built by Jekyll (Ruby); Node is used for image derivatives and for the tests.",
   "homepage": "https://221forever.us",
   "author": "Nianjie Wan",
   "license": "MIT",
@@ -15,9 +15,12 @@
     "start": "npm run dev --",
     "dev": "node scripts/images.mjs && bundle exec jekyll serve",
     "build": "node scripts/images.mjs && JEKYLL_ENV=production bundle exec jekyll build",
-    "images": "node scripts/images.mjs"
+    "images": "node scripts/images.mjs",
+    "test": "playwright test",
+    "preview": "node tests/server.mjs --dir _site --port 4201"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "sharp": "^0.35.3"
   }
 }
