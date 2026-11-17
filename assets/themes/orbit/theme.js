@@ -355,7 +355,7 @@ export default {
     }
     const np = {
       el: h('aside', { class: 'np', 'aria-label': '正在播放' }),
-      btn: h('button', { type: 'button', class: 'play', 'aria-label': '播放 / 暂停', 'aria-pressed': 'false', onclick: () => player.toggle() }, icon(44, 44, PLAY)),
+      btn: h('button', { type: 'button', class: 'play', 'data-play': 'np', 'aria-label': '播放 / 暂停', 'aria-pressed': 'false', onclick: () => player.toggle() }, icon(44, 44, PLAY)),
       title: h('a', { class: 'np-t' }),
       sub: h('span', { class: 'np-s' }),
       time: h('span', { class: 'np-time' }),
@@ -528,7 +528,8 @@ export default {
       }
       function table() {
         const rows = [h('div', { class: 'row-h', 'aria-hidden': 'true' }, ...['年', '№', '月·日', 'T+', '', '题', '曲'].map((t) => h('span', {}, t)))];
-        const years = []; for (let y = Y0; y <= letters.latest.year; y++) years.push(y);
+        const years = (letters.years || []).map((y) => y.year);          // 核心给的年份里也有没写信的那几年
+        if (!years.length) for (let y = letters[0].year; y <= letters.latest.year; y++) years.push(y);
         if (desc) years.reverse();
         years.forEach((y) => {
           const list = letters.filter((l) => l.year === y);
@@ -587,16 +588,12 @@ export default {
       table(); today();
       return {
         el,
-        /** 首页进了文档之后：画图，并把刚读过的那封信带到眼前 */
-        enter(route) {
+        /** 首页进了文档之后：画图。从一封信回来时选中刚读过的那一封（滚动交给核心：它会回到离开时的位置，
+         *  那封信不在屏幕上时再把它带到眼前）。直接打开首页则显示今日读数。 */
+        enter(route, back) {
           keepDrawn(chartHost, draw);
-          const last = router.lastRead, read = last && (last.no ? letters.byNo(last.no) : letters.byUrl(last.url || last));
-          if (!read) return undefined;
-          setSel(read.no, false);
-          window.scrollTo(0, route.scrollY || 0);
-          const row = rowOf(read.no), seen = (r) => r.bottom > 80 && r.top < window.innerHeight - 80;
-          if (row && !seen(readout.getBoundingClientRect()) && !seen(row.getBoundingClientRect())) row.scrollIntoView({ block: 'center' });
-          return false;                     // 滚动位置我们自己管好了
+          const read = back && router.lastRead;
+          if (read && letters.byNo(read.no)) setSel(read.no, false);
         },
         step(d) { const n = sel ? sel + d : d > 0 ? 1 : letters.length; if (letters.byNo(n)) setSel(n); },
         reset() { setSel(null); },
@@ -607,7 +604,7 @@ export default {
     function arcIcon(dir) {                 // 逆行 = 顺时针，顺行 = 逆时针
       return h('span', { class: 'arc' }, icon(40, 40, `<g${dir < 0 ? ' transform="translate(40 0) scale(-1 1)"' : ''}><path d="M31.26 26.5A13 13 0 1 0 8.4 25.9"/><path class="f" d="M10.9 30.4L11.1 23.3L4.9 26.9Z"/></g><circle cx="20" cy="20" r="1.8" class="f"/>`));
     }
-    const backLink = (cls, ...kids) => h('a', { class: cls, href: '/', 'data-back': true, onclick: (e) => { if (router.home && !mod(e)) { e.preventDefault(); router.home(); } } }, ...kids);
+    const backLink = (cls, ...kids) => h('a', { class: cls, href: '/', 'data-back': true }, ...kids);
     const TARGET = '<circle cx="10" cy="10" r="7.5"/><circle cx="10" cy="10" r="3.5"/><circle cx="10" cy="10" r="1.1" class="f"/>';
 
     function letterView({ letter, contentEl }) {
@@ -634,8 +631,8 @@ export default {
         const label = h('span', { class: 'dir' }, dir < 0 ? '逆行 · 上一封' : '顺行 · 下一封');
         if (!q) return h('span', { class: 'none' }, arcIcon(dir), label, h('span', { class: 'ttl' }, dir < 0 ? '这是第一封，再往前就是认识之前了。' : '下一封还没写。'));
         const days = Math.abs(Math.round((geo[q.index].ms - g.ms) / DAY));
-        // 上一封 / 下一封替换当前这条历史记录，所以后退总是回到图上
-        return h('a', { href: q.url, rel: dir < 0 ? 'prev' : 'next', onclick: (e) => { if (!mod(e)) { e.preventDefault(); router.go(q.url, { replace: true }); } } },
+        // 普通链接：信到信之间核心会替换当前这条历史记录，所以后退总是回到图上
+        return h('a', { href: q.url, rel: dir < 0 ? 'prev' : 'next' },
           arcIcon(dir), label, h('span', { class: 'ttl', lang: latin(q.title) ? 'en' : null }, q.title), h('span', { class: 'gap' }, `№ ${q.no}　${dots(q.date)}　${days} d ${dir < 0 ? '前' : '后'}`));
       }
 
@@ -684,12 +681,15 @@ export default {
 
     // ───────────────────────── 路由 ─────────────────────────
     let first = true;
+    // 这次是不是「回来」：后退 / 前进到这一页，或从一封信的整页（比如礼物盒那封）点回来
+    const nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
+    const returned = (nav && nav.type === 'back_forward') || !!(document.referrer && letters.byUrl(document.referrer));
     function show(route) {
       const view = route.type === 'letter' ? letterView(route) : route.type === 'home' ? (home ||= buildHome()) : lostView();
       if (route.type !== 'letter') strip = null;
       main.replaceChildren(view.el);
       root.dataset.view = route.type;
-      const handled = view.enter(route);
+      const handled = view.enter(route, first ? returned : true);
       paint(player.state);
       if (!first) main.focus({ preventScroll: true });
       first = false;
