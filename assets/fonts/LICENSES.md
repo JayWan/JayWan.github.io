@@ -42,9 +42,22 @@ tool that produced everything here.
 
 ## Notes
 
-- The copyright notice of Noto Serif SC above is the one inside the font file (name ID 0). The
-  `OFL.txt` next to it in google/fonts starts with "Copyright 2012 Google Inc. All Rights
-  Reserved." Both are reproduced here because they differ.
+- For four typefaces the notice inside the font file (name ID 0) and the notice at the top of the
+  licence file shipped next to it differ. The table quotes one; here are both, so that nothing is
+  dropped:
+  - Noto Serif SC — font file: "(c) 2017-2024 Adobe (http://www.adobe.com/)."; `OFL.txt` in
+    google/fonts: "Copyright 2012 Google Inc. All Rights Reserved."
+  - IBM Plex Mono — font files: "Copyright 2017 IBM Corp. All rights reserved."; `OFL.txt`:
+    "Copyright © 2017 IBM Corp. with Reserved Font Name "Plex"".
+  - Source Serif 4 — font files: "© 2014 - 2021 Adobe Systems Incorporated
+    (http://www.adobe.com/), with Reserved Font Name ‘Source’."; `OFL.txt`: "Copyright 2014 The
+    Source Serif 4 Project Authors (https://github.com/adobe-fonts/source-serif)".
+  - Zhuque Fangsong — font file: "Copyright 2023 JadeFoci"; `LICENSE.txt`: "Copyright (c) 2023,
+    Zhejiang JadeFoci Techonology Co. LTD (https://www.jadefoci.com/)".
+  The Reserved Font Name column takes the stricter of the two in each case.
+- Alegreya, whose Latin letters Zhuque Fangsong builds on: "Copyright 2011 The Alegreya Project
+  Authors (https://github.com/huertatipografica/Alegreya)", SIL Open Font License 1.1, no Reserved
+  Font Name declared in its current `OFL.txt`.
 - Zhuque Fangsong is a pre-release. Its README asks, as a courtesy and not as a licence
   condition, that modified versions not be spread widely before the final release. What is here
   is a renamed subset used as a web font by this one site.
