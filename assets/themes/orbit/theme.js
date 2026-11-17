@@ -147,8 +147,9 @@ export default {
           line(P(a, rIn - step * 0.55), P(a, R - band), 'lb dash', gBack);
           line(P(a, R), P(a, R + (big ? 9 : 5)), 'la', gOut);
           const q = P(a, R + (big ? 15 : 9)), mid = Math.abs(c) <= 0.25;
-          const anchor = mid ? (c > 0 ? 'start' : 'end') : c > 0 ? 'start' : 'end';
-          const dy = mid ? (sn > 0 ? -6 : 8) : (sn > 0.5 ? -3 : sn < -0.5 ? 4 : 0), dx = mid ? (c > 0 ? 11 : -11) : 0;
+          // 贴近正上、正下的那条：大图上把字居中放在刻度旁边，给两侧的冬至 / 夏至和角上的小图留出地方
+          const anchor = mid && big ? 'middle' : c > 0 ? 'start' : 'end';
+          const dy = mid ? (sn > 0 ? -6 : 8) : (sn > 0.5 ? -3 : sn < -0.5 ? 4 : 0), dx = mid ? (c > 0 ? 1 : -1) * (big ? 14 : 11) : 0;
           const t = S('text', { x: f1(q[0] + dx), y: f1(q[1] + dy), class: 't-spoke', 'text-anchor': anchor, 'dominant-baseline': 'central' }, gOut);
           if (big) S('tspan', { class: 'n' }, t, `${Number(an.md.slice(0, 2))}·${Number(an.md.slice(3))} `);
           S('tspan', null, t, an.label);
@@ -185,7 +186,8 @@ export default {
           const p = P(a, R + off), up = a === 90 ? -1 : 1;
           if (a === 90 || a === 270) {
             const t = text(name, p[0], p[1] + up, 't-card', gOut);
-            if (big) { t.setAttribute('text-anchor', 'end'); t.setAttribute('x', f1(p[0] + 12)); text(date, p[0] + 17, p[1] + up, 't-card-d', gOut, { 'text-anchor': 'start' }); }
+            // 上面是「冬至 12·21」，下面反过来写成「6·21 夏至」：日期都在逆时针的上游一侧
+            if (big) { const k = a === 90 ? 1 : -1; t.setAttribute('text-anchor', k > 0 ? 'end' : 'start'); t.setAttribute('x', f1(p[0] + 12 * k)); text(date, p[0] + 17 * k, p[1] + up, 't-card-d', gOut, { 'text-anchor': k > 0 ? 'start' : 'end' }); }
           } else if (big) {
             const side = a === 180 ? -1 : 1, anchor = { 'text-anchor': a === 180 ? 'end' : 'start' };
             text(name, p[0] + side * 6, p[1] - 8, 't-card', gOut, anchor);
