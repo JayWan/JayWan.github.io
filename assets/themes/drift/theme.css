@@ -349,15 +349,19 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
   display: grid; grid-template-columns: auto 1fr auto; align-items: center; column-gap: 18px;
   border-top: 1px solid var(--ink-line);
 }
-.track .play { color: var(--ink); }
-.track .play[aria-pressed="true"] { background: var(--ink); }
-.track .play[aria-pressed="true"] i { color: var(--paper); }
-@media (hover: hover) { .track .play:hover { background: var(--ink); } .track .play:hover i { color: var(--paper); } }
+/* the key: the one solid thing on the sheet, so it is the thing to press; it gives under the finger.
+   A song that did not start leaves it hollow and dashed, the way a silence is drawn on the river. */
+.track .play { color: var(--ink); background: var(--ink); transition: transform .2s var(--ease); }
+.track .play i { color: var(--paper); }
+@media (hover: hover) { .track .play:hover { transform: scale(1.06); } }
+.track .play:active { transform: scale(.94); }
+.song-off .track .play { background: none; border-style: dashed; }
+.song-off .track .play i { color: var(--ink); }
 .sheet.is-loading .track .play { animation: dr-wait .7s ease-in-out infinite alternate; }
 .track-k { display: block; font: 500 12.5px/1 var(--serif); letter-spacing: .28em; color: var(--ink-2); }
 .track-name { display: block; margin-top: 9px; font: 500 20px/1.25 var(--serif); letter-spacing: .02em; color: var(--ink); }
 .track-time { font: 400 12.5px/1.3 var(--mono); letter-spacing: .06em; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
-.track-time.cn { font-family: var(--serif); font-weight: 500; letter-spacing: .14em; font-size: 13px; white-space: normal; max-width: 11em; }
+.track-time.cn { font-family: var(--serif); font-weight: 500; letter-spacing: .14em; font-size: 13px; }
 .track-line { position: absolute; left: 0; right: 0; bottom: -22px; height: 44px; cursor: pointer; outline-offset: -14px; }
 .track-line::before { content: ""; position: absolute; left: 0; right: 0; top: 21px; height: 1px; background: var(--ink-line); }
 .track-line i { position: absolute; left: 0; top: 20px; height: 3px; width: calc(var(--prog, 0) * 100%); background: var(--ink); }

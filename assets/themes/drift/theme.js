@@ -513,7 +513,7 @@ export default {
       days: h('dl', { className: 'sh-days' }),
       play: playButton('play', '播放或暂停这封信的歌', () => { if (openL) player.toggle(openL); }),
       song: h('span', { className: 'track-name' }),
-      time: h('span', { className: 'track-time cn' }, '点一下才响'),
+      time: h('span', { className: 'track-time' }),
       line: h('div', { className: 'track-line', role: 'slider', tabIndex: 0, 'aria-label': '播放进度', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': '0' }, h('i')),
       body: h('div', { className: 'sheet-body letter-body' }),
       sign: h('p', { className: 'sheet-sign' }),
@@ -573,7 +573,7 @@ export default {
     function tickTime(st) {
       if (!openL || !st.letter || st.letter.no !== openL.no || st.error) return;
       S.time.classList.remove('cn');
-      S.time.textContent = `${fmt.clock(st.time)} / ${fmt.clock(st.duration)}`;
+      S.time.textContent = `${fmt.clock(st.time)} / ${fmt.clock(st.duration || openL.song.duration || 0)}`;
       const pr = st.duration ? clamp(st.time / st.duration, 0, 1) : 0;
       S.line.style.setProperty('--prog', pr.toFixed(4));
       S.line.setAttribute('aria-valuenow', String(Math.round(pr * 100)));
@@ -589,9 +589,11 @@ export default {
       barSong.textContent = cur ? `${cur.song.title} · ${cur.title}` : '';
       if (cur) barSong.href = cur.url;
       sheet.classList.toggle('mini-on', Boolean(openL) && (trackAway || Boolean(cur && !mine)));
+      sheet.classList.toggle('song-off', mine && Boolean(st.error));      // a song that did not start: the key goes dashed, like a silence on the river
       if (mine && !st.error) { tickTime(st); return; }
-      S.time.classList.add('cn');
-      S.time.replaceChildren(...phrases(mine ? '这首歌没放出来，再点一下试试' : '点一下才响'));
+      // at rest the slot holds the length of the song (a thing with a length and a key is a thing to play)
+      S.time.classList.toggle('cn', mine);
+      S.time.textContent = mine ? '没放出来' : openL && openL.song && openL.song.duration ? fmt.clock(openL.song.duration) : '';
       S.line.style.setProperty('--prog', '0');
     }
     player.on('change', paint);
