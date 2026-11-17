@@ -207,6 +207,8 @@ export default {
       h('span', { class: 'day', lang: 'en' }, d != null ? String(d) : ''));
       a.addEventListener('pointerenter', () => router.prefetch(a.href));
       a.addEventListener('touchstart', () => router.prefetch(a.href), { passive: true });
+      /* 点下去这一列就亮起来，信到之前读者知道点着了（show() 里熄掉） */
+      a.addEventListener('click', (e) => { if (e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) a.parentNode.classList.add('is-going'); });
       return a;
     }
     function mei(l) {                                        // 分行在 layoutHome 里做：一行几个字随屏宽变
@@ -615,8 +617,11 @@ export default {
 
     /* ── 一个函数画任何一页；之后每次站内跳转核心都会再调它 ── */
     let first = true;
+    const settleCells = () => { for (const c of root.querySelectorAll('.is-going')) c.classList.remove('is-going'); };
+    window.addEventListener('pageshow', settleCells);          // 整页跳走又退回来（从缓存里恢复）时
     function show(route) {
       if (ro) ro.disconnect();
+      settleCells();
       if (route.type === 'letter') {
         main.replaceChildren(letterView(route));
         root.dataset.view = 'letter';

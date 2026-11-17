@@ -120,7 +120,8 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .mei.mei--l{right:auto;left:10px}
 .is-mei .mei,.cell--latest .mei,.is-read .mei{visibility:visible}
 .is-off .mei{visibility:hidden}
-.cell.is-read{background:var(--paper-lit)}
+.cell.is-read,.cell.is-going{background:var(--paper-lit)}
+.cell.is-going .lt{color:var(--red)}
 .leaf:has(.col:focus-visible) .cell:not(:focus-within) .mei{visibility:hidden}
 .cell:focus-within .mei{visibility:visible}
 @media (hover:hover){
@@ -327,6 +328,7 @@ html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(-
     max-width:780px;margin:0 auto;padding:6px 14px 0;column-gap:24px}
   .side,.side-in{display:contents}
   .plate{grid-area:plate;margin-bottom:22px;max-width:340px}
+  .plate--tall{max-width:196px}
   .song{grid-area:song;align-self:end}
   .counts{grid-area:counts;display:flex;gap:34px;margin:14px 0 26px;padding:14px 1px 0}
   .counts>div{display:block}
