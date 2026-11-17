@@ -582,7 +582,14 @@ export default {
       if (typeof v === 'object' && v.no && v.url) return letters.byUrl(v.url);
       return letters.byUrl(typeof v === 'string' ? v : v.url || '') || null;
     }
-    const tint = (color) => { const m = document.querySelector('meta[name="theme-color"]'); if (m && color) m.content = color; };
+    // 浏览器的状态栏跟着色带走。两个人写的那封色带是渐变（没有底色）：用上半截 / 左半边的蓝
+    function tint() {
+      const el = main.firstElementChild;
+      const m = document.querySelector('meta[name="theme-color"]');
+      if (!el || !m) return;
+      const ground = getComputedStyle(view.type === 'letter' ? el.firstElementChild : document.documentElement).backgroundColor;
+      m.content = /^(transparent|rgba\(.*,\s*0\))$/.test(ground) ? getComputedStyle(el).getPropertyValue('--sea').trim() : ground;
+    }
 
     let first = true;
     let entered = null;                       // 从曲目表点开的是哪一封（之后可能翻到别的信去了）
@@ -623,10 +630,7 @@ export default {
         view = { type: '404', letter: null };
       }
       root.dataset.view = view.type;
-      const el = main.firstElementChild;
-      // 浏览器的状态栏跟着色带走。两个人写的那封色带是渐变（没有底色）：用上半截 / 左半边的蓝
-      const ground = getComputedStyle(view.type === 'letter' ? el.firstElementChild : document.documentElement).backgroundColor;
-      tint(/^(transparent|rgba\(.*,\s*0\))$/.test(ground) ? getComputedStyle(el).getPropertyValue('--sea').trim() : ground);
+      tint();
       paint();
       inkHunger();
       if (!first) main.focus({ preventScroll: true });
@@ -640,6 +644,7 @@ export default {
     });
 
     show(router.current);
+    setTimeout(tint, 0);                      // 核心在 mount 之后才写 theme-color（纸色）；直接打开一封信时再改成色带的颜色
     return { show };
   },
 };
