@@ -56,7 +56,7 @@ export default {
     const other = { him: 'Pikachi', her: 'Pikajay' };
     const capWho = (p) => (p.role === 'both' ? names(p).join(' 和 ') : other[p.role] ? p.author : `${p.author} 写的`);
     const byline = (p) => (p.role === 'both' ? `${names(p)[0]} 起头，${names(p).slice(1).join('、')} 写`
-      : other[p.role] ? `${p.author} 写给 ${other[p.role]}` : `${p.author} 写的 · 客人的信`);
+      : other[p.role] ? `${p.author} 写给 ${other[p.role]}` : `${p.author} 写的`);
 
     /* ───────── depth: 2 near · 1 middle · 0 far ─────────
        Far: pictures found online (cover.own === false), a guest's letter, a letter without a cover.
@@ -94,7 +94,7 @@ export default {
       lost,
       h('h1', {}, site.title),
       h('p', { className: 'lead' }, `${cn(N)}封信，写了${cn(years)}年。`),
-      h('p', { className: 'sub' }, '最新的一封在最上面，往下滑是回头看。挤的地方是话多的那两年，空的地方是没写信的日子，都照实留着。点一张相片，信在原地展开；每封信有一首歌，不点不响。'),
+      h('p', { className: 'sub' }, '最新的一封在最上面，往下是回头看。挤的地方是话多的那两年，空的地方是没写信的日子，都照实留着。点一张相片，信在原地展开；每封信有一首歌，不点不响。'),
       h('p', { className: 'odo-today' }, `截至今天 ${dot(today)}`),
       h('dl', { className: 'odo' }, [['认识', site.met, tdays.met], ['在一起', site.together, tdays.together], ['结婚', site.married, tdays.married]]
         .filter((row) => row[1] && row[2] != null)
@@ -503,6 +503,7 @@ export default {
       sheet.dataset.role = p.role;
       S.cover.hidden = !c;
       S.cover.className = 'sheet-cover' + (c && c.own === false ? ' found' : '');
+      if (c) S.cover.style.setProperty('--r', (c.w / c.h).toFixed(4));
       S.cover.replaceChildren(...(c ? [ctx.img(c, { sizes: c.own === false ? '(max-width: 759px) 70vw, 420px' : '(max-width: 759px) 100vw, 752px', lazy: false, lqip: true })] : []));
       const wd = fmt.date(p.date, 'weekday');
       S.meta.textContent = [dot(p.date), '周' + wd.slice(-1), season(p.date), p.place].filter(Boolean).join(' · ');
@@ -581,7 +582,7 @@ export default {
       if (restore) window.scrollTo(0, route.scrollY);
       else if (animate && near && !p.quiet) {
         const D = 680, sr = sheet.getBoundingClientRect(), img = S.cover.querySelector('img');
-        if (img && pr.width) {
+        if (img && pr.width && img.getBoundingClientRect().width > 8) {
           const f = S.cover.getBoundingClientRect(), cr = img.getBoundingClientRect(), s = pr.width / Math.max(1, cr.width);
           S.cover.animate([{ transform: `translate(${pr.left - f.left - (cr.left - f.left) * s}px, ${pr.top - f.top - (cr.top - f.top) * s}px) scale(${s})` }, { transform: 'none' }], { duration: D, easing: EASE });
         }
