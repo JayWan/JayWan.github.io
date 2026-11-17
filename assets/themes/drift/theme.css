@@ -85,7 +85,7 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
 .play-s i, .play-s[aria-pressed="true"] i { width: 10px; height: 12px; }
 
 /* ───────── stage / hero ───────── */
-.stage { position: relative; z-index: 2; outline: 0; overflow-x: clip; }
+.stage { position: relative; z-index: 2; outline: 0; overflow-x: clip; margin: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px); }   /* a phone held sideways: clear of the sensor housing */
 .hero { position: relative; z-index: 4; padding: 120px 40px 0; max-width: 720px; }
 @media (min-width: 1100px) {
   .hero { position: absolute; left: 72px; top: 132px; padding: 0; width: calc(50% - 72px - 84px); max-width: 580px; }
@@ -393,12 +393,15 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 .letter-body .letter-signoff { margin: .2em 0; text-align: right; font-size: .88em; color: var(--ink-2); }
 .letter-body .img { margin: 2em 0; background-color: #d9d2c2; outline: 1px solid rgba(35, 31, 24, .14); outline-offset: -1px; }
 .letter-body .flip-card-hint { font-family: var(--serif); font-size: 13px; }
-/* the card says that it turns: a quiet word in the corner of each face */
-.letter-body .flip-card-front, .letter-body .flip-card-back { padding-bottom: 50px; }
+/* the card says that it turns: a quiet word in the corner of each face. On the front it stands on the line of the
+   letter's own closing note, so the card is no taller than the letter made it. */
 .letter-body .flip-card-front::after, .letter-body .flip-card-back::after {
-  content: "转过来看 →"; position: absolute; right: 18px; bottom: 16px; font: 500 12.5px/1 var(--serif); letter-spacing: .18em; color: var(--ink-2); pointer-events: none;
+  content: "背面 →"; position: absolute; right: 1.8rem; bottom: 2.2rem; font: 500 13px/2 var(--serif); letter-spacing: .15em; color: var(--ink-2); pointer-events: none;
 }
-.letter-body .flip-card-back::after { content: "← 转回正面"; right: 16px; }
+.letter-body .flip-card-front:not(:has(.flip-card-hint)) { padding-bottom: 3.4rem; }
+.letter-body .flip-card-front:not(:has(.flip-card-hint))::after { bottom: 1rem; }
+.letter-body .flip-card-back { padding-bottom: 44px; }
+.letter-body .flip-card-back::after { content: "← 正面"; right: 16px; bottom: 9px; }
 .letter-body .flip-card-back img { margin: 0; max-height: none; mix-blend-mode: normal; outline: 0; }
 .letter-body .flip-card-front { box-shadow: 0 1px 2px rgba(35, 31, 24, .2), 0 14px 30px -14px rgba(35, 31, 24, .4); }
 .letter-body .flip-card-back { box-shadow: 0 1px 2px rgba(35, 31, 24, .2), 0 14px 30px -14px rgba(35, 31, 24, .4); }
@@ -533,6 +536,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
   .sheet-body { padding: 34px 22px 0; }
   .letter-body { font-size: 17px; line-height: 1.95; --letter-leading: 1.35rem; --flip-front-pad: 1.6rem 1.2rem; }
   .letter-body blockquote { padding-left: 1.1em; }
+  .letter-body .flip-card-front::after { right: 1.2rem; bottom: 1.6rem; line-height: 1.95; }
   .sheet-foot { padding: 24px 22px 48px; }
   .sheet-nav { margin-top: 40px; }
   .sn-k { font-size: 12px; letter-spacing: 0; white-space: nowrap; }
