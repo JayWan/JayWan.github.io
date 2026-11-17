@@ -30,8 +30,6 @@ const I_NOTE = '<svg class="sd-note" viewBox="0 0 10 13" aria-hidden="true"><ell
 
 const pad2 = (n) => (n < 10 ? '0' : '') + n;
 const pad3 = (n) => String(n).padStart(3, '0');
-const ZH = '零一二三四五六七八九';
-const zhNum = (n) => (n < 10 ? ZH[n] : n < 20 ? '十' + (n % 10 ? ZH[n % 10] : '') : n < 100 ? ZH[Math.floor(n / 10)] + '十' + (n % 10 ? ZH[n % 10] : '') : String(n));
 const visualLen = (s) => { let n = 0; for (const c of s) n += c.codePointAt(0) > 0x2e7f ? 1 : 0.55; return n; };
 const latinOnly = (s) => /^[\x20-\x7e]+$/.test(s);
 
@@ -84,10 +82,13 @@ export default {
       return el;
     }
     function chip(side) {
-      if (side === 'ab') return h('i', { class: 'sd-chip sd-chip-ab', title: 'A / B 面 · 两个人写的' }, h('span', {}, 'A'), h('span', {}, 'B'));
-      if (side === 'x') return h('i', { class: 'sd-chip sd-chip-x', title: '附赠曲目 · 客人写的' }, '附');
-      return h('i', { class: `sd-chip sd-chip-${side}`, title: side === 'a' ? 'A 面 · 他写的' : 'B 面 · 她写的' }, side.toUpperCase());
+      const say = { role: 'img', 'aria-label': { a: 'A 面 · 他写的', b: 'B 面 · 她写的', ab: 'A / B 面 · 两个人写的', x: '附赠曲目 · 客人写的' }[side] };   // 只念给读屏听，不出气泡
+      if (side === 'ab') return h('i', { class: 'sd-chip sd-chip-ab', ...say }, h('span', {}, 'A'), h('span', {}, 'B'));
+      if (side === 'x') return h('i', { class: 'sd-chip sd-chip-x', ...say }, '附');
+      return h('i', { class: `sd-chip sd-chip-${side}`, ...say }, side.toUpperCase());
     }
+    /** 页眉正中的厂牌：A 空心蓝、B 实心绿，两种油墨先在这里各印一次 */
+    const mark = () => h('i', { class: 'sd-chip sd-chip-ab sd-mark', 'aria-hidden': 'true' }, h('span', {}, 'A'), h('span', {}, 'B'));
     /** 方形封套：双色调由 CSS 的混合模式做（见 theme.css「封套」） */
     function sleeve(l, opts, cls = '') {
       const fit = fits(l.cover);
@@ -134,7 +135,6 @@ export default {
       hungerEl,
       h('div', { class: 'sd-foot-row' },
         h('span', {}, tx('© 2016 – 2026 Fan & Wan')),
-        h('span', { class: 'sd-foot-mid' }, '建议按顺序听。也可以不按。'),
         ui.switcher()));
 
     const P = {
@@ -246,14 +246,11 @@ export default {
 
       // ---- 刊头 ----
       const title = h('h1', { class: 'sd-title', 'aria-label': site.title }, h('span', {}, '221'), ' ', h('span', {}, 'FOREVER'));
-      const info = h('div', { class: 'sd-info' },
-        h('div', {},
-          h('p', { class: 'sd-lede' }, `${zhNum(tracks.length)}封信，${zhNum(tracks.filter((l) => l.song).length)}首歌。`, h('br'), 'A 面是他写的，B 面是她写的，', h('span', { class: 'sd-nw' }, '哪面先放都行。')),
-          h('p', { class: 'sd-line sd-l', 'aria-hidden': 'true' }, `${tracks.length} 首 · ${span} · 全长 ${totalText}`)),
-        h('dl', { class: 'sd-facts' },
-          h('div', {}, h('dt', { class: 'sd-l' }, '曲目'), h('dd', {}, String(tracks.length), bonus ? h('small', {}, ` + ${bonus}`) : null)),
-          h('div', {}, h('dt', { class: 'sd-l' }, '年头'), h('dd', {}, span)),
-          h('div', {}, h('dt', { class: 'sd-l' }, '全长'), h('dd', {}, totalText))));
+      // 大字下面只有一条规格栏：三个数。两面各是谁写的，由筛选钮上的 A / B 标记和油墨颜色说
+      const info = h('dl', { class: 'sd-info' },
+        h('div', {}, h('dt', { class: 'sd-l' }, '曲目'), h('dd', {}, String(tracks.length), bonus ? h('small', {}, ` + ${bonus}`) : null)),
+        h('div', {}, h('dt', { class: 'sd-l' }, '年头'), h('dd', {}, span)),
+        h('div', {}, h('dt', { class: 'sd-l' }, '全长'), h('dd', {}, totalText)));
       const latestLink = newest && h('a', { class: 'sd-latest', href: newest.url, 'data-side': sideOf(newest) },
         h('span', {}, '最新一封'), noEl(newest, 'sd-latest-no', 'b'), h('u', {}, tx(newest.title)), h('i', { 'aria-hidden': 'true' }, '→'));
       if (latestLink) warm(latestLink);
@@ -278,15 +275,11 @@ export default {
       const sq = h('div', { class: 'sd-sq' }, mosaic, big);
       sq.style.setProperty('--mr', String(cells / 6));
       sq.style.setProperty('--mp', String(Math.ceil((tracks.length + 1) / 8)));
-      const restCap = [
-        h('p', { class: 'sd-cap-lbl sd-l' }, `封套 · ${tracks.length} / ${cells} 格`),
-        h('p', { class: 'sd-cap-big' }, '蓝的是他写的，绿的是她写的。'),
-        h('p', { class: 'sd-cap-note' }, `第 ${tracks.length + 1} 首还没写。`),
-        // 没有悬停时，右栏下半截放「今天」：他们自己的数法。（不放摘句：摘句里的字不在首屏字体切片里，要多下 90 KB）
-        today.length && h('dl', { class: 'sd-cap-now' },
-          h('dt', { class: 'sd-l' }, `今天 · ${dot(site.today.date)}`),
-          today.map(([k, n]) => h('dd', {}, h('span', {}, `${k}第`), h('b', {}, String(n)), h('span', {}, '天')))),
-      ];
+      // 拼版自己说话：两种油墨是两个人，印着曲号的空格子是还没写的。没有悬停时，下面只放「今天」：他们自己的数法。
+      //（不放摘句：摘句里的字不在首屏字体切片里，要多下 90 KB）
+      const restCap = today.length ? [h('dl', { class: 'sd-cap-now' },
+        h('dt', { class: 'sd-l' }, `今天 · ${dot(site.today.date)}`),
+        today.map(([k, n]) => h('dd', {}, h('span', {}, `${k}第`), h('b', {}, String(n)), h('span', {}, '天'))))] : [];
 
       // ---- 曲目表 ----
       const list = h('ol', { class: 'sd-list' });
@@ -319,12 +312,12 @@ export default {
       });
       const extras = letters.filter((l) => !trackNo.has(l));
       if (extras.length) {
-        yearRows.push([list.appendChild(h('li', { class: 'sd-yr sd-yr--bonus' }, h('span', {}, '附'), h('span', {}, `Bonus track · ${[...new Set(extras.map((l) => l.author))].join('、')} 写的，不排曲号`))), [], null]);
+        yearRows.push([list.appendChild(h('li', { class: 'sd-yr sd-yr--bonus' }, h('span', {}, 'Bonus track'), h('span', {}, [...new Set(extras.map((l) => l.author))].join('、')))), [], null]);
         extras.forEach((l) => list.append(row(l)));
       }
 
       const el = h('div', { class: 'sd-home', 'data-filter': 'all' },
-        h('div', { class: 'sd-cat sd-l' }, h('span', {}, '221–LP'), h('span', { class: 'sd-cat-mid' }, '书信集 · 每首歌附信一封'), h('span', {}, 'Stereo · 双声道')),
+        h('div', { class: 'sd-cat sd-l' }, h('span', {}, '221–LP'), mark(), h('span', {}, 'Stereo · 双声道')),
         h('header', { class: 'sd-mast' }, title, info, latestLink, h('div', { class: 'sd-ctl' }, tabs)),
         h('aside', { class: 'sd-panel', 'aria-label': '封套' }, h('div', { class: 'sd-stick' }, sq, cap)),
         h('section', { class: 'sd-tracks', 'aria-label': '曲目表' }, list));
@@ -334,7 +327,7 @@ export default {
       const bigs = new Map();
       function panel(l) {
         big.classList.toggle('is-show', Boolean(l));
-        if (!l) { cap.removeAttribute('data-side'); cap.replaceChildren(...restCap.filter(Boolean)); return; }
+        if (!l) { cap.removeAttribute('data-side'); cap.replaceChildren(...restCap); return; }
         if (!bigs.has(l)) bigs.set(l, sleeve(l, { sizes: '400px', widths: [480, 800], lazy: false }));
         big.replaceChildren(bigs.get(l));
         cap.dataset.side = sideOf(l);
@@ -501,8 +494,7 @@ export default {
       const season = fmt.season ? fmt.season(l.date) : '';
       const who = authorsOf(l);
       const credits = [
-        ['写信', s === 'ab' && who.length > 1 ? [`${who[0]} 起头`, h('span', {}, `${who.slice(1).join('、')} 写`), h('small', {}, 'A / B 面 · 两个人写的')]
-          : [l.author, h('small', {}, s === 'a' ? 'A 面 · 他写的' : s === 'b' ? 'B 面 · 她写的' : s === 'ab' ? 'A / B 面 · 两个人写的' : '附赠曲目 · 客人写的')]],
+        ['写信', s === 'ab' && who.length > 1 ? [`${who[0]} 起头`, h('span', {}, `${who.slice(1).join('、')} 写`, chip(s))] : [l.author, chip(s)]],   // 名字后面跟着这一面的标记
         ['日期', [dot(l.date), h('small', {}, [season, fmt.date(l.date, 'weekday')].filter(Boolean).join(' · '))]],
         l.place && ['地点', [l.place]],
         dayLines(l).length && [guest ? '这一天' : '天数', dayLines(l).map((t, i) => h('span', {}, guest && !i ? `他们${t}` : t))],

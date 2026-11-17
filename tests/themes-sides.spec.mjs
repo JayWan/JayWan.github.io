@@ -24,7 +24,8 @@ test.describe('theme "sides": its own rules', () => {
     const numbered = rows.filter((row) => row.role !== 'guest');
     expect(numbered.map((row) => row.no)).toEqual(numbered.map((_, i) => String(i + 1).padStart(2, '0')));
     for (const row of rows.filter((r) => r.role === 'guest')) expect(row.no).toBe('+');
-    await expect(page.locator('#theme-root .sd-cap-note')).toHaveText(`第 ${numbered.length + 1} 首还没写。`);
+    // the next track is not announced in words: the first empty cell of the mosaic carries its number
+    await expect(page.locator('#theme-root .sd-mosaic .sd-slot').first()).toHaveText(String(numbered.length + 1));
   });
 
   test('the letter two people wrote is in both filters, and a year counts what is shown', async ({ page }) => {
