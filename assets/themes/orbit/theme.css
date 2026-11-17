@@ -135,7 +135,7 @@ body { margin: 0; }
 .ro-new svg { vertical-align: -.02em; margin-left: 2px; }
 
 /* 蓝晒：灰度照片上叠一层蓝（overlay 把中间调压成蓝色，黑白两端不动），再用 screen 把最深处抬到深蓝 */
-.cy { display: block; position: relative; isolation: isolate; background: var(--deep); cursor: pointer; }
+.cy { display: block; position: relative; isolation: isolate; background: #000; cursor: pointer; }      /* 图还没到时，黑经过两层蓝就是最深的那种蓝 */
 .cy picture { display: block; }
 .cy img { display: block; width: 100%; height: auto; filter: grayscale(1) brightness(.95); }
 .cy::before, .cy::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; }
@@ -143,6 +143,8 @@ body { margin: 0; }
 .cy::after { background: var(--deep); mix-blend-mode: screen; }
 .in-colour .cy::before, .in-colour .cy::after { display: none; }
 .in-colour .cy img { filter: none; }
+.in-colour .cy { background: var(--deep); }
+#theme-root .is-gif.is-in .cy { background: var(--ink); }      /* 透明底的动图原本画在白纸上 */
 .ro-thumb { display: block; border: 1px solid var(--line); padding: 3px; }
 .ro-thumb .cy, .ro-thumb picture { height: 100%; }
 .ro-thumb img { height: 100%; object-fit: cover; object-position: var(--fx) var(--fy); }
@@ -281,6 +283,7 @@ body { margin: 0; }
 .prose .o-fig { width: var(--fig-w, -webkit-fit-content); width: var(--fig-w, fit-content); max-width: 100%; margin: 2em auto; }
 .prose .o-fig.is-portrait { max-width: min(100%, calc(var(--ar, 1) * 76vh)); }
 .o-fig .cy img { width: auto; max-width: calc(100% + .5px); }
+.o-fig[style*="fig-w"] .cy img { width: 100%; max-width: none; }      /* 作者自己写了宽度的图：把版框填满 */
 
 /* 两件做成物件的信：卡片和礼物盒，装进同样的版框 */
 .prose .flip-card-front p { text-align: left; }

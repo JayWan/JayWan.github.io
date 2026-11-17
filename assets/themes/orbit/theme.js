@@ -430,6 +430,7 @@ export default {
         if (w && ht) fig.style.setProperty('--ar', f1(w / ht));
         const cy = h('span', { class: 'cy', onclick: flip });
         img.replaceWith(cy); cy.append(img);
+        if (img.complete && img.naturalWidth) fig.classList.add('is-in'); else img.addEventListener('load', () => fig.classList.add('is-in'), { once: true });
         fig.append(h('figcaption', { class: 'o-cap' }, h('span', {}, h('b', {}, `图 ${letter.no}·${n}`), fig.classList.contains('is-gif') ? '动图' : null), capToggle()));
       });
       // 卡片背面那张手写的照片：同样的版框。点卡片是翻面，所以原色只放在图注里的那个钮上
