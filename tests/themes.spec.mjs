@@ -71,30 +71,52 @@ for (const theme of themeIds) {
       expect(total, `the home page transfers ${Math.round(total / 1024)} KB in ${loaded.length} files; the heaviest:\n  ${heaviest}\n`).toBeLessThanOrEqual(700 * 1024);
     });
 
-    test('the flip card turns over and back', async ({ page, request }) => {
-      await open(page, (await samplePages(request)).flip, theme);
-      const card = page.locator('#theme-root .flip-card');
-      const height = () => card.locator('.flip-card-inner').evaluate((el) => el.getBoundingClientRect().height);
-      await expect(card.locator('.flip-card-front')).toBeVisible();
-      const frontHeight = await height();
-      expect(frontHeight).toBeGreaterThan(100);
+    for (const way of ['a page load', 'soft navigation']) {
+      test(`the flip card turns over and back (${way})`, async ({ page, request }) => {
+        // 木婚快乐 is a card: the typed letter and its closing lines on the front, the photo of the
+        // handwritten card on the back. No theme may flatten it into text followed by a picture.
+        const url = (await samplePages(request)).flip;
+        if (way === 'a page load') await open(page, url, theme);
+        else {
+          await open(page, '/', theme);
+          if (!(await page.evaluate(() => window.__theme.ctx.router.soft))) test.skip(true, 'this theme does not return show(): links load pages normally');
+          expect(await page.evaluate((to) => window.__theme.ctx.router.go(to), url), 'soft navigation').toBe(true);
+        }
+        const card = page.locator('#theme-root .letter-body .flip-card');
+        await expect(card, 'one card, the one the letter came with').toHaveCount(1);
+        const front = card.locator('.flip-card-front');
+        const photo = card.locator('.flip-card-back img');
+        const height = () => card.locator('.flip-card-inner').evaluate((el) => el.getBoundingClientRect().height);
+        await expect(front).toBeVisible();
+        await expect(front, 'the typed letter is on the front').toContainText('木婚快乐！');
+        await expect(front, 'and so are its closing lines').toContainText('2026年8月12日 7:25 PM');
+        await expect(front).toContainText('Oak Creek 家中');
+        await expect(photo, 'the photo is not shown until the card is turned').toBeHidden();
+        const frontHeight = await height();
+        expect(frontHeight).toBeGreaterThan(100);
 
-      await card.click({ position: { x: 20, y: 20 } });
-      await expect(card).toHaveClass(/is-flipped/);
-      await expect(card.locator('.flip-card-back img')).toBeVisible();
-      await expect(card.locator('.flip-card-front')).toBeHidden();
-      await expect.poll(height, 'the card takes the height of the photo side').not.toBe(frontHeight);
-      await expectNoSidewaysScroll(page);
+        await card.click({ position: { x: 20, y: 20 } });
+        await expect(card).toHaveClass(/is-flipped/);
+        await expect(photo).toBeVisible();
+        await expect.poll(() => photo.evaluate((img) => img.naturalWidth), 'the photo on the back loads').toBeGreaterThan(0);
+        await expect(front).toBeHidden();
+        await expect.poll(height, 'the card takes the height of the photo side').not.toBe(frontHeight);
+        const box = await photo.boundingBox();
+        expect(box.width / box.height, 'the photo keeps its proportions').toBeGreaterThan(1.2);
+        await expectNoSidewaysScroll(page);
 
-      await card.focus();
-      await page.keyboard.press('Enter');                                 // and it works from the keyboard
-      await expect(card).not.toHaveClass(/is-flipped/);
-      await expect(card.locator('.flip-card-front')).toBeVisible();
-    });
+        await card.focus();
+        await page.keyboard.press('Enter');                               // and it works from the keyboard
+        await expect(card).not.toHaveClass(/is-flipped/);
+        await expect(front).toBeVisible();
+      });
+    }
 
     test('the gift box opens, with confetti over the whole screen', async ({ page, request }) => {
       await open(page, (await samplePages(request)).gift, theme);
-      const box = page.locator('#theme-root #gift-container');
+      const box = page.locator('#theme-root .letter-body #gift-container');
+      await expect(box, 'the box is closed until the reader opens it').toBeVisible();
+      await expect(page.locator('#theme-root #gift-reveal')).toBeHidden();
       await box.scrollIntoViewIfNeeded();
       await box.click();
       const canvas = await page.evaluate(() => {
@@ -106,8 +128,16 @@ for (const theme of themeIds) {
       expect(canvas.top).toBe(0);
       expect(Math.abs(canvas.width - canvas.vw)).toBeLessThanOrEqual(1);
       expect(Math.abs(canvas.height - canvas.vh)).toBeLessThanOrEqual(1);
-      await expect(page.locator('#theme-root #gift-reveal')).toBeVisible();
+      // what was inside: the picture and the letter's last line. A box that opens onto nothing,
+      // a box shown already open, or a placeholder in its place are all failures.
+      const reveal = page.locator('#theme-root .letter-body #gift-reveal');
+      await expect(reveal).toBeVisible();
       await expect(box).toBeHidden();
+      const gift = reveal.locator('img.float-img');
+      await expect(gift).toBeVisible();
+      await expect.poll(() => gift.evaluate((img) => img.naturalWidth), 'the picture of the gift loads').toBeGreaterThan(0);
+      await expect(reveal.locator('.reveal-words')).toBeVisible();
+      await expect(reveal.locator('.reveal-words')).toHaveText('生日快乐，我的小天使！');
       await expectNoSidewaysScroll(page);
     });
 

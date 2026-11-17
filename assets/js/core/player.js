@@ -46,7 +46,9 @@ export function createPlayer(letters, site) {
   // the end of the song) without ever firing more than four times a second.
   let lastTime = 0;
   let trailing = 0;
-  const emitTime = () => { trailing = 0; lastTime = Date.now(); events.emit('time', state); };
+  // (An emit also cancels the one that was waiting: a timer that is late, on a busy machine, would
+  // otherwise fire right behind the tick that overtook it.)
+  const emitTime = () => { clearTimeout(trailing); trailing = 0; lastTime = Date.now(); events.emit('time', state); };
   const ticked = () => {
     const wait = TIME_EVENT_MS - (Date.now() - lastTime);
     if (wait <= 0) emitTime();
