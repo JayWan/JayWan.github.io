@@ -538,10 +538,10 @@ export default {
       if (img.dataset.still || !img.naturalWidth) return;
       const k = Math.min(1, 1200 / img.naturalWidth);
       const c = h('canvas', { width: Math.round(img.naturalWidth * k), height: Math.round(img.naturalHeight * k) });
+      const fig = img.closest('figure'), hint = fig && fig.querySelector('.fo-hint');
       let frame;
-      try { c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); frame = c.toDataURL('image/png'); } catch { return; }
-      const moving = img.currentSrc || img.src, fig = img.closest('figure');
-      const hint = fig && fig.appendChild(h('figcaption', { class: 'fo-hint' }));
+      try { c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); frame = c.toDataURL('image/png'); } catch { if (hint) hint.textContent = ''; return; }
+      const moving = img.currentSrc || img.src;
       const set = (on) => {
         img.dataset.still = on ? 'off' : 'on';
         img.src = on ? moving : frame;
@@ -561,6 +561,8 @@ export default {
       if (!ctx.env.reducedMotion) return;
       for (const img of el.querySelectorAll('img[data-gif]')) {
         if (img.dataset.still || img.closest('.flip-card, .gift-scene')) continue;
+        const fig = img.closest('figure');                     // 提示那一行先占好位置：图到了以后信不会往下跳一行
+        if (fig && !fig.querySelector('.fo-hint')) fig.appendChild(h('figcaption', { class: 'fo-hint' }, '点图，让它动起来'));
         if (img.complete && img.naturalWidth) still(img);
         else img.addEventListener('load', () => still(img), { once: true });
       }

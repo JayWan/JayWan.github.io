@@ -265,7 +265,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .plate figcaption .n{font-size:15px;letter-spacing:.02em}
 
 .song-k{font:14px/1 var(--fs);letter-spacing:.42em;color:var(--red)}
-.song-t{margin-top:11px;font:23px/1.4 var(--fs);letter-spacing:.06em}
+.song-t{margin-top:11px;font:23px/1.4 var(--fs);letter-spacing:.06em;text-wrap:balance}
 .song-a{font:14.5px/1.5 var(--fs);letter-spacing:.1em;color:var(--ink-2)}
 .song-c{display:flex;align-items:center;margin:4px 0 0 -6px}
 .play{flex:none;width:44px;height:44px;padding:0;border:0;background:none;color:var(--ink);cursor:pointer;-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent;border-radius:50%}
