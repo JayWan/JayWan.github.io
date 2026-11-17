@@ -19,7 +19,8 @@ export default {
   mount(ctx) {
     const { site, letters, root, player, router, ui } = ctx;
     const { fmt } = ui;
-    const byline = (letter) => ({ him: '他写的', her: '她写的' })[letter.role] || `${letter.author} 写的`;   // role: him | her | guest
+    // role is him | her | both | guest. Authorship is said on every letter, never only on the exceptions.
+    const byline = (letter) => ({ him: '他写的', her: '她写的', both: '两个人一起写的' })[letter.role] || `${letter.authors.join('、')} 写的`;
 
     // ---- the song control. Every element that starts a song carries data-play (the tests look for it). ----
     function playButton(letter) {
