@@ -2,7 +2,7 @@
 // the player (ARCHITECTURE §5.3), the router's corner cases (§5.2) and ctx.img().
 
 import { test, expect } from '@playwright/test';
-import { getIsland, samplePages, watch } from './helpers.mjs';
+import { getIsland, samplePages, watch, firstLetterLink } from './helpers.mjs';
 
 const ctx = (page, fn, arg) => page.evaluate(`(${fn})(window.__theme.ctx, ${JSON.stringify(arg ?? null)})`);
 const playerState = (page) => ctx(page, (c) => { const s = c.player.state; return { no: s.letter && s.letter.no, playing: s.playing, time: s.time, duration: s.duration, loading: s.loading, error: s.error }; });
@@ -196,6 +196,233 @@ test.describe('router', () => {
     await page.waitForFunction(() => window.__sameDocument === undefined && document.documentElement.getAttribute('data-theme-ready') === 'probe');
     await expect(page.locator('#theme-root h1')).toHaveText(target.title);
     expect(failed).toBe(true);
+  });
+});
+
+// A theme for the tests below: its show() takes a while (an exit animation, say), and can be told
+// never to finish. It records when each show() starts and ends.
+const SLOW_THEME = `
+export default { mount(ctx) {
+  const main = document.createElement('main');
+  ctx.root.append(main);
+  const log = (window.__shows = []);
+  let running = 0;
+  const name = (route) => route.type + (route.letter ? ':' + route.letter.no : '');
+  function draw(route) {
+    const view = document.createElement('div');
+    view.dataset.view = name(route);
+    if (route.type === 'letter') { const body = document.createElement('div'); body.className = 'letter-body'; body.append(route.contentEl); view.append(body); }
+    else for (const l of ctx.letters) { const a = document.createElement('a'); a.href = l.url; a.textContent = l.title; a.dataset.no = l.no; a.style.cssText = 'display:block;height:120px'; view.append(a); }
+    main.replaceChildren(view);
+  }
+  draw(ctx.router.current);
+  return { async show(route) {
+    log.push(['start', name(route), running]);
+    running++;
+    if (window.__stuck) { draw(route); await new Promise(() => {}); }
+    await new Promise((done) => setTimeout(done, 300));
+    draw(route);
+    running--;
+    log.push(['end', name(route), running]);
+  } };
+} };`;
+
+async function openSlowTheme(page, path = '/') {
+  await page.route('**/assets/themes/probe/theme.js*', (route) => route.fulfill({ contentType: 'text/javascript', body: SLOW_THEME }));
+  await openProbe(page, path);
+}
+
+test.describe('router: the corners', () => {
+  test('an #anchor on the page being read is the browser\'s; an #anchor on another letter is scrolled to', async ({ page, request, baseURL }) => {
+    const { letter } = await samplePages(request);                       // Hang Zhou has a heading with an id
+    const seen = watch(page, baseURL);
+    await openProbe(page, letter);
+    const id = await page.evaluate(() => { window.__sameDocument = true; return document.querySelector('#theme-root .letter-body [id]').id; });
+    await page.evaluate((anchor) => { const a = document.createElement('a'); a.href = `#${anchor}`; a.id = 'jump'; a.textContent = 'jump'; document.querySelector('#theme-root .letter-body').append(a); }, id);
+    await page.locator('#jump').click();
+    await expect.poll(() => page.evaluate(() => decodeURIComponent(location.hash))).toBe(`#${id}`);
+    const top = () => page.evaluate((anchor) => Math.round(document.getElementById(anchor).getBoundingClientRect().top), id);
+    await expect.poll(top, 'the browser scrolled to the anchor').toBeLessThan(5);
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
+    expect(await page.evaluate(() => window.__sameDocument)).toBe(true);
+
+    // from the home page: a link to that letter's anchor
+    await ctx(page, (c) => c.router.go('/'));
+    await expect(page.locator('#theme-root .p-list')).toBeVisible();
+    expect(await ctx(page, (c, url) => c.router.go(url), `${letter}#${encodeURIComponent(id)}`)).toBe(true);
+    await expect.poll(top, 'the core scrolled to the anchor').toBeLessThan(5);
+    expect(await ctx(page, (c) => [c.router.current.hash.length > 1, c.page.type])).toEqual([true, 'letter']);
+    expect(new URL(page.url()).hash.length).toBeGreaterThan(1);
+    expect(await page.evaluate(() => window.__sameDocument)).toBe(true);
+    expect(seen.errors).toEqual([]);
+  });
+
+  test('a link inside an SVG is a link too', async ({ page, request, baseURL }) => {
+    const { letter } = await samplePages(request);
+    await openProbe(page);
+    await page.evaluate((url) => {
+      window.__sameDocument = true;
+      const NS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('width', '120'); svg.setAttribute('height', '60');
+      const a = document.createElementNS(NS, 'a');
+      a.setAttribute('href', url); a.id = 'svg-link';
+      const rect = document.createElementNS(NS, 'rect');
+      rect.setAttribute('width', '120'); rect.setAttribute('height', '60');
+      a.append(rect); svg.append(a);
+      document.getElementById('theme-root').prepend(svg);
+    }, letter);
+    expect(await ctx(page, (c) => c.letters.byUrl(document.getElementById('svg-link')).date), 'letters.byUrl accepts the element').toBe('2016-06-08');
+    await page.locator('#svg-link rect').click();
+    await expect(page).toHaveURL(new URL(letter, baseURL).href);
+    await expect(page.locator('#theme-root .letter-body .content-body')).toBeVisible();
+    expect(await page.evaluate(() => window.__sameDocument), 'soft navigation').toBe(true);
+  });
+
+  test('prefetch fetches the letter, not its photos', async ({ page, request, baseURL }) => {
+    const { flip } = await samplePages(request);                         // its photo is several megabytes
+    const seen = watch(page, baseURL);
+    await openProbe(page);
+    await page.waitForLoadState('networkidle');
+    const before = seen.requests.length;
+    await ctx(page, (c, url) => { c.router.prefetch(url); c.router.prefetch(url); }, flip);
+    await expect.poll(() => seen.requests.slice(before)).toEqual([new URL(flip, baseURL).href]);
+    await page.waitForTimeout(500);
+    expect(seen.requests.slice(before), 'only the HTML, once').toEqual([new URL(flip, baseURL).href]);
+
+    expect(await ctx(page, (c, url) => c.router.go(url), flip)).toBe(true);
+    await expect.poll(() => seen.requests.slice(before).filter((u) => u.includes('/assets/images/posts/')).length, 'the photo is requested when the letter is shown').toBeGreaterThan(0);
+    expect(seen.requests.slice(before).filter((u) => u === new URL(flip, baseURL).href).length, 'and the HTML is not fetched again').toBe(1);
+  });
+
+  test('while a letter is on its way <html> carries data-navigating', async ({ page, request, baseURL }) => {
+    const { letters } = await getIsland(request);
+    const target = letters[3];
+    await openProbe(page);
+    let release;
+    const held = new Promise((resolve) => { release = resolve; });
+    await page.route(`**${new URL(target.url, baseURL).pathname}`, async (route) => { await held; await route.continue(); });
+    await ctx(page, (c, url) => { c.router.go(url); }, target.url);
+    await expect(page.locator('html')).toHaveAttribute('data-navigating', '');
+    release();
+    await expect(page.locator('#theme-root h1')).toHaveText(target.title);
+    await expect(page.locator('html[data-navigating]')).toHaveCount(0);
+  });
+
+  test('a letter that takes too long to arrive is loaded as a normal page', async ({ page, request, baseURL }) => {
+    test.setTimeout(40_000);
+    const { letters } = await getIsland(request);
+    const target = letters[6];
+    await openProbe(page);
+    await page.evaluate(() => { window.__sameDocument = true; });
+    await page.route(`**${new URL(target.url, baseURL).pathname}`, (route) => (route.request().resourceType() === 'fetch' ? undefined : route.continue()));   // the fetch never gets an answer
+    await ctx(page, (c, url) => { c.router.go(url); }, target.url);
+    await page.waitForFunction(() => window.__sameDocument === undefined && document.documentElement.getAttribute('data-theme-ready') === 'probe', null, { timeout: 20_000 });
+    await expect(page.locator('#theme-root h1')).toHaveText(target.title);
+  });
+
+  test('show() calls never overlap, and a show() that was overtaken does not move the reader', async ({ page, request, baseURL }) => {
+    const { letters } = await getIsland(request);
+    const [first, second] = [letters[20], letters[3]];
+    const seen = watch(page, baseURL);
+    await openSlowTheme(page);
+    await page.evaluate(() => window.scrollTo(0, 2000));
+    await page.locator(`#theme-root a[data-no="${first.no}"]`).click();
+    await expect(page.locator(`#theme-root [data-view="letter:${first.no}"]`)).toBeVisible();
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+
+    // Back (its show() will want to scroll to 2000 when it is done) and, before that has finished, another letter
+    await page.evaluate((url) => { history.back(); setTimeout(() => window.__theme.ctx.router.go(url), 100); }, second.url);
+    await expect(page.locator(`#theme-root [data-view="letter:${second.no}"]`)).toBeVisible();
+    await expect(page).toHaveURL(new URL(second.url, baseURL).href);
+    await page.waitForTimeout(400);
+    expect(await page.evaluate(() => window.scrollY), 'the reader is at the top of the letter').toBe(0);
+    expect(await ctx(page, (c) => [c.page.letter.no, c.router.current.letter.no])).toEqual([second.no, second.no]);
+
+    const log = await page.evaluate(() => window.__shows);
+    expect(log.filter((entry) => entry[0] === 'start').map((entry) => entry[2]), 'no show() started while another was running').toEqual(log.filter((entry) => entry[0] === 'start').map(() => 0));
+    expect(log.map((entry) => entry[0]).join(' ')).toMatch(/^(start end ?)+$/);
+    expect(log[log.length - 1]).toEqual(['end', `letter:${second.no}`, 0]);
+
+    // three quick clicks: only the last letter is shown, and only one history entry is added
+    const length = await page.evaluate(() => history.length);
+    const results = await page.evaluate((urls) => Promise.all(urls.map((url) => window.__theme.ctx.router.go(url))), [letters[7].url, letters[8].url, letters[9].url]);
+    expect(results).toEqual([false, false, true]);
+    await expect(page.locator(`#theme-root [data-view="letter:${letters[9].no}"]`)).toBeVisible();
+    expect(await page.evaluate(() => history.length)).toBe(length + 1);
+    expect(seen.errors).toEqual([]);
+  });
+
+  test('a show() that never finishes does not freeze the links', async ({ page, request, baseURL }) => {
+    const { letters } = await getIsland(request);
+    await openSlowTheme(page);
+    await page.evaluate(() => { window.__stuck = true; window.__sameDocument = true; });
+    await page.locator(`#theme-root a[data-no="${letters[2].no}"]`).click();
+    await expect(page.locator(`#theme-root [data-view="letter:${letters[2].no}"]`)).toBeVisible();
+    await page.goBack();                                                  // has to wait for the stuck show(), but not forever
+    await expect(page.locator('#theme-root [data-view="home"]')).toBeVisible();
+    await page.locator(`#theme-root a[data-no="${letters[5].no}"]`).click();
+    await expect(page.locator(`#theme-root [data-view="letter:${letters[5].no}"]`)).toBeVisible();
+    await expect(page).toHaveURL(new URL(letters[5].url, baseURL).href);
+    expect(await page.evaluate(() => window.__sameDocument)).toBe(true);
+  });
+
+  test('"back to the list": data-back is the Back button when the reader came from there', async ({ page, request, baseURL }) => {
+    const { letters } = await getIsland(request);
+    await openProbe(page);
+    await page.evaluate(() => { window.__sameDocument = true; });
+    const { link, url } = await firstLetterLink(page, request, 12);
+    await link.scrollIntoViewIfNeeded();
+    const scrollAtHome = await page.evaluate(() => window.scrollY);
+    expect(scrollAtHome).toBeGreaterThan(200);
+    await link.click();
+    await expect(page).toHaveURL(new URL(url, baseURL).href);
+    const length = await page.evaluate(() => history.length);
+
+    await page.locator('#theme-root a[data-back]').click();               // "← 所有的信"
+    await expect(page).toHaveURL(new URL('/', baseURL).href);
+    await expect(page.locator('#theme-root .p-list')).toBeVisible();
+    await expect.poll(() => page.evaluate(() => window.scrollY), 'the list is where the reader left it').toBeGreaterThanOrEqual(scrollAtHome - 80);
+    expect(await page.evaluate(() => window.scrollY)).toBeLessThanOrEqual(scrollAtHome + 80);
+    expect(await page.evaluate(() => history.length), 'no new history entry').toBe(length);
+    await page.goForward();                                               // so Forward still leads to the letter
+    await expect(page).toHaveURL(new URL(url, baseURL).href);
+
+    // from one letter to the next and then "back to the list": the list is not where the reader came from
+    await expect(page.locator('#theme-root .letter-body .content-body')).toBeVisible();
+    const before = await ctx(page, (c) => c.page.letter.prev.title);
+    await page.locator('#theme-root a[rel="prev"]').click();
+    await expect(page.locator('#theme-root h1')).toHaveText(before);
+    const deeper = await page.evaluate(() => history.length);
+    expect(await ctx(page, (c) => c.router.back('/'))).toBe(true);
+    await expect(page.locator('#theme-root .p-list')).toBeVisible();
+    expect(await page.evaluate(() => [history.length, window.scrollY])).toEqual([deeper + 1, 0]);
+    expect(await page.evaluate(() => window.__sameDocument)).toBe(true);
+
+    // a letter opened directly: there is no list to go back to, so the link is an ordinary link
+    const fresh = await page.context().newPage();
+    await openProbe(fresh, letters[4].url);
+    await fresh.locator('#theme-root a[data-back]').click();
+    await expect(fresh).toHaveURL(new URL('/', baseURL).href);
+    await expect(fresh.locator('#theme-root .p-list')).toBeVisible();
+    await fresh.goBack();
+    await expect(fresh.locator('#theme-root h1')).toHaveText(letters[4].title);
+    await fresh.close();
+  });
+
+  test('"back to the list" after a real page load: the standalone letter', async ({ page, request, baseURL }) => {
+    const { gift } = await samplePages(request);
+    await openProbe(page);
+    const link = page.locator(`#theme-root .p-list a[href="${gift}"]`);
+    await link.scrollIntoViewIfNeeded();
+    const scrollAtHome = await page.evaluate(() => window.scrollY);
+    await link.click();                                                   // a full page load
+    await page.waitForFunction(() => document.documentElement.getAttribute('data-theme-ready') === 'probe' && window.__theme.ctx.page.type === 'letter');
+    expect(await page.evaluate(() => history.state.from)).toBe('/');
+    await page.locator('#theme-root a[data-back]').click();
+    await expect(page).toHaveURL(new URL('/', baseURL).href);
+    await expect(page.locator('#theme-root .p-list')).toBeVisible();
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThanOrEqual(scrollAtHome - 80);
   });
 });
 

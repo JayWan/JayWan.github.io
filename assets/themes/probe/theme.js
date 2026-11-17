@@ -115,7 +115,9 @@ export default {
       const body = h('div', { className: 'letter-body' }, contentEl);
       ctx.widgets.init(contentEl);                       // re-measure the flip card in its new width
       return h('article', { className: 'p-letter', 'data-role': letter.role, ...(letter.quiet && { 'data-quiet': '' }) },
-        h('a', { className: 'p-back', href: '/' }, '← 所有的信'),
+        // data-back: if the reader came here from the list, this link is the Back button (they land
+        // where they left the list, and no new history entry is made); otherwise it is a plain link.
+        h('a', { className: 'p-back', href: '/', 'data-back': '' }, '← 所有的信'),
         ctx.img(letter.cover, { sizes: '(max-width: 760px) 100vw, 720px', lazy: false, lqip: true, className: 'p-cover' }),
         h('h1', {}, letter.title),
         h('p', { className: 'p-facts' }, facts.join(' · ')),

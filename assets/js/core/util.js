@@ -24,11 +24,14 @@ export function pad(n, width = 2) {
 }
 
 /** A site path in one canonical spelling: decoded ("/story/2026/08/12/木婚快乐/"), with a trailing
- *  slash, without query or hash. Accepts a path, a full URL or anything with an href.
- *  Returns null for something that is not a URL at all. */
+ *  slash, without query or hash. Accepts a path, a full URL or anything with an href (a URL,
+ *  location, an <a>, also an SVG <a>, whose href is an object). Returns null for something that
+ *  is not a URL at all. */
 export function normPath(url) {
   let path;
-  try { path = new URL(String(url && url.href !== undefined ? url.href : url), location.href).pathname; } catch { return null; }
+  let raw = url && url.href !== undefined ? url.href : url;
+  if (raw && typeof raw === 'object' && 'baseVal' in raw) raw = raw.baseVal;
+  try { path = new URL(String(raw), location.href).pathname; } catch { return null; }
   try { path = decodeURI(path); } catch { /* keep the encoded form */ }
   path = path.replace(/\/index\.html$/, '/');
   return path.endsWith('/') ? path : path + '/';
