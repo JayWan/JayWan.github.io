@@ -11,8 +11,6 @@ const between = (a, b) => Math.round((T(b) - T(a)) / DAY);
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const rnd = (i, k) => { const x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
 const pad = (n) => String(n).padStart(2, '0');
-const CN = '零一二三四五六七八九';
-const cn = (n) => (n < 10 ? CN[n] : n < 100 ? (n < 20 ? '' : CN[Math.floor(n / 10)]) + '十' + (n % 10 ? CN[n % 10] : '') : String(n));
 
 /** h('a', { href, className, onclick, 'data-x': … }, ...children) → element. Null children are skipped. */
 function h(tag, props = {}, ...children) {
@@ -104,16 +102,29 @@ export default {
 
     const lost = h('p', { className: 'lost', hidden: true }, h('b', {}, '这一页没有信。'), h('span', {}, '信都在下面这条河里。'));
     const tdays = site.today.days;
-    const years = Number(today.slice(0, 4)) - Number(site.met.slice(0, 4));
+    /* The river in miniature, lying on its side under the wordmark: honest, linear time from the day they met
+       to today. One tick per letter, the line dashed over every silence, year marks below, a lamp where today is.
+       It says what the page is before anything is read: crowded years, empty years, and which end is now. */
+    const strip = h('div', { className: 'strip', 'aria-hidden': 'true' });
+    {
+      const s0 = T(site.met), s1 = Math.max(T(today), s0 + DAY), pc = (t) => (clamp((t - s0) / (s1 - s0), 0, 1) * 100).toFixed(2) + '%';
+      const put = (e, t, t2) => { e.style.left = pc(t); if (t2) e.style.right = `calc(100% - ${pc(t2)})`; strip.append(e); };
+      order.forEach((p, i) => {
+        if (i && GAP[i] > SILENCE) put(h('i', { className: 'st-q' }), T(p.date), T(order[i - 1].date));
+        put(h('i', {}), T(p.date));
+      });
+      const y0 = Number(site.met.slice(0, 4)) + 1, y1 = Number(today.slice(0, 4));
+      for (let y = y0; y <= y1; y++) put(h('span', {}, String(y).slice(y1 - y0 > 12 ? 2 : 0)), Date.UTC(y, 0, 1));   // in time the years outgrow the line: then two digits each
+      strip.append(h('b', {}));
+    }
     const hero = h('section', { className: 'hero' },
       lost,
       h('h1', {}, site.title),
-      h('p', { className: 'lead' }, `${cn(N)}封信，写了${cn(years)}年。`),
-      h('p', { className: 'sub' }, '最新的一封在最上面，往下是回头看。挤的地方是话多的那两年，空的地方是没写信的日子，都照实留着。点一张相片，信在原地展开；每封信有一首歌，不点不响。'),
       h('p', { className: 'odo-today' }, `截至今天 ${dot(today)}`),
       h('dl', { className: 'odo' }, [['认识', site.met, tdays.met], ['在一起', site.together, tdays.together], ['结婚', site.married, tdays.married]]
         .filter((row) => row[1] && row[2] != null)
-        .map(([k, d, n]) => h('div', {}, h('dt', {}, k), h('dd', {}, h('b', {}, String(n)), h('i', {}, '天'), h('span', {}, `自 ${dot(d)}`))))));
+        .map(([k, d, n]) => h('div', {}, h('dt', {}, k), h('dd', {}, h('b', {}, String(n)), h('i', {}, '天'), h('span', {}, `自 ${dot(d)}`))))),
+      strip);
 
     const axis = h('div', { className: 'axis', 'aria-hidden': 'true' });
     const list = h('ol', { className: 'prints' });

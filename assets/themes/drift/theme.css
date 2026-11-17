@@ -94,8 +94,19 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
   margin: 0; font: 300 clamp(44px, 5.5vw, 80px)/1.04 var(--serif); letter-spacing: .015em; color: var(--text);
   white-space: nowrap; font-variant-numeric: lining-nums;
 }
-.lead { margin: 30px 0 0; font: 500 23px/1.6 var(--serif); letter-spacing: .06em; color: var(--text); }
-.sub { margin: 14px 0 0; font: 400 17px/1.9 var(--serif); color: var(--text-2); max-width: 29em; text-align: justify; }
+/* beside the river the wordmark keeps a fixed line: at every width it is centred on 今天, and what hangs below it stays clear of that lamp's label */
+@media (min-width: 1100px) { .hero h1 { line-height: 84px; } }
+/* the river in miniature: a tick per letter on linear time, dashed over each silence, year marks, a lamp at today */
+.strip { position: relative; height: 38px; margin: 36px 0 0; }
+.strip::before { content: ""; position: absolute; left: 0; right: 0; top: 15px; height: 1px; background: var(--line); }
+.strip i { position: absolute; top: 2px; width: 1px; height: 13px; background: var(--text-2); }
+.strip .st-q { top: 15px; width: auto; height: 1px; background: repeating-linear-gradient(90deg, #524d41 0 3px, var(--ground) 3px 7px); }
+.strip b {
+  position: absolute; left: 100%; top: 12px; width: 7px; height: 7px; margin-left: -4px; border-radius: 50%; background: var(--paper);
+  box-shadow: 0 0 0 3px rgba(var(--paper-rgb), .1), 0 0 16px 4px rgba(var(--paper-rgb), .28);
+}
+.strip > span { position: absolute; top: 27px; font: 400 11px/1 var(--mono); letter-spacing: .02em; color: var(--dim); font-variant-numeric: tabular-nums; }
+.strip > span::before { content: ""; position: absolute; left: 0; top: -11px; width: 1px; height: 5px; background: #57524a; }
 .odo-today { margin: 40px 0 0; font: 400 12.5px/1 var(--mono); letter-spacing: .12em; color: var(--dim); }
 .odo { display: flex; gap: 0; margin: 14px 0 0; padding: 0; border-top: 1px solid var(--line); }
 .odo > div { flex: 1 1 0; padding: 14px 0 0; }
@@ -454,8 +465,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 
   .hero { padding: calc(64px + env(safe-area-inset-top, 0px)) 22px 0; }
   .hero h1 { font-size: 41px; letter-spacing: .01em; }
-  .lead { margin-top: 20px; font-size: 20px; letter-spacing: .04em; }
-  .sub { margin-top: 10px; font-size: 15.5px; line-height: 1.9; }
+  .strip { display: none; }      /* on a phone the dock at the bottom is this strip */
   .odo-today { margin-top: 22px; font-size: 12px; }
   .odo > div + div { padding-left: 14px; }
   .odo dt { font-size: 12.5px; }
