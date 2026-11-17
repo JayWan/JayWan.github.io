@@ -326,8 +326,12 @@ body { margin: 0; }
 .sd-prose blockquote.largeQuote { border: 0; padding: 0; color: var(--ink); font: 700 26px/1.55 var(--zh); }
 .sd-prose .flip-card-front, .sd-prose .flip-card-back { border-radius: 0; }
 .sd-prose .flip-card-hint { font: 500 12px/1 var(--zh); letter-spacing: .08em; }
-/* 整张卡片都能点；卡片下面写明白（这几个字都在首屏的字体切片里） */
-.sd-prose .flip-card::after { content: "点一下，换一面"; display: block; margin-top: 10px; text-align: right; font: 500 12px/1 var(--zh); letter-spacing: .08em; color: var(--ink-2); }
+/* 整张卡片都能点：两面的右下角都折起一角，露出这一面的油墨 */
+.sd-prose :is(.flip-card-front, .flip-card-back)::after {
+  content: ""; position: absolute; right: -1px; bottom: -1px; width: 34px; height: 34px; pointer-events: none;
+  background: linear-gradient(135deg, var(--side) calc(50% - .5px), var(--paper) calc(50% + .5px));
+}
+.sd-prose .flip-card-back::after { right: 0; bottom: 0; }
 .sd-end { display: flex; align-items: center; gap: 12px; margin: 3em 0 0; font: 500 13px/1 var(--zh); letter-spacing: .08em; color: var(--ink-2); }
 .sd-end::before { content: ""; width: 10px; height: 10px; background: var(--side-bg); }
 
