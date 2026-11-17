@@ -755,6 +755,13 @@ export default {
     }
     show(landed, true);
     paint(player.state);
+    /* A print can be picked up. Once, on arriving at the top of the river, the nearest print on the first screen
+       lifts the way it does under a pointer, and settles. Not for a reader who asked for stillness. */
+    if (landed.type !== 'letter' && sheet.animate) setTimeout(() => {
+      if (openL || !motion() || root.classList.contains('paused') || window.scrollY > 60) return;
+      const it = items.filter((x) => !x.p.quiet && x.frame.getBoundingClientRect().top < innerHeight - 120).sort((x, y) => LAYER[idx(y.p)] - LAYER[idx(x.p)])[0];
+      if (it) it.frame.animate([{ transform: 'none' }, { transform: 'translateY(-10px) scale(1.025)', offset: 0.45 }, { transform: 'none' }], { duration: 1500, easing: 'ease-in-out' });
+    }, 1300);
 
     let rsz = 0, lastW = stage.clientWidth;
     addEventListener('resize', () => { clearTimeout(rsz); rsz = setTimeout(() => { if (stage.clientWidth !== lastW) { lastW = stage.clientWidth; place(); } }, 120); });
