@@ -448,6 +448,10 @@ export default {
         const t = p.textContent.trim();
         if (t.length > 3 && !p.lang && !p.querySelector('p, img') && t.replace(/[\x00-ɏ‐-›]/g, '').length === 0) p.lang = 'en';
       });
+      // 夹在中文段落里的英文撇号（didn’t）也交给拉丁字体。只包那一个字符；包过的不会再匹配
+      const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), hits = [];
+      while (walk.nextNode()) { const n = walk.currentNode; if (/[A-Za-z][’‘][A-Za-z]/.test(n.nodeValue) && !n.parentElement.closest(':lang(en), script, style')) hits.push(n); }
+      hits.forEach((n) => n.replaceWith(...n.nodeValue.split(/([A-Za-z][’‘])(?=[A-Za-z])/).flatMap((s, i) => (i % 2 ? [s.slice(0, -1), h('span', { lang: 'en' }, s.slice(-1))] : [s]))));
     }
 
     // ───────────────────────── 外壳 ─────────────────────────
@@ -528,6 +532,15 @@ export default {
             h('a', { class: 'btn', href: l.url }, '读这封信 ', icon(16, 10, ARROW)),
             stepper(1, l.next))));
         paint(player.state);
+        fit();
+      }
+      /** 桌面上读数栏的高度是定死的，题目和歌名却不能截断：题目排成两行就小一号、摘句只留一行；再放不下，摘句不放。 */
+      function fit() {
+        const m = readout.querySelector('.ro-main');
+        if (!m) return;
+        m.classList.remove('two', 'tight');
+        if (m.querySelector('.ro-title').offsetHeight > 36) m.classList.add('two');
+        if (m.parentNode.scrollHeight > m.parentNode.clientHeight + 12) m.classList.add('tight');
       }
       function table() {
         const rows = [h('div', { class: 'row-h', 'aria-hidden': 'true' }, ...['年', '№', '月·日', 'T+', '', '题', '曲'].map((t) => h('span', {}, t)))];
@@ -548,7 +561,8 @@ export default {
                 h('span', { class: 'c-d' }, md(l.date)),
                 h('span', { class: 'c-t' }, h('span', { class: 'lbl' }, 'T+'), l.days.met),
                 h('span', { class: 'c-song', lang: l.song && latin(l.song.title) ? 'en' : null }, l.song && h('span', { class: 'lbl' }, '曲 '), l.song ? l.song.title : '')));
-            a.addEventListener('pointerenter', (e) => { router.prefetch(l.url); if (e.pointerType === 'mouse') setSel(l.no); });
+            // 选中跟着「动了的」指针走（pointermove，见下面）：从信里回来时指针碰巧停在某一行上，不该把刚读过的那封换掉
+            a.addEventListener('pointerenter', () => router.prefetch(l.url));
             a.addEventListener('touchstart', () => router.prefetch(l.url), { passive: true });
             a.addEventListener('focus', () => setSel(l.no));
             rows.push(a);
@@ -559,6 +573,7 @@ export default {
         sort.setAttribute('aria-label', `排序：${desc ? '由近及远' : '由远及近'}，点一下反过来`);
         markRow();
       }
+      eph.addEventListener('pointermove', (e) => { const r = e.pointerType === 'mouse' && e.target.closest('.row'); if (r) setSel(+r.dataset.no); });
       const rowOf = (no) => eph.querySelector(`.row[data-no="${no}"]`);
       function markRow() { eph.querySelectorAll('.row.is-sel').forEach((r) => r.classList.remove('is-sel')); if (sel) { const r = rowOf(sel); if (r) r.classList.add('is-sel'); } }
       function setSel(no, animate = true) {
@@ -572,6 +587,7 @@ export default {
       function draw() {
         chart = makeChart(chartHost, { sel, intro });
         intro = false;
+        fit();
         if (!chart) return;
         const svg = chart.svg;
         svg.addEventListener('pointerdown', (e) => { touch = e.pointerType !== 'mouse'; });

@@ -29,7 +29,7 @@ body { margin: 0; }
 :where(#theme-root) button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
 #theme-root a, #theme-root button, .cy, .song-track, .orbit { -webkit-tap-highlight-color: transparent; }
 #theme-root :focus-visible { outline: 2px solid var(--sun); outline-offset: 3px; }
-.view:focus { outline: none; }
+#theme-root .view:focus { outline: none; }
 :where(.view, .colophon) :where(h1, h2, p, dl, dd, dt, figure, ul, blockquote) { margin: 0; padding: 0; }
 #theme-root[data-np="on"], #theme-root[data-np="same"] { --np-h: 58px; }
 
@@ -130,7 +130,7 @@ body { margin: 0; }
 .strip dd i, .l-data dd i { font-size: max(.52em, 11px); margin-left: .3em; color: var(--ink-2); font-weight: 400; }
 .strip dd .tp, .l-data dd .tp { font-size: max(.58em, 11.5px); font-weight: 400; color: var(--ink-2); margin-right: .1em; }
 .strip small { display: block; font-size: var(--ann); color: var(--ink-2); white-space: nowrap; }
-.strip .ro-new small { white-space: normal; line-height: 1.4; }
+.strip .ro-new small { white-space: normal; }
 .ro-new a::after { content: ""; position: absolute; inset: -6px 0; }
 .ro-new svg { vertical-align: -.02em; margin-left: 2px; }
 
@@ -148,10 +148,10 @@ body { margin: 0; }
 .ro-thumb { display: block; border: 1px solid var(--line); padding: 3px; }
 .ro-thumb .cy, .ro-thumb picture { height: 100%; }
 .ro-thumb img { height: 100%; object-fit: cover; object-position: var(--fx) var(--fy); }
-.ro-title { font-size: 21px; font-weight: 600; line-height: 1.3; letter-spacing: .02em; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ro-title { font-size: 21px; font-weight: 600; line-height: 1.3; letter-spacing: .02em; display: block; overflow-wrap: anywhere; }
 .ro-quote { font-size: 13.5px; line-height: 1.7; color: var(--ink-2); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .ro-song { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 13px; color: var(--ink-2); }
-.ro-song span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ro-song span { line-height: 1.35; overflow-wrap: anywhere; }
 .ro-sl { display: none; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
 .ro-song em, .ro-sl em { font-style: normal; font-size: 11.5px; letter-spacing: .14em; color: var(--ink-3); margin-right: 6px; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border: 1px solid var(--sun); color: var(--sun); font-size: 14px; letter-spacing: .12em; white-space: nowrap; }
@@ -215,7 +215,7 @@ body { margin: 0; }
 .kicker .of { color: var(--ink-3); }
 .kicker .bar { width: 28px; height: 1px; background: var(--line); }
 .l-title { font-weight: 600; letter-spacing: .02em; line-height: 1.22; overflow-wrap: anywhere; }
-@supports (text-wrap: balance) { .l-title { text-wrap: balance; } }
+@supports (text-wrap: balance) { .l-title, .c-title, .ro-title, .ro-song span { text-wrap: balance; } }
 
 .l-data > div { min-width: 0; }
 .l-data dt { font-size: 12px; letter-spacing: .16em; color: var(--ink-3); white-space: nowrap; }
@@ -357,6 +357,9 @@ html[data-navigating] #theme-root::after { content: ""; position: fixed; z-index
   .ro-main { display: flex; flex-direction: column; justify-content: center; gap: 3px; min-width: 0; }
   .ro-actions { display: flex; flex-direction: column; justify-content: center; gap: 8px; min-width: 0; border-left: 1px solid var(--line-2); padding-left: 22px; }
   .ro-actions .step { display: none; }
+  .two .ro-title { font-size: 18px; }
+  .two .ro-quote { -webkit-line-clamp: 1; }
+  .tight .ro-quote { display: none; }
 
   .tablecol { border-left: 1px solid var(--line); display: flex; flex-direction: column; padding: 28px 26px 12px; min-width: 0; }
   .eph-head { display: flex; align-items: baseline; gap: 18px; padding-bottom: 10px; }
@@ -387,6 +390,8 @@ html[data-navigating] #theme-root::after { content: ""; position: fixed; z-index
   .colophon .hunger { margin-right: auto; }
 
   .letter { padding-bottom: 36px; }
+  .lost { flex: 1; display: flex; flex-direction: column; }
+  .lost-body { flex: 1; align-content: center; }
   .topbar { height: 60px; padding: 0 36px; }
   .l-grid { display: grid; grid-template-columns: minmax(0, 612px) var(--side); column-gap: 72px; justify-content: center; padding: 52px 36px 0; align-items: start; }
   .l-grid > * { grid-column: 1; min-width: 0; }
@@ -423,6 +428,8 @@ html[data-navigating] #theme-root::after { content: ""; position: fixed; z-index
   .chart { position: relative; inset: auto; grid-column: 1 / -1; }
   .chartnote { align-self: center; }
   .chartnote span { display: inline; }
+  .ro-thumb { display: none; }
+  .ro-letter { grid-template-columns: minmax(0, 1fr) 236px; }
 }
 @media (min-width: 1200px) and (pointer: coarse) { .row { min-height: 44px; } .eph { max-height: none; } }
 @media (min-width: 1200px) and (min-height: 860px) { .l-side { position: -webkit-sticky; position: sticky; top: 28px; } }
@@ -460,7 +467,7 @@ html[data-navigating] #theme-root::after { content: ""; position: fixed; z-index
   .ro-letter.no-thumb { grid-template-columns: minmax(0, 1fr); }
   .ro-thumb { width: 76px; height: 76px; }
   .ro-main { min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
-  .ro-title { font-size: 19px; white-space: normal; }
+  .ro-title { font-size: 19px; }
   .ro-quote, .ro-song span { display: none; }
   .ro-sl { display: block; }
   .ro-kicker { letter-spacing: .04em; }
@@ -516,7 +523,7 @@ html[data-navigating] #theme-root::after { content: ""; position: fixed; z-index
   .pn { margin-top: 48px; }
   .pn > :nth-child(2) { border-top: 1px solid var(--line-2); }
 }
-@media (max-width: 380px) { .l-grid { grid-template-columns: minmax(0, 1fr) 120px; } .loc { width: 120px; height: 120px; } }
+@media (max-width: 380px) { .l-grid { grid-template-columns: minmax(0, 1fr) 120px; } .loc { width: 120px; height: 120px; } .strip :not(.ro-new) > dd { font-size: 21px; } }
 
 /* ───────────── 静止 ───────────── */
 @media (prefers-reduced-motion: reduce) {
