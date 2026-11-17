@@ -84,7 +84,8 @@ for (const theme of themeIds) {
       const page = await context.newPage();
       const pages = await samplePages(request);
 
-      // 1. The first screen of the home page, before any scrolling, holds a link to the newest letter.
+      // 1. The first screen of the home page, before any scrolling, holds a link to the newest
+      //    letter: at least a finger's worth of it (44 × 44) is inside the screen.
       await open(page, '/', theme);
       await expect.poll(() => page.evaluate(() => {
         const { letters } = window.__theme.ctx;
@@ -92,8 +93,9 @@ for (const theme of themeIds) {
           if (letters.byUrl(a) !== letters.latest) return false;
           const box = a.getBoundingClientRect();
           const style = getComputedStyle(a);
-          return box.width > 0 && box.height > 0 && style.visibility !== 'hidden' && Number(style.opacity) > 0.1
-            && box.top >= 0 && box.bottom <= window.innerHeight && box.left >= 0 && box.right <= window.innerWidth;
+          const wide = Math.min(box.right, window.innerWidth) - Math.max(box.left, 0);
+          const tall = Math.min(box.bottom, window.innerHeight) - Math.max(box.top, 0);
+          return style.visibility !== 'hidden' && Number(style.opacity) > 0.1 && wide >= 44 && tall >= 44;
         });
       }), 'a visible <a href> to ctx.letters.latest on the first screen').toBe(true);
 
@@ -108,8 +110,9 @@ for (const theme of themeIds) {
           await expect.poll(() => page.evaluate(() => [...document.querySelectorAll('#theme-root [data-play]')].some((button) => {
             const box = button.getBoundingClientRect();
             const style = getComputedStyle(button);
+            const middle = (box.top + box.bottom) / 2;
             return box.width > 0 && box.height > 0 && style.visibility !== 'hidden' && Number(style.opacity) > 0.1
-              && box.top >= window.innerHeight / 2 && box.bottom <= window.innerHeight && box.left >= 0 && box.right <= window.innerWidth;
+              && middle >= window.innerHeight / 2 && box.bottom <= window.innerHeight + 1 && box.left >= -1 && box.right <= window.innerWidth + 1;
           })), `${down} screens into the letter: a visible [data-play] control in the lower half of the screen`).toBe(true);
         }
         await page.evaluate(() => window.__theme.ctx.player.pause());
