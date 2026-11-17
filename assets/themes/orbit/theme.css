@@ -167,8 +167,8 @@ body { margin: 0; }
 .play .p-prog { fill: none; stroke: var(--sun); stroke-width: 1.6; stroke-linecap: round; }
 .play .p-dot { fill: var(--sun); opacity: 0; }
 .play .i-play, .play .i-pause { fill: var(--ink); }
-.play .i-pause, .play.is-playing .i-play { display: none; }
-.play.is-playing .i-pause { display: block; }
+.play .i-pause, .play .i-retry, .play.is-playing .i-play, .play.is-error .i-play { display: none; }
+.play.is-playing .i-pause, .play.is-error .i-retry { display: block; }
 .play.is-loaded .p-dot { opacity: 1; }
 .play.is-loading .p-ring { stroke: var(--sun); stroke-opacity: 1; stroke-dasharray: 3 5; }
 .play.is-error .p-ring { stroke-dasharray: 2 4; }
@@ -309,13 +309,13 @@ body { margin: 0; }
 .pn .arc svg { display: block; fill: none; stroke: currentColor; }
 .pn .arc svg .f { fill: currentColor; stroke: none; }
 .pn .none { color: var(--ink-3); }
-.pn .none .ttl { font-weight: 400; font-size: 14px; }
+.pn .none .ttl { font-weight: 400; font-size: 15px; letter-spacing: .14em; }
+.pn .none .g { margin-right: 8px; }
 .pn-home { grid-column: 1 / -1; justify-content: center; min-height: 56px; border-top: 1px solid var(--line-2); font-size: 14px; color: var(--ink); }
 
 .lost-body { display: grid; justify-items: center; gap: 14px; text-align: center; padding: 48px 20px 64px; }
 .lost .loc { width: 220px; height: 220px; grid-column: auto; order: 0; margin: 0; }
-.lost .l-title { font-size: 30px; }
-.lost-p { font-size: 14px; color: var(--ink-2); margin-bottom: 14px; }
+.lost .l-title { font-size: 30px; letter-spacing: .2em; margin: 0 -.2em 16px 0; }
 
 @media (hover: hover) {
   .btn:hover { background: var(--sun); color: var(--bg); }

@@ -81,7 +81,7 @@ const G_TODAY = '<circle cx="7" cy="7" r="4.6" class="s"/><path d="M2.4 7h9.2M7 
 const G_EVT = '<path d="M7 3.2L10.8 7 7 10.8 3.2 7z" class="s"/>';
 const ARROW = '<path d="M0 5h14M10 1l4 4-4 4" fill="none" stroke="currentColor"/>';
 const RING = 2 * Math.PI * 19;
-const PLAY = `<circle class="p-ring" cx="22" cy="22" r="19"/><circle class="p-prog" cx="22" cy="22" r="19" transform="translate(22 22) scale(-1 1) rotate(-90) translate(-22 -22)" stroke-dasharray="${f1(RING)}" stroke-dashoffset="${f1(RING)}"/><circle class="p-dot" cx="22" cy="3" r="2.4"/><path class="i-play" d="M18.2 14.6v14.8L30 22z"/><path class="i-pause" d="M16.6 15h3.6v14h-3.6zM23.8 15h3.6v14h-3.6z"/>`;
+const PLAY = `<circle class="p-ring" cx="22" cy="22" r="19"/><circle class="p-prog" cx="22" cy="22" r="19" transform="translate(22 22) scale(-1 1) rotate(-90) translate(-22 -22)" stroke-dasharray="${f1(RING)}" stroke-dashoffset="${f1(RING)}"/><circle class="p-dot" cx="22" cy="3" r="2.4"/><path class="i-play" d="M18.2 14.6v14.8L30 22z"/><path class="i-pause" d="M16.6 15h3.6v14h-3.6zM23.8 15h3.6v14h-3.6z"/><g class="i-retry" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M28.1 25.5A7 7 0 1 0 15.8 25.2"/><path d="M17.3 28.2L17.4 23.6L13.4 25.8Z" fill="currentColor"/></g>`;
 
 export default {
   mount(ctx) {
@@ -336,6 +336,7 @@ export default {
         return { no: best.no, dist: bd, inside: Math.hypot(x - cx, y - cy) <= R + 24, today: todayAt ? Math.hypot(todayAt.x - x, todayAt.y - y) : 1e9 };
       }
       select(opt.sel || null, false);
+      if (opt.lost) { const p = P(38, R + 17); S('circle', { cx: p[0], cy: p[1], r: 6.5, class: 'sel-halo', style: 'stroke-width:1.2;stroke-dasharray:2.3 2.2' }, gOut); }      // 轨道之外的一个空位
       return { svg, select, nearest, phone, get current() { return current; } };
     }
 
@@ -374,13 +375,14 @@ export default {
     };
     np.el.append(h('span', { class: 'np-rule' }, np.fill), np.btn, h('span', { class: 'np-meta' }, np.title, np.sub), np.time);
     let strip = null;                       // 信页上那一行配乐的各个零件
+    const FAILED = '放不出来';              // 歌没放出来：四个字，播放键自己变成「再来一次」的箭头
     const clockOf = (st, letter) => (st.letter === letter ? `${fmt.clock(st.time)} / ${fmt.clock(st.duration)}` : `0:00 / ${letter.song.duration ? fmt.clock(letter.song.duration) : '–:––'}`);
     function tick(st) {
       const cur = st.letter, q = cur && st.duration ? Math.min(1, st.time / st.duration) : 0;
       root.querySelectorAll('[data-play]').forEach((b) => orbitDot(b, cur && String(cur.no) === b.dataset.play ? q : 0));
       orbitDot(np.btn, q);
       np.fill.style.width = `${q * 100}%`;
-      if (cur) np.time.textContent = `${fmt.clock(st.time)} / ${fmt.clock(st.duration)}`;
+      if (cur) np.time.textContent = st.error ? FAILED : `${fmt.clock(st.time)} / ${fmt.clock(st.duration)}`;
       if (strip) {
         const mine = cur === strip.letter;
         strip.fill.style.width = strip.knob.style.left = `${mine ? q * 100 : 0}%`;
@@ -400,13 +402,13 @@ export default {
       const here = ctx.page.letter;
       root.dataset.np = !cur ? 'off' : here === cur ? 'same' : 'on';
       if (cur) {
-        np.title.textContent = st.error ? `《${cur.song.title}》放不出来，再点一次试试` : cur.song.title;
+        np.title.textContent = cur.song.title;
         np.title.href = cur.url;
         np.sub.textContent = `№ ${cur.no} ${cur.title}`;
       }
       if (strip) {
         strip.el.classList.toggle('is-loaded', cur === strip.letter);
-        strip.note.textContent = cur === strip.letter && st.error ? '放不出来，再点一次试试' : cur === strip.letter && st.loading ? '歌在路上…' : '这封信的歌';
+        strip.note.textContent = cur === strip.letter && st.error ? FAILED : cur === strip.letter && st.loading ? '歌在路上…' : '这封信的歌';
       }
       tick(st);
     }
@@ -664,9 +666,12 @@ export default {
       } else strip = null;
 
       function pn(q, dir) {
+        // 第一封再往前是认识那天（◇），最新一封再往后是今天（⊕）：两头用图上的记号收住
+        const at = q ? geo[q.index].ms : dir < 0 ? MET : Math.max(TODAY, g.ms), days = Math.abs(Math.round((at - g.ms) / DAY));
+        if (!q) return h('span', { class: 'none' }, arcIcon(dir), h('span', { class: 'dir' }, dir < 0 ? '逆行' : '顺行'),
+          h('span', { class: 'ttl' }, icon(14, 14, dir < 0 ? G_EVT : G_TODAY, 'g'), dir < 0 ? '认识' : '今日'),
+          h('span', { class: 'gap' }, dots(dir < 0 ? site.met : site.today.date) + (days ? `　${days} d ${dir < 0 ? '前' : '后'}` : '')));
         const label = h('span', { class: 'dir' }, dir < 0 ? '逆行 · 上一封' : '顺行 · 下一封');
-        if (!q) return h('span', { class: 'none' }, arcIcon(dir), label, h('span', { class: 'ttl' }, dir < 0 ? '这是第一封，再往前就是认识之前了。' : '下一封还没写。'));
-        const days = Math.abs(Math.round((geo[q.index].ms - g.ms) / DAY));
         // 普通链接：信到信之间核心会替换当前这条历史记录，所以后退总是回到图上
         return h('a', { href: q.url, rel: dir < 0 ? 'prev' : 'next' },
           arcIcon(dir), label, h('span', { class: 'ttl', lang: latin(q.title) ? 'en' : null }, q.title), h('span', { class: 'gap' }, `№ ${q.no}　${dots(q.date)}　${days} d ${dir < 0 ? '前' : '后'}`));
@@ -709,10 +714,9 @@ export default {
         h('header', { class: 'topbar' }, h('a', { class: 'brand', href: '/' }, site.title), h('a', { class: 'back', href: '/' }, icon(20, 20, TARGET), '回到绕日图')),
         h('div', { class: 'lost-body' }, loc,
           h('p', { class: 'kicker' }, '404 · 轨道之外'),
-          h('h1', { class: 'l-title' }, '这个位置上没有信'),
-          h('p', { class: 'lost-p' }, `图上一共 ${letters.length} 封，每一封都在自己的那一天。`),
+          h('h1', { class: 'l-title' }, '没有信'),
           h('a', { class: 'btn', href: '/' }, '回到绕日图 ', icon(16, 10, ARROW))));
-      return { el, enter() { keepDrawn(loc, () => makeChart(loc, { mini: true })); } };
+      return { el, enter() { keepDrawn(loc, () => makeChart(loc, { mini: true, lost: true })); } };
     }
 
     // ───────────────────────── 路由 ─────────────────────────
