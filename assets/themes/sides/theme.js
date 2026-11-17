@@ -264,7 +264,8 @@ export default {
       const cells = Math.max(36, Math.ceil((tracks.length + 1) / 6) * 6);
       const mosaic = h('div', { class: 'sd-mosaic' });
       tracks.forEach((l, i) => {
-        const a = h('a', { href: l.url, 'data-side': sideOf(l), 'aria-label': `${noText(l)} ${l.title}` },
+        // 拼版是曲目表的另一个入口，每封信在表里都有一行：不占 Tab 键的位置
+        const a = h('a', { href: l.url, 'data-side': sideOf(l), tabindex: '-1', 'aria-label': `${noText(l)} ${l.title}` },
           sleeve(l, { sizes: '(max-width: 860px) 12vw, 64px', widths: [480], lazy: i > 23 }));
         mosaic.append(a);
       });
@@ -623,7 +624,9 @@ export default {
       }
       root.dataset.view = view.type;
       const el = main.firstElementChild;
-      tint(getComputedStyle(view.type === 'letter' ? el.firstElementChild : document.documentElement).backgroundColor);
+      // 浏览器的状态栏跟着色带走。两个人写的那封色带是渐变（没有底色）：用上半截 / 左半边的蓝
+      const ground = getComputedStyle(view.type === 'letter' ? el.firstElementChild : document.documentElement).backgroundColor;
+      tint(/^(transparent|rgba\(.*,\s*0\))$/.test(ground) ? getComputedStyle(el).getPropertyValue('--sea').trim() : ground);
       paint();
       inkHunger();
       if (!first) main.focus({ preventScroll: true });

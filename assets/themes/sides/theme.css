@@ -26,7 +26,7 @@
 [data-side="ab"] { --side: var(--ink); --side-bg: linear-gradient(90deg, var(--sea) 50%, var(--forest) 50%); }   /* 两个人写的：一半蓝一半绿 */
 [data-side="x"] { --side: var(--ink); --side-bg: var(--ink); }                                                     /* 客人写的：黑 */
 
-html { background: #EFEBE2; color: #14161B; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html { background: #EFEBE2; color: #14161B; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-padding-bottom: calc(var(--ph) + var(--sab) + 12px); }   /* 键盘聚焦到的东西不被贴底的播放器盖住 */
 body { margin: 0; }
 #theme-root {
   min-height: 100vh; min-height: 100svh;
@@ -109,14 +109,13 @@ body { margin: 0; }
 .sd-tab {
   display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px;
   box-shadow: inset 0 0 0 1px var(--ink); font: 500 14px/1 var(--zh); white-space: nowrap;
-  transition: background-color .12s, color .12s;
 }
 .sd-tab b { font: 700 14px/1 var(--lat); font-variant-numeric: tabular-nums; }
 .sd-tab.is-on { background: var(--ink); color: var(--paper); }
 .sd-tab.is-on .sd-chip-a { color: var(--paper); box-shadow: inset 0 0 0 1.5px var(--paper); }
 .sd-tab.is-on .sd-chip-b { background: var(--paper); color: var(--ink); }
 .sd-latest { display: flex; align-items: center; gap: 10px; min-height: 44px; font: 500 14px/1.3 var(--zh); text-decoration: none; color: var(--ink-2); }
-.sd-latest span, .sd-latest b { flex: none; white-space: nowrap; }
+.sd-latest > span, .sd-latest b { flex: none; white-space: nowrap; }
 .sd-latest b { font: 700 16px/1 var(--lat); font-stretch: 75%; color: var(--side); font-variant-numeric: tabular-nums; }
 .sd-latest u { text-decoration: none; color: var(--ink); border-bottom: 1px solid currentColor; padding-bottom: 2px; }
 .sd-latest i { display: none; font-style: normal; color: var(--ink); }
@@ -161,7 +160,6 @@ body { margin: 0; }
   position: relative; display: grid; align-items: center; min-height: 60px;
   grid-template-columns: 50px minmax(0, 1fr) 208px 46px 40px 22px 44px; column-gap: 16px;
   margin: 0 -12px; padding: 0 12px;
-  transition: background-color .12s, color .12s;
 }
 .sd-trk::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 1px; background: var(--rule); }
 .sd-no { font: 700 28px/1 var(--lat); font-stretch: 75%; font-variant-numeric: tabular-nums; color: var(--side); }
@@ -326,7 +324,7 @@ body { margin: 0; }
 /* ---- 上一首 / 下一首 / 回到曲目表 ---- */
 .sd-pn { margin: 96px var(--pr) 0 var(--pl); }
 .sd-pn-in { max-width: 1344px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); }
-.sd-pnt { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 24px; align-items: end; padding: 26px 20px 28px; min-height: 168px; text-decoration: none; transition: background-color .12s, color .12s; }
+.sd-pnt { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 24px; align-items: end; padding: 26px 20px 28px; min-height: 168px; text-decoration: none; }
 .sd-pnt + .sd-pnt { border-left: 1px solid var(--rule); }
 .sd-pn-no { font: 800 120px/.78 var(--lat); font-stretch: 62%; color: var(--side); font-variant-numeric: tabular-nums; }
 .sd-pn-lbl { margin: 0 0 10px; color: var(--ink-2); }
@@ -334,7 +332,7 @@ body { margin: 0; }
 .sd-pn-song { margin: 4px 0 0; font: 400 14px/1.4 var(--zh); color: var(--ink-2); }
 .sd-pnt--none { color: var(--ink-2); }
 .sd-pnt--none .sd-pn-no { color: var(--ink-2); opacity: .45; }
-.sd-pn-back { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 0 20px; border-top: 1px solid var(--rule); font: 700 16px/1 var(--zh); text-decoration: none; transition: background-color .12s, color .12s; }
+.sd-pn-back { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 0 20px; border-top: 1px solid var(--rule); font: 700 16px/1 var(--zh); text-decoration: none; }
 .sd-pn-back small { margin-left: auto; font: 500 12px/1 var(--zh); letter-spacing: .08em; color: var(--ink-2); }
 @media (hover: hover) {
   a.sd-pnt:hover { background: var(--side-bg); color: var(--paper); }
@@ -368,7 +366,7 @@ body { margin: 0; }
 .sd-pno { font: 700 30px/1 var(--lat); font-stretch: 75%; color: var(--side); font-variant-numeric: tabular-nums; }
 .sd-ptxt { display: flex; align-items: baseline; gap: 12px; min-width: 0; white-space: nowrap; }
 .sd-ptxt strong { font: 700 15px/1.3 var(--zh); overflow: hidden; text-overflow: ellipsis; }
-.sd-ptxt span { font: 400 13px/1.3 var(--zh); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; }
+.sd-ptxt > span { font: 400 13px/1.3 var(--zh); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; }
 .sd-ptime { font: 500 13px/1 var(--lat); font-variant-numeric: tabular-nums; color: var(--ink-2); padding-right: 12px; white-space: nowrap; }
 @media (hover: hover) { .sd-pskip:not(:disabled):hover { background: var(--paper-2); } }
 /* 信还在路上：进度线的位置上一小段墨色来回走（网快的时候不出现） */
@@ -403,7 +401,7 @@ html[data-navigating] .sd-player::after { content: ""; position: absolute; left:
   .sd-info { grid-template-columns: 1fr; row-gap: 16px; }
   .sd-trk { grid-template-columns: 46px minmax(0, 1fr) 132px 22px 44px; }
   .sd-date { display: none; }
-  .sd-latest span { display: none; }
+  .sd-latest > span { display: none; }
 }
 
 /* ================= 手机 ================= */
@@ -424,7 +422,7 @@ html[data-navigating] .sd-player::after { content: ""; position: absolute; left:
   .sd-line { display: block; }
   /* 最新一封：紧跟在说明下面的一整行 */
   .sd-latest { min-height: 52px; padding: 0; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); margin-bottom: 14px; font-size: 14px; }
-  .sd-latest span { display: inline; }
+  .sd-latest > span { display: inline; }
   .sd-latest b { font-size: 22px; }
   .sd-latest u { border: 0; padding: 0; font-weight: 700; font-size: 16px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sd-latest i { display: block; margin-left: auto; padding-left: 8px; }
@@ -529,9 +527,9 @@ html[data-navigating] .sd-player::after { content: ""; position: absolute; left:
   .sd-ptime { display: none; }
   .sd-pmeta { gap: 10px; padding-left: 4px; }
   .sd-pno { font-size: 26px; }
-  .sd-ptxt, .sd-ptxt strong, .sd-ptxt span { display: block; }
+  .sd-ptxt, .sd-ptxt strong, .sd-ptxt > span { display: block; }
   .sd-ptxt strong { font-size: 14px; }
-  .sd-ptxt span { font-size: 12px; }
+  .sd-ptxt > span { font-size: 12px; }
 }
 @media (max-width: 370px) {
   .sd-tab { gap: 6px; padding: 0 6px; font-size: 13px; }
