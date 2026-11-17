@@ -181,9 +181,11 @@ export default {
       it.a.style.width = w + 'px';
       if (!it.p.cover) return;
       // derivatives only; only what the first screen shows is fetched at once. On a 3x screen a print asks for 2x
-      // (behind the grain nobody sees the difference); a far print is dim and soft by design and asks for 1.6x at most.
+      // (behind the grain nobody sees the difference); a far print is dim and soft by design and asks for 1.6x at most;
+      // and no print asks for a picture wider than 800px: the river shows prints, the opened letter shows the photograph.
       // That keeps the first screen within its weight on a phone and on a 2x desktop.
-      const sizes = Math.round(w * Math.min(1, (LAYER[i] ? 2 : 1.6) / (window.devicePixelRatio || 1))) + 'px';
+      const dpr = window.devicePixelRatio || 1;
+      const sizes = Math.round(Math.min(w * Math.min(dpr, LAYER[i] ? 2 : 1.6), Math.max(800, w)) / dpr) + 'px';
       if (!it.pic) {
         it.pic = ctx.img(it.p.cover, { sizes, lazy: i >= EAGER });
         it.ph.append(it.pic);
