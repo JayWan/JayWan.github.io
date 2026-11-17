@@ -5,10 +5,16 @@
 // Everything else (other pages, ?theme= links, new-tab clicks, an #anchor on the page that is
 // already showing) is left to the browser.
 //
-// What a soft navigation does: fetch the letter's page, take its `.content-body`, activate its
-// widgets, pushState, set the title, call the theme's show(route), then set the scroll position.
+// What a soft navigation does: fetch the letter's page, take its `.content-body`, prepare it
+// (core/prose.js) and activate its widgets, pushState, set the title, call the theme's
+// show(route), then set the scroll position.
 // A `standalone` letter (it runs its own inline scripts) and any failure become a real
 // navigation: the worst case is always "it behaves like a normal website".
+//
+// History, the same in every theme: opening a letter from the list adds an entry; moving from
+// one letter to another replaces the entry. So the list is always one step behind a letter, and
+// Back from any letter returns to it. On the way back the list shows the letter that was read
+// last (router.lastRead), not only the place where the reader happened to start.
 
 import { normPath } from './util.js';
 
@@ -30,11 +36,23 @@ const SHOW_TIMEOUT = 2000;    // how long a new navigation waits for a show() th
  *
  *   router.start(view)    begin intercepting. `view` is what theme.mount() returned; without a
  *                         show() function the router stays passive and links load pages normally.
- *   router.go(url)        navigate as if a link had been clicked. Resolves true (soft) or false (the
+ *   router.go(url, { replace })
+ *                         navigate as if a link had been clicked. Resolves true (soft) or false (the
  *                         browser is loading the page, or a newer navigation took over).
+ *                         replace: true = take the place of the current history entry, false = add
+ *                         one. Left out, the rule above applies: letter → letter replaces,
+ *                         everything else adds. Clicked links follow the same rule.
  *   router.back(url)      "back to the list": if `url` (default "/") is the page the reader came
  *                         from, this is the Back button, so they land where they left; otherwise
  *                         it is go(url). A link with the attribute data-back does the same.
+ *   router.home()         back('/'): the name the themes use for "back to the list"
+ *   router.lastRead       the letter that was on screen last (the one being read, or on the list the
+ *                         one just left); null until a letter has been opened in this tab.
+ *                         When the reader comes back to the list and show() leaves the scrolling to
+ *                         the core, the core restores the old position and then, if the reader moved
+ *                         on from the letter they had opened (previous / next) and no link to
+ *                         lastRead is on screen, scrolls the window until the nearest one is in the
+ *                         middle. A theme that returns false from show() does this itself.
  *   router.prefetch(url)  fetch a letter's HTML ahead of time (call it on pointerenter / touchstart).
  *                         Only the HTML: the letter's photos are not requested until it is shown.
  *   router.current        the route on screen (one object, updated in place)
@@ -54,7 +72,7 @@ const SHOW_TIMEOUT = 2000;    // how long a new navigation waits for a show() th
  * While a letter is being fetched, <html> carries the attribute data-navigating, so a theme can
  * show that something is happening.
  */
-export function createRouter({ letters, site, page, normalise = () => {}, prepare = () => {} }) {
+export function createRouter({ letters, site, page, root = document, normalise = () => {}, prepare = () => {} }) {
   const bodies = new Map();     // normalised path → the live .content-body of that letter (in this document)
   const inert = new Map();      // normalised path → a fetched .content-body still inside its own parsed document
   const pending = new Map();    // normalised path → Promise of the fetch in flight
@@ -84,9 +102,29 @@ export function createRouter({ letters, site, page, normalise = () => {}, prepar
     try { sessionStorage.setItem(STORE, JSON.stringify(Object.fromEntries([...scrolls].slice(-40)))); } catch { /* storage unavailable */ }
   }
 
+  // What must survive a real page load inside the tab (the standalone letter, a theme without
+  // show()): the letter read last, and where a page that replaced another one was reached from.
+  const LAST = 'f221:last';
+  const FROM = 'f221:from';
+  const stored = (name) => { try { return JSON.parse(sessionStorage.getItem(name)); } catch { return null; } };
+  const store = (name, value) => { try { sessionStorage.setItem(name, JSON.stringify(value)); } catch { /* storage unavailable */ } };
+
   const here = () => normPath(location.href);
   const current = { type: page.type, url: page.url, hash: '', letter: page.letter || null, contentEl: page.contentEl || null, scrollY: 0 };
   let currentPath = here();
+  // startedAt: the letter the reader was looking at when they last left the list (or, with no
+  // list before it, the letter this run of letters began with). Previous / next replace the
+  // letter but not the entry, so the two differ once the reader has moved on: `moved`.
+  let startedAt = page.letter ? currentPath : null;
+  let lastRead = page.letter || null;
+  let moved = false;
+  const noteLast = (letter) => { lastRead = letter; moved = Boolean(startedAt) && normPath(letter.url) !== startedAt; store(LAST, [letter.url, startedAt]); };
+  function recallLast() {
+    const [url, first] = [].concat(stored(LAST) || []);
+    const letter = typeof url === 'string' && url ? letters.byUrl(url) : null;
+    if (letter) { lastRead = letter; moved = Boolean(first) && normPath(url) !== first; }
+  }
+  if (page.letter) noteLast(page.letter); else recallLast();
   if (page.type === 'letter' && page.contentEl) bodies.set(currentPath, page.contentEl);
 
   /** What a URL points at: { type: 'home' } | { type: 'letter', letter } | null (not ours). */
@@ -172,10 +210,46 @@ export function createRouter({ letters, site, page, normalise = () => {}, prepar
     return document.getElementById(id);
   }
 
+  /** Back on the list: make sure the letter that was read last is on screen.
+   *  Only when the reader moved on from the letter they had opened (previous / next), or asked
+   *  for the list from a letter that has no list behind it (`always`): coming straight back from
+   *  the letter that was opened, the list is exactly where it was left, and stays there.
+   *  The list links to its letters with ordinary <a href>. If such a link is on screen already,
+   *  nothing moves; otherwise the window is scrolled until the nearest one is in the middle.
+   *  Only the window: a container that scrolls (or clips) inside the theme is the theme's own.
+   *  Links that travel with the screen (a player bar naming the letter) are not the list. */
+  function showLastRead(always = false) {
+    if (!lastRead || current.type !== 'home' || !(always || moved)) return false;
+    const path = normPath(lastRead.url);
+    const middle = window.innerHeight / 2;
+    let nearest = null;
+    for (const a of root.querySelectorAll('a')) {
+      if (normPath(a) !== path || !a.getClientRects().length || pinned(a)) continue;   // another letter, not drawn, or not in the list
+      const box = a.getBoundingClientRect();
+      const x = (box.left + box.right) / 2;
+      const y = (box.top + box.bottom) / 2;
+      if (y >= 0 && y <= window.innerHeight && x >= 0 && x <= window.innerWidth) return false;
+      if (nearest === null || Math.abs(y - middle) < Math.abs(nearest - middle)) nearest = y;
+    }
+    if (nearest === null) return false;
+    window.scrollTo(0, Math.max(0, window.scrollY + nearest - middle));
+    return true;
+  }
+  /** Whether `node` stays put while the page scrolls: it, or something around it, is fixed or sticky. */
+  function pinned(node) {
+    for (let n = node; n && n.nodeType === 1 && n !== root; n = n.parentElement) {
+      const { position } = getComputedStyle(n);
+      if (position === 'fixed' || position === 'sticky') return true;
+    }
+    return false;
+  }
+
   /** Show `route`. The caller has made sure no other show() is running and that it is still the
-   *  newest navigation (`mine === serial`). */
-  async function render(route, scrollY, path, mine) {
+   *  newest navigation (`mine === serial`). `returning`: the reader is coming back to the list
+   *  ('moved' = by Back, Forward or the like; 'always' = they asked for the list). */
+  async function render(route, scrollY, path, mine, returning = false) {
     route.scrollY = scrollY;
+    if (route.type === 'letter') noteLast(route.letter);
     Object.assign(current, { letter: null, contentEl: null, hash: '' }, route);
     currentPath = path;
     Object.assign(page, { type: route.type, url: route.url, letter: route.letter || null, contentEl: route.contentEl || null });
@@ -190,8 +264,9 @@ export function createRouter({ letters, site, page, normalise = () => {}, prepar
       const target = scrollY === 0 ? anchor(route.hash) : null;
       if (target) { target.scrollIntoView(); return; }
       window.scrollTo(0, scrollY);
+      if (returning && showLastRead(returning === 'always')) return;
       // The view may still be growing (images, fonts); try once more when it has had a frame.
-      if (scrollY > 0) requestAnimationFrame(() => { if (mine === serial && Math.abs(window.scrollY - scrollY) > 2) window.scrollTo(0, scrollY); });
+      if (scrollY > 0) requestAnimationFrame(() => { if (mine === serial && Math.abs(window.scrollY - scrollY) > 2) { window.scrollTo(0, scrollY); if (returning) showLastRead(returning === 'always'); } });
     } finally {
       if (showing === running) showing = null;
       finished();
@@ -200,9 +275,18 @@ export function createRouter({ letters, site, page, normalise = () => {}, prepar
 
   const stamp = (extra) => ({ ...(history.state || {}), f221: key, ...extra });
 
-  async function go(url) {
+  /** Leave for `url` by a real page load. When it takes the place of the current entry, the new
+   *  page cannot see where that entry was reached from (its referrer is this page), so it is told. */
+  function leave(url, replace, path) {
+    if (!replace) { location.assign(url); return; }
+    const from = (history.state || {}).from;
+    if (path && (from || startedAt)) store(FROM, { path, from, first: startedAt });
+    location.replace(url);
+  }
+
+  async function go(url, options = {}) {
     const target = view ? match(url) : null;
-    if (!target) { location.assign(url); return false; }
+    if (!target) { leave(url, options.replace === true); return false; }
     if (target.path === currentPath) {
       serial++;                                                        // whatever was on its way is no longer wanted
       html.removeAttribute('data-navigating');
@@ -210,19 +294,25 @@ export function createRouter({ letters, site, page, normalise = () => {}, prepar
       else window.scrollTo(0, 0);
       return true;
     }
+    // Letter → letter takes the place of the entry, so Back from any letter leads to the list.
+    const replace = typeof options.replace === 'boolean' ? options.replace : current.type === 'letter' && target.type === 'letter';
     const mine = ++serial;
     let route;
-    try { route = await build(target, mine); } catch { if (mine === serial) location.assign(url); return false; }
+    try { route = await build(target, mine); } catch { if (mine === serial) leave(url, replace, target.path); return false; }
     if (mine !== serial) return false;                                 // the reader clicked something else meanwhile
     await idle();
     if (mine !== serial) return false;
     try {
-      history.replaceState(stamp({ scroll: window.scrollY }), '');     // remember where we were on the page we leave
-      note(key, window.scrollY);
-      const from = currentPath;
+      const from = replace ? (history.state || {}).from : currentPath;
+      if (!replace) {
+        history.replaceState(stamp({ scroll: window.scrollY }), '');   // remember where we were on the page we leave
+        note(key, window.scrollY);
+      }
       key = newKey();
-      history.pushState({ f221: key, from }, '', target.url + target.hash);
-      await render(route, 0, target.path, mine);
+      if (target.type !== 'letter') startedAt = null;
+      else if (!replace || current.type !== 'letter') startedAt = target.path;   // opened from the list (or in its place); letter → letter keeps it
+      history[replace ? 'replaceState' : 'pushState']({ f221: key, ...(from && { from }), ...(startedAt && { first: startedAt }) }, '', target.url + target.hash);
+      await render(route, 0, target.path, mine, options.returning === true ? 'always' : false);
       return true;
     } catch (err) {
       console.error('[221] soft navigation failed, loading the page instead:', err);
@@ -231,7 +321,8 @@ export function createRouter({ letters, site, page, normalise = () => {}, prepar
     }
   }
 
-  /** "Back to the list". See the header. */
+  /** "Back to the list". See the header. When the list is not one step back (a letter opened
+   *  directly), it is added as a new entry and shows the letter the reader is coming from. */
   function back(url = '/') {
     const target = view ? match(url) : null;
     const from = (history.state || {}).from;
@@ -239,7 +330,7 @@ export function createRouter({ letters, site, page, normalise = () => {}, prepar
       history.back();
       return Promise.resolve(true);
     }
-    return go(url);
+    return go(url, { replace: false, returning: current.type === 'letter' });   // the list, at the letter just read
   }
 
   /** href / target of an <a>. On an SVG <a> these properties are SVGAnimatedString objects. */
@@ -267,6 +358,7 @@ export function createRouter({ letters, site, page, normalise = () => {}, prepar
     const target = match(location.href);
     const mine = ++serial;
     const state = event.state || {};
+    note(key, window.scrollY);                                         // where the entry we leave was: its last scroll event may not have fired yet
     key = state.f221 || newKey();
     const scrollY = scrolls.has(key) ? scrolls.get(key) : state.scroll || 0;
     try {
@@ -275,7 +367,10 @@ export function createRouter({ letters, site, page, normalise = () => {}, prepar
       if (mine !== serial) return;
       await idle();
       if (mine !== serial) return;
-      await render(route, scrollY, path, mine);
+      // Forward from the list is a new start: the list has been seen since. Between two letters
+      // (entries a theme added on purpose) the entry remembers what its run began with.
+      startedAt = route.type !== 'letter' ? null : current.type === 'letter' ? state.first || path : path;
+      await render(route, scrollY, path, mine, 'moved');
     } catch {
       if (mine === serial) location.reload();                          // the address bar already shows the right URL
     }
@@ -298,17 +393,34 @@ export function createRouter({ letters, site, page, normalise = () => {}, prepar
     if (!view) return;
     const state = history.state || {};
     key = state.f221 || newKey();
-    const from = state.from === undefined ? cameFrom() : null;
-    history.replaceState(stamp(from ? { from } : null), '');
+    // Reached by a page load that replaced another entry (letter → the standalone letter): the
+    // page that left has said where its entry was reached from. Otherwise the referrer knows.
+    const told = stored(FROM);
+    try { sessionStorage.removeItem(FROM); } catch { /* storage unavailable */ }
+    const mine = told && told.path === currentPath ? told : null;
+    const from = state.from !== undefined ? null : mine ? mine.from : cameFrom();
+    if (page.letter) { startedAt = state.first || (mine && mine.first) || currentPath; noteLast(page.letter); }
+    history.replaceState(stamp({ ...(from && { from }), ...(startedAt && { first: startedAt }) }), '');
     // We restore scroll ourselves: the browser cannot know how tall a view the theme is about to draw.
     history.scrollRestoration = 'manual';
     recall();
     const nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
     const scrollY = scrolls.has(key) ? scrolls.get(key) : state.scroll || 0;
+    const returning = Boolean(nav && nav.type === 'back_forward');     // back on this page after a real page load elsewhere
     if (scrollY && nav && nav.type !== 'navigate') {                   // came back to this page by Back or reload
       window.scrollTo(0, scrollY);
-      requestAnimationFrame(() => window.scrollTo(0, scrollY));
-    }
+      requestAnimationFrame(() => { window.scrollTo(0, scrollY); if (returning) showLastRead(); });
+    } else if (returning) showLastRead();
+    // The same when the browser kept this page alive and brings it back as it was: the theme is
+    // asked to show the list again, because the letter read last has changed behind its back.
+    window.addEventListener('pageshow', (event) => {
+      if (!event.persisted || current.type !== 'home') return;
+      const before = lastRead;
+      recallLast();
+      if (lastRead === before) return;
+      const turn = ++serial;
+      idle().then(() => (turn === serial ? render({ type: 'home', url: '/', hash: '' }, window.scrollY, currentPath, turn, 'moved') : null)).catch(() => {});
+    });
     document.addEventListener('click', onClick);
     window.addEventListener('popstate', onPop);
     window.addEventListener('scroll', () => note(key, window.scrollY), { passive: true });
@@ -318,8 +430,10 @@ export function createRouter({ letters, site, page, normalise = () => {}, prepar
 
   return {
     start,
-    go,
+    go: (url, options) => go(url, { replace: options ? options.replace : undefined }),
     back,
+    home: () => back('/'),
+    get lastRead() { return lastRead; },
     prefetch(url) {
       const target = view ? match(url) : null;
       if (target && target.type === 'letter' && !target.letter.standalone && !bodies.has(target.path)) fetchInert(target).catch(() => {});

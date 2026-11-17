@@ -36,6 +36,7 @@ for (const theme of themeIds) {
           const line = await page.evaluate(() => window.__theme.ctx.ui.hunger().text);
           await expect(page.locator('#theme-root'), "the site's own line, ctx.ui.hunger().text, is on the home page, unchanged").toContainText(line);
           await expect(page.locator('#theme-root nav.theme-switcher a[data-theme-id]').first(), 'ctx.ui.switcher() is on the page').toBeAttached();
+          await expect(page.locator('#theme-root'), 'a year without letters is 「没有信」 or 「这一年没有写信」; 「无信」 also reads as faithless').not.toContainText('无信');
         }
         await expectNoSidewaysScroll(page);
 
@@ -50,6 +51,71 @@ for (const theme of themeIds) {
         expect(seen.originals(), 'covers only through ctx.img(), never the originals').toEqual([]);
       });
     }
+
+    test('a letter ends with a way back to the list', async ({ page, request }) => {
+      // Not only at the top: after the last line of a long letter the list must be one tap away.
+      // The reader is put where the letter ends (its last line near the top of the screen, so
+      // most of a screen of what follows is in view). What counts there: a visible link to "/",
+      // or anything marked data-back, that is on screen. A bar that stays on screen counts too.
+      const pages = await samplePages(request);
+      for (const kind of ['letter', 'quiet']) {
+        await open(page, pages[kind], theme);
+        await expect.poll(() => page.evaluate(() => {
+          // (scrolled again on every try: photos above may still be arriving and pushing the end down)
+          const body = document.querySelector('#theme-root .letter-body');
+          (body.querySelector('.content-body > :last-child') || body).scrollIntoView({ block: 'end' });
+          window.scrollBy(0, Math.round(window.innerHeight * 0.8));
+          const root = document.getElementById('theme-root');
+          const href = (a) => { const v = a.href; return v && typeof v === 'object' ? v.baseVal : a.getAttribute('href'); };
+          const home = (a) => { try { const u = new URL(href(a), location.href); return u.origin === location.origin && u.pathname === '/' && !u.search; } catch { return false; } };
+          return [...root.querySelectorAll('a[href], [data-back]')].filter((a) => a.hasAttribute('data-back') || home(a)).some((a) => {
+            const box = a.getBoundingClientRect();
+            const style = getComputedStyle(a);
+            return box.width > 0 && box.height > 0 && style.visibility !== 'hidden' && Number(style.opacity) > 0.1
+              && box.bottom > 0 && box.top < window.innerHeight && box.right > 0 && box.left < window.innerWidth;
+          });
+        }), `${kind}: where the letter ends, a link back to the list is on screen`).toBe(true);
+      }
+    });
+
+    test('on a phone: the newest letter is one tap from the first screen, and pause stays under the thumb', async ({ browser, request, baseURL, browserName }) => {
+      // iPhone 17 Pro, 402 × 874. Two things the mockups got wrong in four different ways.
+      const context = await browser.newContext({ baseURL, viewport: { width: 402, height: 874 }, hasTouch: true });
+      const page = await context.newPage();
+      const pages = await samplePages(request);
+
+      // 1. The first screen of the home page, before any scrolling, holds a link to the newest letter.
+      await open(page, '/', theme);
+      await expect.poll(() => page.evaluate(() => {
+        const { letters } = window.__theme.ctx;
+        return [...document.querySelectorAll('#theme-root a')].some((a) => {
+          if (letters.byUrl(a) !== letters.latest) return false;
+          const box = a.getBoundingClientRect();
+          const style = getComputedStyle(a);
+          return box.width > 0 && box.height > 0 && style.visibility !== 'hidden' && Number(style.opacity) > 0.1
+            && box.top >= 0 && box.bottom <= window.innerHeight && box.left >= 0 && box.right <= window.innerWidth;
+        });
+      }), 'a visible <a href> to ctx.letters.latest on the first screen').toBe(true);
+
+      // 2. Once a song plays, a control that pauses it sits in the lower half of the screen and
+      //    stays there while the letter is read. (Checked where the song really plays.)
+      if (browserName === 'chromium') {
+        await open(page, pages.letter, theme);
+        await page.locator('#theme-root [data-play]:visible').first().click();
+        await expect.poll(async () => (await state(page)).playing, 'the song plays').toBe(true);
+        for (const down of [0.5, 2.5]) {
+          await page.evaluate((screens) => window.scrollTo(0, Math.round(window.innerHeight * screens)), down);
+          await expect.poll(() => page.evaluate(() => [...document.querySelectorAll('#theme-root [data-play]')].some((button) => {
+            const box = button.getBoundingClientRect();
+            const style = getComputedStyle(button);
+            return box.width > 0 && box.height > 0 && style.visibility !== 'hidden' && Number(style.opacity) > 0.1
+              && box.top >= window.innerHeight / 2 && box.bottom <= window.innerHeight && box.left >= 0 && box.right <= window.innerWidth;
+          })), `${down} screens into the letter: a visible [data-play] control in the lower half of the screen`).toBe(true);
+        }
+        await page.evaluate(() => window.__theme.ctx.player.pause());
+      }
+      await context.close();
+    });
 
     test('the first view of the home page weighs at most 700 KB', async ({ page, baseURL }) => {
       // ARCHITECTURE §8: HTML + CSS + JS + fonts + the images of the first screen, cold cache.
@@ -101,8 +167,8 @@ for (const theme of themeIds) {
         await expect.poll(() => photo.evaluate((img) => img.naturalWidth), 'the photo on the back loads').toBeGreaterThan(0);
         await expect(front).toBeHidden();
         await expect.poll(height, 'the card takes the height of the photo side').not.toBe(frontHeight);
-        const box = await photo.boundingBox();
-        expect(box.width / box.height, 'the photo keeps its proportions').toBeGreaterThan(1.2);
+        // (polled: while the card is still turning, the photo's box is foreshortened)
+        await expect.poll(async () => { const box = await photo.boundingBox(); return box.width / box.height; }, 'the photo keeps its proportions').toBeGreaterThan(1.2);
         await expectNoSidewaysScroll(page);
 
         await card.focus();

@@ -93,6 +93,10 @@ test('the season of a letter goes by the month, and a year without letters is st
   expect(got.years.filter((y) => y[1] === 0).map((y) => y[0]), 'the years in which nobody wrote').toEqual([2020, 2022]);
   expect(got.sum).toBeGreaterThanOrEqual(32);
   expect(got.oneYear).toBe(true);
+
+  // the reference theme says it in plain words; 「无信」 would also read as "faithless"
+  await expect(page.locator('#theme-root .p-year', { hasText: '2020' })).toHaveText('2020 年 · 这一年没有写信');
+  await expect(page.locator('#theme-root')).not.toContainText('无信');
 });
 
 for (const theme of ['classic', 'probe']) {
