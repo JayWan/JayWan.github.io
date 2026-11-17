@@ -300,7 +300,8 @@ body { margin: 0; }
 .sd-prose blockquote p { margin: 0; }
 .sd-prose blockquote p + p { margin-top: 1em; }
 .sd-prose blockquote.sd-lyrics { border-left-color: var(--side); color: var(--side); }
-.sd-ln { display: block; padding-left: 1em; text-indent: -1em; }
+.sd-ln { display: block; }
+.sd-lyrics .sd-ln { padding-left: 1em; text-indent: -1em; }
 .sd-prose blockquote.largeQuote { border: 0; padding: 0; color: var(--ink); font: 700 26px/1.55 var(--zh); }
 .sd-prose .flip-card-front, .sd-prose .flip-card-back { border-radius: 0; }
 .sd-prose .flip-card-hint { font: 500 12px/1 var(--zh); letter-spacing: .08em; }
@@ -472,16 +473,16 @@ html[data-navigating] .sd-player::after { content: ""; position: absolute; left:
   .sd-htx { padding-top: 22px; }
   .sd-letter[data-plain] .sd-htx { padding-top: 16px; }
   .sd-h1, .sd-letter[data-plain] .sd-h1 { font-size: 33px; line-height: 1.25; margin-bottom: 20px; }
-  .sd-h1.is-long, .sd-letter[data-plain] .sd-h1.is-long { font-size: 27px; }
+  .sd-h1:is(.is-long, .is-mid), .sd-letter[data-plain] .sd-h1:is(.is-long, .is-mid) { font-size: 27px; }
   .sd-sbox { grid-template-columns: 52px minmax(0, 1fr) auto; column-gap: 14px; row-gap: 14px; }
   .sd-lplay { width: 52px; height: 52px; }
   .sd-sname { font-size: 19px; }
 
   .sd-body { padding-top: 20px; }
-  .sd-cols, .sd-letter.no-slv .sd-cols { display: flex; flex-direction: column; }
+  .sd-cols, .sd-letter.no-slv .sd-cols { display: flex; flex-direction: column; align-items: stretch; }
   .sd-pin { position: static; }
   /* 封套缩成一条横幅，正文的第一行留在第一屏里 */
-  .sd-slvbtn .sd-slv { aspect-ratio: 16 / 9; }
+  .sd-slvbtn .sd-slv { aspect-ratio: var(--strip, 1.78); }
   .sd-slvbtn .sd-slv.is-orig { aspect-ratio: var(--ar, 1); max-height: 70svh; }
   .sd-letter[data-quiet] .sd-slvbtn { width: 96px; }
   .sd-letter[data-quiet] .sd-slvbtn .sd-slv { aspect-ratio: 1; }

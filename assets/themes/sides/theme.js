@@ -167,6 +167,7 @@ export default {
       const side = cur ? sideOf(cur) : 'a';
       P.el.dataset.side = side;
       P.el.classList.toggle('is-playing', on);
+      P.play.classList.toggle('is-playing', on);
       P.el.classList.toggle('is-idle', !st.letter);
       P.play.setAttribute('aria-label', on ? '暂停' : '播放');
       P.play.disabled = !cur;
@@ -409,9 +410,12 @@ export default {
       const cored = Boolean(ctx.prose);                       // 核心已经给引文分过类了吗
       el.querySelectorAll('blockquote').forEach((q) => {
         if (q.classList.contains('largeQuote')) return;
-        const lyric = cored ? q.classList.contains('lyrics') : Boolean(q.querySelector('br'));
-        if (!lyric) return;
-        q.classList.add('sd-lyrics');
+        const hasBr = Boolean(q.querySelector('br'));
+        // 每句都不长才算歌词；用 <br> 分行的长段落（第一封信的半文言）只分行，不上色、不悬挂
+        const short = () => q.innerHTML.split(/<br\s*\/?>/i).every((line) => line.replace(/<[^>]+>/g, '').trim().length <= 60);
+        const lyric = cored ? q.classList.contains('lyrics') : hasBr && short();
+        if (lyric) q.classList.add('sd-lyrics');
+        if (!hasBr) return;
         // 每句一行，折行时悬挂缩进：把 <br> 分开的每一句包成一行
         const hosts = q.querySelectorAll('p').length ? [...q.querySelectorAll('p')] : [q];
         hosts.forEach((host) => {
@@ -452,15 +456,15 @@ export default {
           : [l.author, h('small', {}, s === 'a' ? 'A 面 · 他写的' : s === 'b' ? 'B 面 · 她写的' : s === 'ab' ? 'A / B 面 · 两个人写的' : '附赠曲目 · 客人写的')]],
         ['日期', [dot(l.date), h('small', {}, [season, fmt.date(l.date, 'weekday')].filter(Boolean).join(' · '))]],
         l.place && ['地点', [l.place]],
-        dayLines(l).length && ['天数', dayLines(l).map((t) => h('span', {}, t))],
+        dayLines(l).length && [guest ? '这一天' : '天数', dayLines(l).map((t, i) => h('span', {}, guest && !i ? `他们${t}` : t))],
         l.song && ['歌', [l.song.title, h('small', {}, [l.song.artist, l.song.duration && fmt.clock(l.song.duration)].filter(Boolean).join(' · '))]],
         l.chars ? ['篇幅', [`${l.chars} 字`]] : null,
         ['编号', [guest ? '221–附' : `221–${pad3(trackNo.get(l))}`]],
       ].filter(Boolean);
 
       // ---- 色带 ----
-      const metDay = l.days && l.days.met != null ? `认识第 ${l.days.met} 天` : '';
-      const h1 = h('h1', { class: 'sd-h1' + (visualLen(l.title) > 12 ? ' is-long' : '') + (latinOnly(l.title) ? ' is-lat' : '') }, tx(l.title));
+      const metDay = !guest && l.days && l.days.met != null ? `认识第 ${l.days.met} 天` : '';
+      const h1 = h('h1', { class: 'sd-h1' + (visualLen(l.title) > 12 ? ' is-long' : visualLen(l.title) > 10 ? ' is-mid' : '') + (latinOnly(l.title) ? ' is-lat' : '') }, tx(l.title));
       let songBox = null;
       band = null;
       if (l.song) {
@@ -497,7 +501,11 @@ export default {
           btn.setAttribute('aria-pressed', String(on));
           tag.textContent = on ? '回到双色' : '看原图';
         });
-        if (l.cover.w && l.cover.h) slv.style.setProperty('--ar', String(l.cover.w / l.cover.h));
+        if (l.cover.w && l.cover.h) {
+          const ar = l.cover.w / l.cover.h;
+          slv.style.setProperty('--ar', String(ar));                                    // 看原图时的比例
+          slv.style.setProperty('--strip', String(Math.min(2, Math.max(1.2, ar))));     // 手机上横幅的比例
+        }
         aside = h('aside', { class: 'sd-aside' }, h('div', { class: 'sd-pin' }, btn));
       }
 
