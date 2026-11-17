@@ -17,7 +17,11 @@
     2. sets <html data-theme>, and for a new theme also lang, color-scheme and the viewport
     3. document.write()s the resources of that theme, so they are parser-inserted and block
        rendering like any <link> in the HTML (no flash):
-         classic   the text of <noscript id="classic-head">: exactly the tags the site always had
+         classic   the text of <noscript id="classic-head">: exactly the tags the site always had,
+                   plus one safety net: if jQuery did not arrive from code.jquery.com, the same
+                   file is loaded from this site. (Chrome may refuse a cross-site script that was
+                   added with document.write on a very slow connection; the classic scripts would
+                   then fail on the first "$".)
          others    assets/fonts/<name>.css for each font in the registry, shared/widgets.css,
                    assets/themes/<id>/theme.css, and modulepreload hints for the core and the theme
     4. defines __c(), used by _includes/classic-only.html to write classic-only markup
@@ -80,6 +84,7 @@ html:not([data-theme="classic"]) body>:not(#theme-root):not(script):not(style){d
   <link href='https://fonts.googleapis.com/css?family=PT+Sans:700' rel='stylesheet' type='text/css'>
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script>window.jQuery || document.write('<script src="{{ site.baseurl_javascripts }}jquery-3.7.1.min.js"><\/script>')</script>
 </noscript>
 {%- capture boot_cfg -%}
 {"v":"{{ site.time | date: '%s' }}","idle":{{ site.data.themes.idle | default: 30 }},"night":{{ site.data.themes.night | default: '[23,6]' | jsonify | remove: '"' }},"page":{{ page_type | jsonify }},"t":[{{ boot_themes | remove_first: ',' }}],"d":{ {{- boot_dates | remove_first: ',' -}} }}

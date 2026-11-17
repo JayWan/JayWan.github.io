@@ -22,12 +22,9 @@ const BROKEN = {
   'a core module does not load': ['**/assets/js/core/router.js', missing],
 };
 
-// The classic page asks other sites for jQuery and fonts. Answer for them, so these tests
-// pass without a network and say nothing about somebody else's server.
-async function standInForOtherSites(page) {
-  await page.route('https://code.jquery.com/**', js('window.jQuery = window.$ = function () { var q = { ready: function (f) { f(); return q; }, on: f, click: f, scroll: f, toggleClass: f, addClass: f, imagesLoaded: f, done: f }; function f() { return q; } return q; }; window.$.fn = {};'));
-  await page.route('https://fonts.googleapis.com/**', (route) => route.fulfill({ contentType: 'text/css', body: '' }));
-}
+// The classic page asks other sites for jQuery and fonts. Cut them off, so these tests pass
+// without a network; jQuery then comes from the copy on this site (see classic.spec.mjs).
+const standInForOtherSites = (page) => page.route(/^https:\/\//, (route) => route.abort());
 
 for (const [name, [pattern, handler]] of Object.entries(BROKEN)) {
   test(`fallback to classic: ${name}`, async ({ page, request, baseURL }) => {

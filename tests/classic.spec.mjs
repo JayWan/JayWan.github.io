@@ -3,15 +3,22 @@
 // under classic the boot script writes exactly the old tags, and the classic markup that is
 // kept out of the way for the new themes is written back into the page.
 
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { test, expect } from '@playwright/test';
-import { samplePages, watch } from './helpers.mjs';
+import { root, samplePages, watch } from './helpers.mjs';
 
-test.beforeEach(async ({ page }) => {
-  // jQuery and Google Fonts come from other sites; keep the tests independent of them.
-  await page.route(/^https:\/\/(code\.jquery\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)\//, (route) => route.abort());
-});
+// jQuery and Google Fonts come from other sites. The tests answer for them, so they pass
+// without a network and say nothing about somebody else's server.
+const JQUERY = readFileSync(path.join(root, 'assets/javascripts/jquery-3.7.1.min.js'), 'utf8');
+async function otherSites(page, { jquery = true } = {}) {
+  await page.route('https://fonts.googleapis.com/**', (route) => route.fulfill({ contentType: 'text/css', body: '' }));
+  await page.route('https://code.jquery.com/**', (route) => (jquery ? route.fulfill({ contentType: 'text/javascript', body: JQUERY }) : route.abort()));
+}
 
-test('classic home page: the old tags, the old markup, nothing new showing', async ({ page }) => {
+test('classic home page: the old tags, the old markup, nothing new showing', async ({ page, baseURL }) => {
+  await otherSites(page);
+  const seen = watch(page, baseURL);
   await page.goto('/?theme=classic');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'classic');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en-us');
@@ -33,9 +40,14 @@ test('classic home page: the old tags, the old markup, nothing new showing', asy
   expect(await page.locator('.blockGroup-list .block').count()).toBeGreaterThan(30);
   await expect(page.locator('audio[autoplay][src="/assets/bgm/Get Up.mp3"]')).toHaveCount(1);
   await expect(page.locator('html[data-theme-ready]')).toHaveCount(0);
+  expect(await page.evaluate(() => window.jQuery.fn.jquery)).toBe('3.7.1');
+  expect(seen.requests.filter((u) => u.includes('/assets/javascripts/jquery')), 'the local copy of jQuery is only a safety net').toEqual([]);
+  expect(seen.errors).toEqual([]);
 });
 
-test('classic letter page: cover, player, sidebar and scripts are back in place', async ({ page, request }) => {
+test('classic letter page: cover, player, sidebar and scripts are back in place', async ({ page, request, baseURL }) => {
+  await otherSites(page);
+  const seen = watch(page, baseURL);
   const { flip } = await samplePages(request);
   await page.goto(`${flip}?theme=classic`);
   const order = await page.evaluate(() => [...document.querySelectorAll('.sidebar-checkbox, nav.sidebar, nav.menuWrapper, article.postWrapper, .section--first, .section--last, .content-body, .postFooter, .sidebar-toggle-wrapper, .section--footer')]
@@ -45,6 +57,25 @@ test('classic letter page: cover, player, sidebar and scripts are back in place'
   await expect(page.locator('.section--last audio[autoplay] source')).toHaveCount(1);
   await expect(page.locator('script[src="/assets/javascripts/imagesloaded.pkgd.min.js"]')).toHaveCount(1);
   expect(await page.locator('nav.sidebar img').count()).toBeGreaterThan(10);
+
+  // the classic scripts ran, in their old order: jQuery, imagesLoaded, then the inline script
+  await expect(page.locator('.section--first img.post-featuredImage').first()).toHaveClass(/is-loaded/);
+  const card = page.locator('.flip-card');
+  await card.click({ position: { x: 20, y: 20 } });
+  await expect(card).toHaveClass(/is-flipped/);          // flipped once: the core did not add a second listener
+  expect(seen.errors).toEqual([]);
+});
+
+test('classic survives without code.jquery.com: jQuery then comes from this site', async ({ page, request, baseURL }) => {
+  await otherSites(page, { jquery: false });
+  const errors = [];
+  page.on('pageerror', (err) => errors.push(String(err)));
+  const { letter } = await samplePages(request);
+  await page.goto(`${letter}?theme=classic`);
+  expect(await page.evaluate(() => window.jQuery.fn.jquery)).toBe('3.7.1');
+  await expect(page.locator('script[src="/assets/javascripts/jquery-3.7.1.min.js"]')).toHaveCount(1);
+  await expect(page.locator('.section--first img.post-featuredImage').first()).toHaveClass(/is-loaded/);
+  expect(errors).toEqual([]);
 });
 
 test('without JavaScript the page is the classic page', async ({ browser, baseURL }) => {
