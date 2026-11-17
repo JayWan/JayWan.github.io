@@ -41,6 +41,37 @@ test('day counts follow the couple\'s way of counting', async ({ page }) => {
   expect(got.her).toBe('her');
 });
 
+test('what the core derives from the island: four roles, stated counts, the real day, numbering', async ({ page }) => {
+  await page.goto('/?theme=probe');
+  await page.waitForSelector('html[data-theme-ready="probe"]');
+  const got = await page.evaluate(() => {
+    const { letters } = window.__theme.ctx;
+    const by = (title) => letters.find((l) => l.title === title);
+    const brief = (l) => ({ role: l.role, authors: l.authors, author: l.author });
+    const oneYear = by('One Year');
+    return {
+      roles: [...new Set(letters.map((l) => l.role))].sort(),
+      both: brief(by('教小天使发布文章')),
+      guest: brief(letters.latest),
+      stated: [by('221 FOREVER').days, by('和小天使的三百天').days],
+      computed: by('棍棍节').days,
+      oneYear: { date: oneYear.date, time: oneYear.time, year: oneYear.year, doy: oneYear.doy, days: oneYear.days, url: oneYear.url },
+      numbered: letters.every((l, i) => l.no === i + 1 && l.index === i && (!i || letters[i - 1].date <= l.date)),
+      own: [letters[0].cover.own, letters.latest.cover.own],
+    };
+  });
+  expect(got.roles).toEqual(['both', 'guest', 'her', 'him']);
+  expect(got.both).toEqual({ role: 'both', authors: ['Pikajay', 'Pikachi'], author: 'Pikajay' });
+  expect(got.guest).toEqual({ role: 'guest', authors: ['Claude'], author: 'Claude' });
+  // the letter's own number where it states one (they count inclusively), the calendar's elsewhere
+  expect(got.stated).toEqual([{ met: 295, together: 209, married: null }, { met: 384, together: 300, married: null }]);
+  expect(got.computed).toEqual({ met: 349, together: 264, married: null });
+  // 「One Year」 is one year after 2016-02-21, whatever its URL says
+  expect(got.oneYear).toEqual({ date: '2017-02-21', time: null, year: 2017, doy: 52, days: { met: 451, together: 366, married: null }, url: '/story/2017/01/21/One-Year/' });
+  expect(got.numbered).toBe(true);
+  expect(got.own).toEqual([false, true]);
+});
+
 for (const theme of ['classic', 'probe']) {
   test(`${theme}: a greeting waits in the console`, async ({ page }) => {
     await page.route(/^https:\/\//, (route) => route.abort());

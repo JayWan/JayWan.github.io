@@ -48,22 +48,25 @@ async function start() {
 
   if (!(await stylesheetLoaded())) throw new Error('theme.css did not load');
 
-  const [{ createRouter }, { createPlayer }, { img }, widgets, themeModule] = await Promise.all([
+  const [{ createRouter }, { createPlayer }, { img }, widgets, { createProse }, themeModule] = await Promise.all([
     import('./router.js'),
     import('./player.js'),
     import('./img.js'),
     import('./widgets.js'),
+    import('./prose.js'),
     import(`/assets/themes/${T.id}/theme.js?v=${T.v}`),
   ]);
   const theme = themeModule.default;
   if (!theme || typeof theme.mount !== 'function') throw new Error('theme.js must `export default { mount(ctx) }`');
 
   const { site, letters } = data;
+  const prose = createProse(data.pictures);
   const page = { type: data.page.type, url: data.page.url, letter: null, contentEl: null };
   if (page.type === 'letter') {
     page.letter = letters.byUrl(page.url);
     page.contentEl = document.querySelector('.content-body');
     if (!page.letter || !page.contentEl) throw new Error('letter page without its letter or .content-body');
+    prose.prepare(page.contentEl, page.letter);   // themes never see a letter's body as the classic page wrote it
     widgets.init(page.contentEl);      // under classic the classic script does this; here nobody else will
   }
 
@@ -79,7 +82,7 @@ async function start() {
       standaloneDisplay: query('(display-mode: standalone)') || navigator.standalone === true,
     },
     player: createPlayer(letters, site),
-    router: createRouter({ letters, site, page, prepare: widgets.init }),
+    router: createRouter({ letters, site, page, normalise: prose.prepare, prepare: widgets.init }),
     img,
     ui: {
       hunger: () => eggs.hunger(letters, site.today.date),
@@ -87,6 +90,7 @@ async function start() {
       fmt: eggs.fmt,
     },
     widgets: { init: widgets.init },
+    prose: { prepare: prose.prepare },
   };
   T.ctx = ctx;                         // for the console and for tests; not part of the contract
 

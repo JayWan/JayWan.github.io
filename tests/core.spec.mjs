@@ -299,7 +299,9 @@ test.describe('router: the corners', () => {
     expect(seen.requests.slice(before), 'only the HTML, once').toEqual([new URL(flip, baseURL).href]);
 
     expect(await ctx(page, (c, url) => c.router.go(url), flip)).toBe(true);
-    await expect.poll(() => seen.requests.slice(before).filter((u) => u.includes('/assets/images/posts/')).length, 'the photo is requested when the letter is shown').toBeGreaterThan(0);
+    // …and then as one of its lighter copies (ctx.prose.prepare gave it a srcset before it could load)
+    await expect.poll(() => seen.requests.slice(before).filter((u) => u.includes('/assets/m/posts/')).length, 'the photo is requested when the letter is shown').toBeGreaterThan(0);
+    expect(seen.requests.slice(before).filter((u) => u.includes('/assets/images/posts/')), 'the 4.6 MB original is never fetched').toEqual([]);
     expect(seen.requests.slice(before).filter((u) => u === new URL(flip, baseURL).href).length, 'and the HTML is not fetched again').toBe(1);
   });
 
