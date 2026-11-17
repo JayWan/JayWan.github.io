@@ -8,6 +8,8 @@
          a. ?theme=<id> in the URL        forces it for this visit (?theme=random forces a new draw)
          b. the theme of this visit       a visit lasts until the site has been off screen for
                                           `idle` minutes; reloads, links, Back and new tabs keep it
+                                          (a page that stays on screen renews the visit every 5 minutes,
+                                          so a new tab opened after a long read still belongs to it)
          c. a special date                `dates` in _data/themes.yml, visitor's local calendar
          d. the night rule                between night[0]:00 and night[1]:00 only dark themes
          e. the shuffle bag               every theme once per round, never the same twice in a row
@@ -134,6 +136,7 @@ html:not([data-theme="classic"]) body>:not(#theme-root):not(script):not(style){d
   if (by !== 'old' && by !== 'page') save(id, now, by);
   function touch() { var x = get(S, 'now'); if (x) save(x.id, Date.now(), x.by); }
   w.addEventListener('pagehide', touch);
+  setInterval(function () { if (d.visibilityState === 'visible') touch(); }, 3e5);
   d.addEventListener('visibilitychange', function () { if (d.visibilityState === 'hidden') touch(); });
   w.addEventListener('pageshow', function (e) { var x = e.persisted && get(S, 'now'); if (x && x.id !== id && find(x.id)) location.reload(); });
   if (q !== null) try { p = new URL(location.href); p.searchParams.delete('theme'); history.replaceState(history.state, '', p.pathname + p.search + p.hash); } catch (e) {}

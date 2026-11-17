@@ -106,6 +106,17 @@ test.describe('choosing a theme', () => {
     expect(later.id).not.toBe(first.id);
   });
 
+  test('a page that stays on screen keeps the visit alive for new tabs', async ({ page, context }) => {
+    const t0 = la('2026-01-05').getTime();
+    await context.clock.install({ time: t0 });
+    await page.goto('/__boot/');
+    const first = await read(page);
+    await context.clock.runFor(48 * MIN);                                  // a long read in this tab, never hidden
+    const other = await context.newPage();                                 // then a link opened in a new tab
+    await other.goto('/__boot/next');
+    expect(await read(other)).toEqual({ id: first.id, by: 'visit' });
+  });
+
   for (const [day, offset, theme] of [['2027-02-21', '-08:00', 'orbit'], ['2026-11-28', '-08:00', 'drift'], ['2027-02-06', '-08:00', 'sides'],
     ['2027-07-04', '-07:00', 'sides'], ['2027-08-12', '-07:00', 'folio'], ['2027-09-15', '-07:00', 'classic']]) {
     test(`${day.slice(5)} is ${theme}'s day`, async ({ browser, baseURL }) => {
