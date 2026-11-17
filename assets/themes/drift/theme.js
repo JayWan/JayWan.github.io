@@ -41,6 +41,7 @@ export default {
     const dot = (d) => fmt.date(d, 'dot');
     const mqPhone = matchMedia('(max-width: 759px)');
     const mqReduce = matchMedia('(prefers-reduced-motion: reduce)');
+    const EAGER = router.current.type === 'letter' ? 0 : mqPhone.matches ? 1 : 3;   // prints on the first screen of the home page
     const EASE = 'cubic-bezier(.2,.7,.2,1)';
     const motion = () => !mqReduce.matches;
     const store = {
@@ -168,7 +169,7 @@ export default {
       it.a.style.width = w + 'px';
       if (!it.p.cover) return;
       if (!it.pic) {
-        it.pic = ctx.img(it.p.cover, { sizes: w + 'px', lazy: i > 2 });     // derivatives only; the first prints are in the first screen
+        it.pic = ctx.img(it.p.cover, { sizes: w + 'px', lazy: i >= EAGER });     // derivatives only; only what the first screen shows is fetched at once
         it.ph.append(it.pic);
       } else it.pic.querySelectorAll('source, img').forEach((n) => { n.sizes = w + 'px'; });
     }
@@ -415,7 +416,7 @@ export default {
       arm = { id: e.pointerId, x: e.clientX, y: e.clientY, y0: window.scrollY, scrub: false };
     });
     track.addEventListener('pointermove', (e) => {
-      if (!arm || e.pointerId !== arm.id) { if (e.pointerType === 'mouse' && !openL) showTip(R0 + rulerP(e) * (R1 - R0)); return; }
+      if (!arm || e.pointerId !== arm.id) { if (e.pointerType === 'mouse' && !openL && !ctx.env.touch) showTip(R0 + rulerP(e) * (R1 - R0)); return; }   // a hover label, only where there is hover
       if (!arm.scrub) {
         const dx = Math.abs(e.clientX - arm.x), dy = Math.abs(e.clientY - arm.y);
         const along = mqPhone.matches ? dx : dy, across = mqPhone.matches ? dy : dx;
