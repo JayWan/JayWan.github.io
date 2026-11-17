@@ -54,7 +54,8 @@ export default {
     const tracks = letters.filter((l) => sideOf(l) !== 'x');
     const trackNo = new Map(tracks.map((l, i) => [l, i + 1]));
     const noText = (l) => (trackNo.has(l) ? pad2(trackNo.get(l)) : '+');
-    const latest = tracks[tracks.length - 1] || letters.latest;
+    const latest = tracks[tracks.length - 1] || letters.latest;     // 最新的一首（播放器闲着时备着它）
+    const newest = letters.latest || latest;                         // 最新的一封信，不管是谁写的
     const dot = (d) => fmt.date(d, 'dot');
     const authorsOf = (l) => (Array.isArray(l.authors) && l.authors.length ? l.authors : [l.author]);
     const byline = (l) => {
@@ -170,12 +171,6 @@ export default {
       const step = e.key === 'ArrowRight' ? 5 : e.key === 'ArrowLeft' ? -5 : 0;
       if (step && st.letter) { e.preventDefault(); player.seek(st.time + step); }
     });
-    // 在一封信里点播放器上的歌名去另一封信：算「在信之间移动」，替换历史记录
-    P.meta.addEventListener('click', (e) => {
-      if (view.type !== 'letter' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
-      e.preventDefault();
-      router.go(P.meta.getAttribute('href'), { replace: true });
-    });
 
     let view = { type: '', letter: null };   // 现在画着的是什么（自己记，不存 router.current）
     let band = null;                          // 信页色带里跟着播放器走的几个元素
@@ -256,8 +251,8 @@ export default {
           h('div', {}, h('dt', { class: 'sd-l' }, '曲目'), h('dd', {}, String(tracks.length), bonus ? h('small', {}, ` + ${bonus}`) : null)),
           h('div', {}, h('dt', { class: 'sd-l' }, '年头'), h('dd', {}, span)),
           h('div', {}, h('dt', { class: 'sd-l' }, '全长'), h('dd', {}, totalText))));
-      const latestLink = latest && h('a', { class: 'sd-latest', href: latest.url, 'data-side': sideOf(latest) },
-        h('span', {}, '最新一封'), noEl(latest, 'sd-latest-no', 'b'), h('u', {}, tx(latest.title)), h('i', { 'aria-hidden': 'true' }, '→'));
+      const latestLink = newest && h('a', { class: 'sd-latest', href: newest.url, 'data-side': sideOf(newest) },
+        h('span', {}, '最新一封'), noEl(newest, 'sd-latest-no', 'b'), h('u', {}, tx(newest.title)), h('i', { 'aria-hidden': 'true' }, '→'));
       if (latestLink) warm(latestLink);
       const tab = (f, label, n, c) => h('button', { type: 'button', class: 'sd-tab' + (f === 'all' ? ' is-on' : ''), 'data-filter': f, 'aria-pressed': String(f === 'all') }, c, h('span', {}, label), h('b', {}, String(n)));
       const tabs = h('div', { class: 'sd-tabs', role: 'group', 'aria-label': '按 A 面 / B 面筛选' },
@@ -306,14 +301,14 @@ export default {
         rows.set(l, li);
         return li;
       }
-      let year = null;
-      tracks.forEach((l) => {
-        if (l.year !== year) {
-          if (year !== null) for (let y = year + 1; y < l.year; y++) list.append(h('li', { class: 'sd-yr sd-yr--empty', 'data-y': y }, h('span', {}, String(y)), h('span', {}, '这一年没有信')));
-          year = l.year;
-          list.append(h('li', { class: 'sd-yr', 'data-y': year }, h('span', {}, String(year)), h('span', {}, `${tracks.filter((q) => q.year === year).length} 封`)));
-        }
-        list.append(row(l));
+      // 年份行：没有信的年份也列出来。核心有 letters.years 就用它，没有就自己数
+      const byYear = letters.years
+        ? letters.years.map((y) => ({ year: y.year, all: y.letters.length, list: y.letters.filter((l) => trackNo.has(l)) }))
+        : years.length ? Array.from({ length: years[years.length - 1] - years[0] + 1 }, (_, i) => years[0] + i).map((y) => ({ year: y, all: 0, list: tracks.filter((l) => l.year === y) })) : [];
+      byYear.forEach(({ year, all, list: ofYear }) => {
+        if (ofYear.length) list.append(h('li', { class: 'sd-yr', 'data-y': year }, h('span', {}, String(year)), h('span', {}, `${ofYear.length} 封`)));
+        else if (!all) list.append(h('li', { class: 'sd-yr sd-yr--empty', 'data-y': year }, h('span', {}, String(year)), h('span', {}, '这一年没有信')));
+        ofYear.forEach((l) => list.append(row(l)));
       });
       const extras = letters.filter((l) => !trackNo.has(l));
       if (extras.length) {
@@ -470,7 +465,7 @@ export default {
       if (l === 'first') return h('div', { class: 'sd-pnt sd-pnt--none' }, h('span', { class: 'sd-pn-no' }, '00'), h('span', {}, h('p', { class: 'sd-pn-lbl sd-l' }, label), h('p', { class: 'sd-pn-title' }, '这是第一首'), h('p', { class: 'sd-pn-song' }, '前面没有了。')));
       if (l === 'none') return h('div', { class: 'sd-pnt sd-pnt--none' }, h('span', { class: 'sd-pn-no' }, String(tracks.length + 1)), h('span', {}, h('p', { class: 'sd-pn-lbl sd-l' }, label), h('p', { class: 'sd-pn-title' }, '还没写'), h('p', { class: 'sd-pn-song' }, '不知道会是 A 面还是 B 面。')));
       const s = sideOf(l);
-      const a = h('a', { class: 'sd-pnt', href: l.url, rel, 'data-side': s, 'data-step': '' },
+      const a = h('a', { class: 'sd-pnt', href: l.url, rel, 'data-side': s },
         noEl(l, 'sd-pn-no'),
         h('span', {},
           h('p', { class: 'sd-pn-lbl sd-l' }, `${label} · ${SIDE_NAME[s]} · ${dot(l.date)}`),
@@ -552,13 +547,7 @@ export default {
         pnTile(l.prev || 'first', '上一首', 'prev'),
         pnTile(l.next || 'none', '下一首', 'next'),
         h('a', { class: 'sd-pn-back', href: '/', 'data-back': '' }, h('span', { 'aria-hidden': 'true' }, '←'), h('span', {}, '回到曲目表'), h('small', {}, `全部 ${tracks.length} 首`))));
-      // 上一首 / 下一首：替换历史记录，所以从任何一封信按后退都回到曲目表
-      pn.addEventListener('click', (e) => {
-        const a = e.target.closest && e.target.closest('a[data-step]');
-        if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
-        e.preventDefault();
-        router.go(a.getAttribute('href'), { replace: true });
-      });
+      // 上一首 / 下一首是普通链接：从一封信到另一封信，核心会替换历史记录，所以从任何一封信按后退都回到曲目表
 
       return h('article', { class: 'sd-letter' + (aside ? '' : ' no-slv'), 'data-side': s, 'data-quiet': l.quiet || null, 'data-plain': l.quiet || guest || null },
         bandEl,
@@ -575,7 +564,7 @@ export default {
       h('b', { class: 'sd-lost-no', 'aria-hidden': 'true' }, '404'),
       h('h1', {}, '这张唱片里没有这一首。'),
       h('p', {}, `曲目表上一共 ${tracks.length} 首，都还在。`),
-      h('p', { class: 'sd-lost-go' }, h('a', { href: '/' }, '← 回到曲目表'), latest && h('a', { href: latest.url }, `最新一封 · ${latest.title} →`)));
+      h('p', { class: 'sd-lost-go' }, h('a', { href: '/' }, '← 回到曲目表'), newest && h('a', { href: newest.url }, `最新一封 · ${newest.title} →`)));
 
     // =====================================================================================
     // 路由：一个函数画任何一页
@@ -590,10 +579,12 @@ export default {
     const tint = (color) => { const m = document.querySelector('meta[name="theme-color"]'); if (m && color) m.content = color; };
 
     let first = true;
+    let entered = null;                       // 从曲目表点开的是哪一封（之后可能翻到别的信去了）
     function show(route) {
       const from = view;
       let moved;
       if (route.type === 'letter') {
+        if (from.type === 'home') entered = route.letter;
         main.replaceChildren(letterView(route));
         view = { type: 'letter', letter: route.letter };
       } else if (route.type === 'home') {
@@ -604,19 +595,22 @@ export default {
         main.replaceChildren(home.el);
         home.fit();
         view = { type: 'home', letter: null };
-        // 从一封信回来：把刚读过的那一行带到眼前，而不是当初出发的位置
-        const last = from.type === 'letter' ? lastRead() : null;
+        // 回到曲目表：刚读过的那一行做个记号（router.lastRead）。直接从点开的那封信回来，位置由核心原样恢复；
+        // 翻到别的信去了，或者这封信是直接打开的（后面没有曲目表），就把那一行带到眼前。
+        // （右栏的拼版里每封信都有链接，核心会以为「已经在屏幕上」，所以这一步主题自己做。）
+        const last = lastRead();
         const li = last && home.rows.get(last);
         if (li && !li.hidden) {
           li.classList.add('is-last');
           const top = li.getBoundingClientRect().top + window.scrollY;
           const vh = window.innerHeight - P.el.offsetHeight;
           const y = route.scrollY || 0;
-          if (top < y + 8 || top + li.offsetHeight > y + vh - 8) {
+          if (from.type === 'letter' && last !== entered && (top < y + 8 || top + li.offsetHeight > y + vh - 8)) {
             window.scrollTo(0, Math.max(0, Math.round(top - vh * 0.38)));
             moved = false;                                      // 滚动位置我们自己管了
           }
         }
+        entered = null;
       } else {
         band = null;
         main.replaceChildren(lostView());

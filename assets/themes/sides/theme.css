@@ -518,7 +518,7 @@ html[data-navigating] .sd-player::after { content: ""; position: absolute; left:
   .sd-pnt + .sd-pnt { border-left: 0; border-top: 1px solid var(--rule); }
   .sd-pn-no { font-size: 88px; }
   .sd-pn-title { font-size: 19px; }
-  .sd-pn-back { padding: 0; min-height: 64px; }
+  .sd-pn-back { order: -1; padding: 0; min-height: 60px; border-top: 0; border-bottom: 1px solid var(--rule); }
   .sd-lost-no { font-size: 168px; }
   .sd-lost h1 { font-size: 28px; }
 
