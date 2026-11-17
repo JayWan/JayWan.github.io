@@ -331,7 +331,7 @@ html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(-
 }
 
 @media (max-width:719px){
-  :root{--n:6;--cell-h:384px;--foot:46px;--tian:150px;--t:21.5px;--wari:12.5px;--pad:20px}
+  :root{--n:6;--cell-h:384px;--foot:46px;--tian:150px;--t:21.5px;--wari:13px;--pad:20px}
   .home{padding:calc(8px + env(safe-area-inset-top)) 16px 0}
   .leaf{padding-bottom:18px}
   .leaf--title .cell--fl{grid-column:span 1}
@@ -351,7 +351,8 @@ html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(-
   .yr-n{font-size:13.5px;margin-top:12px}
   .yr-foot,.day--k{font-size:12px}
   .t{gap:3px}
-  .wari{margin-top:7px;line-height:1.2}
+  .wari{margin-top:7px;line-height:1.16}
+  .wari .lat{font-size:1em}
   .lead{margin:9px 0 6px}
   .day{font-size:16px}
   .leaf--title .day{padding-bottom:14px}
