@@ -36,6 +36,8 @@ const yearOf = (ms) => new Date(ms).getUTCFullYear();
 const dots = (iso) => iso.replace(/-/g, '·');
 const md = (iso) => iso.slice(5).replace('-', '·');
 const latin = (s) => /^[\x20-\x7e]+$/.test(s);
+/** 一个题目大约有几个汉字宽（西文字母算半个多一点）：太长的题目用小一号的字 */
+const span = (s) => [...s].reduce((n, c) => n + (c < '\u2e80' ? 0.56 : 1), 0);
 const mod = (e) => e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button > 0;
 
 /** 地球的日心黄经（度）。天文年历的低精度太阳公式，误差约 0.01°。 */
@@ -672,7 +674,7 @@ export default {
           h('div', { class: 'l-head' },
             h('p', { class: 'kicker' }, h('span', {}, `第 ${letter.no} 封`, h('span', { class: 'of' }, ` / ${letters.length}`)), h('span', { class: 'bar' }),
               h('span', {}, glyph(letter), ' ', byline(letter)), letter.place && h('span', {}, `于 ${letter.place}`)),
-            h('h1', { class: 'l-title' + (letter.title.length > 11 ? ' long' : '') + (latin(letter.title) ? ' lat' : ''), lang: latin(letter.title) ? 'en' : null }, letter.title)),
+            h('h1', { class: 'l-title' + (span(letter.title) > 11 ? ' long' : '') + (latin(letter.title) ? ' lat' : ''), lang: latin(letter.title) ? 'en' : null }, letter.title)),
           h('dl', { class: 'l-data' },
             cell('自认识', [h('span', { class: 'tp' }, 'T+'), String(T), h('i', {}, 'd')], `${dots(site.met)} 起`),
             cell('日期', dots(letter.date), fmt.date(letter.date, 'weekday')),
