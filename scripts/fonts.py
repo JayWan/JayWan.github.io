@@ -597,7 +597,15 @@ def build(args):
             built[key] = (size, cmap)
             job = next(j for j in jobs if j['key'] == key)
             if job['cjk'] and cmap != job['codepoints']:
-                sys.exit('%s: the file maps %d characters, the plan asked for %d' % (key, len(cmap), len(job['codepoints'])))
+                missing = sorted(set(job['codepoints']) - set(cmap))
+                extra = sorted(set(cmap) - set(job['codepoints']))
+                if missing:
+                    sys.exit('%s: the file lacks %d planned characters: %s' % (key, len(missing), ' '.join('U+%04X' % c for c in missing[:20])))
+                # The subsetter may keep a twin of a planned character (asking for U+203A also keeps
+                # U+2039, which shares its glyph mirrored). Harmless: the CSS only advertises the plan.
+                print('  note: %s also maps %s' % (key, ' '.join('U+%04X' % c for c in extra)))
+                cmap = job['codepoints']
+                built[key] = (size, cmap)
             print('  [%3d/%d] %-26s %7.1f KB  %5d chars' % (n, len(jobs), key, size / 1024, len(cmap)))
     listed = set()
     for fam in CJK + LATIN:
@@ -692,8 +700,10 @@ def check(args):
                 cmap = set(TTFont(file, lazy=True).getBestCmap().keys())
                 if not face['range'] <= cmap:
                     problems.append('%s: %s declares %d characters the file does not contain' % (fam_id, face['url'], len(face['range'] - cmap)))
-                if fam in CJK and cmap != face['range']:
-                    problems.append('%s: %s contains %d characters its unicode-range does not declare' % (fam_id, face['url'], len(cmap - face['range'])))
+                # ‹ and › share a mirrored glyph, so a file that was asked for one maps both; that is harmless
+                undeclared = cmap - face['range'] - {0x2039, 0x203A}
+                if fam in CJK and undeclared:
+                    problems.append('%s: %s contains %d characters its unicode-range does not declare' % (fam_id, face['url'], len(undeclared)))
         families = collections.defaultdict(list)
         for (family, style, weight), members in groups.items():
             families[(family, style)].append((weight, members))

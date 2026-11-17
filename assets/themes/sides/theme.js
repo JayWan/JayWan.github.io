@@ -269,7 +269,7 @@ export default {
       tracks.forEach((l, i) => {
         // 拼版是曲目表的另一个入口，每封信在表里都有一行：不占 Tab 键的位置
         const a = h('a', { href: l.url, 'data-side': sideOf(l), tabindex: '-1', 'aria-label': `${noText(l)} ${l.title}` },
-          sleeve(l, { sizes: '(max-width: 860px) 12vw, 64px', widths: [480], lazy: i > 23 }));
+          sleeve(l, { sizes: '(max-width: 860px) 12vw, 64px', widths: [160, 480], lazy: i > 23 }));
         mosaic.append(a);
       });
       for (let k = tracks.length + 1; k <= cells; k++) mosaic.append(h('span', { class: 'sd-slot' }, String(k)));
@@ -380,7 +380,7 @@ export default {
         cuedRow = (l && rows.get(l)) || null;
         if (!cuedRow) return;
         if (!cuedRow.querySelector('.sd-more')) {
-          cuedRow.append(h('div', { class: 'sd-more' }, sleeve(l, { sizes: '92px', widths: [480] }),
+          cuedRow.append(h('div', { class: 'sd-more' }, sleeve(l, { sizes: '92px', widths: [160, 480] }),
             h('div', {}, l.quote && h('p', {}, l.quote), h('small', {}, '读这封信 →'))));
         }
         cuedRow.classList.add('is-cued', 'is-open');

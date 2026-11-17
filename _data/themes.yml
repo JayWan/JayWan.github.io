@@ -30,7 +30,7 @@ themes:
     name: 夜航
     ground: "#14130f"
     dark: true
-    fonts: [serif-sc, sans-sc-400, mono]
+    fonts: [serif-sc, mono]
     dates: ["11-28"]              # 认识
     enabled: true
 

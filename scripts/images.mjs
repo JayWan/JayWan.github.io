@@ -4,7 +4,7 @@
 // What it makes (all of it is generated, none of it is committed):
 //
 //   assets/images/thumbnail/<name>          350px sidebar thumbnails (committed ones are left alone)
-//   assets/m/hero/<stem>-<ext>-<width>.avif  cover images at 480 / 800 / 1200 / 1600 px wide,
+//   assets/m/hero/<stem>-<ext>-<width>.avif  cover images at 160 / 480 / 800 / 1200 / 1600 px wide,
 //   assets/m/hero/<stem>-<ext>-<width>.jpg   AVIF for browsers that take it, JPEG for the rest
 //   _data/media.json                         what the templates and themes need to know:
 //       hero.<file>  : { w, h, color, lqip, base, widths }
@@ -35,7 +35,7 @@ const OUT = path.join(root, 'assets/m/hero');
 const BGM = path.join(root, 'assets/bgm');
 const DATA = path.join(root, '_data/media.json');
 const MANIFEST = path.join(root, 'assets/m/.manifest.json');   // a dotfile: Jekyll does not publish it
-const WIDTHS = [480, 800, 1200, 1600];
+const WIDTHS = [160, 480, 800, 1200, 1600];   // 160 is for thumbnail-sized uses (a mosaic of 31 covers)
 const force = process.argv.includes('--force');
 
 const mtime = async (p) => { try { return (await stat(p)).mtimeMs; } catch { return 0; } };
