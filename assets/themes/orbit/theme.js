@@ -120,7 +120,7 @@ export default {
         R = Math.min(W / 2 - (W < 700 ? 58 : 66), H / 2 - 34);
         // 图版左上角压着站名：圆不能碰到它
         const hr = host.getBoundingClientRect(), t = host.parentElement.querySelector('.masthead h1'), tr = t && t.getBoundingClientRect();
-        if (tr && tr.bottom > hr.top && tr.right > hr.left) R = Math.min(R, Math.hypot(cx - (tr.right - hr.left), cy - (tr.bottom - hr.top)) - 4);
+        if (tr && tr.bottom > hr.top && tr.right > hr.left) R = Math.min(R, Math.hypot(cx - (tr.right - hr.left - 4), cy - (tr.bottom - hr.top - 6)) - 2);
         band = 20; rOut = R - band - 16; rIn = R * 0.25; dotR = Math.max(3.2, Math.min(4.4, R / 82)); sunR = 9;
       }
       if (big) svg.style.setProperty('--z', f1(Math.min(1.3, Math.max(1, R / 290))));     // 图大了，图上的字跟着大

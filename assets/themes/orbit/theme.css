@@ -407,6 +407,19 @@ html[data-navigating] #theme-root::after { content: ""; position: fixed; z-index
   .np { left: 14px; right: 14px; bottom: 10px; border: 1px solid var(--line); padding: 4px 22px; grid-template-columns: 44px minmax(0, 1fr) auto; }
   .np-meta { flex-direction: row; align-items: baseline; gap: 14px; }
 }
+/* 窄一些的桌面：站名和图注不再压在图的四角上，各占一行；图版高一点，页面可以滚 */
+@media (min-width: 1200px) and (max-width: 1399.98px) {
+  #theme-root { --ch: max(100svh - 30px - var(--foot) - var(--np-h), 850px); }
+  .chartwrap { display: grid; grid-template: auto minmax(0, 1fr) auto / minmax(0, 1fr) auto; column-gap: 24px; padding: 0 34px; }
+  .masthead { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 16px; padding-top: 24px; }
+  .masthead > *, .chartnote, .tilt { position: static; }
+  .masthead .plate-no { margin-left: auto; }
+  .masthead .plate-desc br { display: none; }
+  .masthead .plate-desc span::before { content: "，"; }
+  .chart { position: relative; inset: auto; grid-column: 1 / -1; }
+  .chartnote { align-self: center; }
+  .chartnote span { display: inline; }
+}
 @media (min-width: 1200px) and (pointer: coarse) { .row { min-height: 44px; } .eph { max-height: none; } }
 @media (min-width: 1200px) and (min-height: 860px) { .l-side { position: -webkit-sticky; position: sticky; top: 28px; } }
 
