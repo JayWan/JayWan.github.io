@@ -103,35 +103,51 @@ function titleLines(title, tail) {
   return lines.map((ln, i) => h('span', { class: 'ln' }, h('span', { class: 'lt v' }, vt(ln)), i === lines.length - 1 && tail));
 }
 
-/* 题记：尽量在标点处换行，一行一个分句；L 是一行最多几个字。 */
+/* 题记、眉批的分行：一行最多 L 个字。先按标点分句；单个分句超长的，在词与词之间拆成差不多长的几段；
+   再把相邻的短段并起来，行数最少、各行最匀。 */
+/** 一行有多长：行末的标点悬在版心外面，只算小半个字 */
+const span = (x) => { const t = x.trim(); return units(t) - (/[，。；！？、…」』）”’]$/.test(t) ? 0.6 : 0); };
+const KEEP = /简简单单|茕茕孑立|地久天长|所爱之人|伪命题/g;    // 分词认不出来、又不该拆开的词（现有的信里遇到的）
+function splitClause(c, L) {
+  if (span(c) <= L) return [c];
+  const words = new Set(), kept = new Set();
+  for (const m of c.matchAll(KEEP)) for (let i = m.index + 1; i < m.index + m[0].length; i++) kept.add(i);
+  try { for (const g of new Intl.Segmenter('zh', { granularity: 'word' }).segment(c)) words.add(g.index); } catch { /* 没有 Intl.Segmenter：按字数拆 */ }
+  const n = c.length, best = new Array(n + 1).fill(Infinity), from = new Array(n + 1).fill(0);
+  best[0] = 0;
+  for (let j = 1; j <= n; j++) {
+    if (j < n) {                                          // 能不能在 j 前面断开
+      if (/[A-Za-z0-9]{2}/.test(c.slice(j - 1, j + 1)) || !/[A-Za-z0-9\u3400-\u9fff]/.test(c[j]) || /[“‘（《「『(]/.test(c[j - 1])) continue;
+    }
+    const pen = j === n ? 0 : (words.size && !words.has(j) ? 9 : 0) + (kept.has(j) ? 80 : 0) + (/[的地得了着过吗呢吧啊们个]/.test(c[j]) ? 6 : 0)
+      + (/[0-9那这]/.test(c[j - 1]) ? 6 : 0) - (c[j - 1] === ' ' ? 3 : 0) - (/ [-–—] $/.test(c.slice(0, j)) ? 30 : 0);
+    for (let i = j - 1; i >= 0; i--) {
+      const u = span(c.slice(i, j));
+      if (u > L) break;
+      const cost = best[i] + 100 + u * u * 0.3 + pen;
+      if (cost < best[j]) { best[j] = cost; from[j] = i; }
+    }
+  }
+  if (best[n] === Infinity) return [c];
+  const out = [];
+  for (let j = n; j > 0; j = from[j]) out.unshift(c.slice(from[j], j));
+  return out;
+}
 function quoteLines(text, L) {
   const clauses = String(text).match(/[^，。；！？、,;!?…]+[，。；！？、,;!?…”’」』）)]*\s*/g) || [String(text)];
-  const parts = [];
-  for (const c of clauses) {                              // 单个分句就超长的，按字数（西文按空格）均分
-    const u = units(c), n = Math.ceil(u / L), target = u / n;
-    let start = 0;
-    for (let k = 1; k < n; k++) {
-      let best = start + 1, bd = 1e9;
-      for (let i = start + 1; i < c.length; i++) {
-        const d = Math.abs(units(c.slice(start, i)) - target) - (c[i] === ' ' || c[i - 1] === ' ' ? 2.5 : 0);
-        if (d < bd) { bd = d; best = i; }
-      }
-      parts.push(c.slice(start, best)); start = best;
-    }
-    parts.push(c.slice(start));
-  }
+  const parts = clauses.flatMap((c) => splitClause(c, L));
   const n2 = parts.length;
   let bestLines = null, bestScore = 1e9;
-  for (let mask = 0; mask < (1 << (n2 - 1)) && n2 <= 12; mask++) {   // 分句很少，穷举所有分行方式
+  for (let mask = 0; mask < (1 << (n2 - 1)) && n2 <= 12; mask++) {   // 段很少，穷举所有并法
     const lines = [];
     let cur = parts[0], ok = true, score = 0;
     for (let j = 1; j < n2; j++) { if (mask & (1 << (j - 1))) { lines.push(cur); cur = parts[j]; } else cur += parts[j]; }
     lines.push(cur);
-    for (const ln of lines) { const w = units(ln.trim()); if (w > L + 0.01) ok = false; score += w * w; }
+    for (const ln of lines) { const w = span(ln); if (w > L + 0.01) ok = false; score += w * w; }
     score += lines.length * 1e4;                           // 先求行数最少，再求各行最匀
     if (ok && score < bestScore) { bestScore = score; bestLines = lines; }
   }
-  return (bestLines || parts).map((s) => s.trim()).filter(Boolean);
+  return (bestLines || parts).map((x) => x.trim()).filter(Boolean);
 }
 
 const PLAY_SVG = '<svg viewBox="0 0 44 44" aria-hidden="true" focusable="false"><circle class="play-ring" cx="22" cy="22" r="15.5"/><path class="ic-play" d="M19.2 16.6 L28.4 22 L19.2 27.4 Z"/><path class="ic-pause" d="M17.8 16.8h2.6v10.4h-2.6zM23.6 16.8h2.6v10.4h-2.6z"/></svg>';
@@ -193,10 +209,10 @@ export default {
       a.addEventListener('touchstart', () => router.prefetch(a.href), { passive: true });
       return a;
     }
-    function mei(l) {
+    function mei(l) {                                        // 分行在 layoutHome 里做：一行几个字随屏宽变
       if (!l.quote) return null;
-      const p = h('p', { class: 'mei v' }, vt(l.quote));
-      p.dataset.u = units(l.quote).toFixed(1);
+      const p = h('p', { class: 'mei v' });
+      p.dataset.q = l.quote;
       return p;
     }
     const cells = new Map();                               // 信 → <li>，换栏数时重复使用
@@ -231,8 +247,9 @@ export default {
 
     const groups = [];
     if (letters.length) {
-      const y1 = Math.max(letters[letters.length - 1].year, own.length ? own[own.length - 1].year : 0);
-      for (let y = letters[0].year; y <= y1; y++) {
+      /* 每一年一叶，没写信的年份也算：核心给了 letters.years 就用它 */
+      const y0 = letters[0].year, y1 = letters[letters.length - 1].year;
+      for (const y of (letters.years ? letters.years.map((g) => g.year) : Array.from({ length: y1 - y0 + 1 }, (_, i) => y0 + i))) {
         const list = own.filter((l) => l.year === y);
         groups.push({ id: 'y' + y, year: y, title: yearZh(y), note: list.length ? numZh(list.length) + '封' : '没有信', list, label: `${y} 年，${list.length ? list.length + ' 封' : '没有信'}` });
       }
@@ -262,15 +279,17 @@ export default {
     function layoutHome() {
       if (!homeEl || !homeEl.isConnected) return;
       buildLeaves();
-      const maxPer = wide.matches ? 7 : 9;
+      const per = '10';                                      // 一行十个字：多数分句不用拆
       for (const m of homeEl.querySelectorAll('.mei')) {
-        const u = Number(m.dataset.u) || 1, per = Math.ceil(u / Math.max(1, Math.ceil(u / maxPer)));
-        m.style.height = ((per + 0.7) * 1.06).toFixed(2) + 'em';
+        if (m.dataset.l === per) continue;
+        m.dataset.l = per;
+        m.replaceChildren(...quoteLines(m.dataset.q, Number(per)).flatMap((ln, i) => [i > 0 && h('br'), ...vt(ln)]).filter(Boolean));
       }
       for (const c of homeEl.querySelectorAll('a.col')) {                  // 题名加夹注比这一列还长：歌名拆成两行
-        c.classList.remove('is-long');
+        c.classList.remove('is-long', 'no-lead');
         const d = c.querySelector('.day'), ld = c.querySelector('.lead');
         if (d && ld && (ld.offsetHeight < 8 || d.getBoundingClientRect().bottom > c.getBoundingClientRect().bottom + 1)) c.classList.add('is-long');
+        if (ld) c.classList.toggle('no-lead', ld.offsetHeight < 48);       // 剩下的地方画不成一道线，就不画
       }
       for (const lf of homeEl.querySelectorAll('.leaf')) {
         const left = lf.getBoundingClientRect().left;
