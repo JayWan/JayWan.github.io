@@ -454,6 +454,13 @@ export default {
         img.replaceWith(cy); cy.append(img);
         cy.after(h('div', { class: 'o-cap' }, h('span', {}, h('b', {}, `图 ${letter.no}·${n}`), '手写的那一面'), capToggle()));
       });
+      // 卡片有两面：下面画出「字的一面 ⇄ 照片的一面」，正朝上的那一面亮着，不写字
+      el.querySelectorAll('.flip-card').forEach((card) => {
+        if (card.querySelector('.cue')) return;
+        const cue = icon(64, 22, '<path class="a" d="M1.5 1.5h15v19h-15zM5 7h8M5 11h8M5 15h5"/><path d="M25 8h14M35.5 5l3.5 3-3.5 3M39 14H25M28.5 11L25 14l3.5 3"/><path class="b" d="M47.5 1.5h15v19h-15zM50 16l4-5.5 2.5 3 1.5-1.5 2.5 4"/><circle class="b" cx="57.6" cy="6.6" r="1.4"/>', 'cue');
+        cue.removeAttribute('aria-hidden'); cue.setAttribute('role', 'img'); cue.setAttribute('aria-label', '点一下，换一面');      // 看不见的人照旧听到这一句
+        card.append(cue);
+      });
       // 整段都是西文的段落交给拉丁字体（引号、撇号才不会占一个汉字宽）
       el.querySelectorAll('p, li, blockquote, h3, h4, h5').forEach((p) => {
         const t = p.textContent.trim();

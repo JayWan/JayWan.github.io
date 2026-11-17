@@ -122,6 +122,25 @@ test.describe('theme "orbit", its own promises', () => {
     expect(seen.errors).toEqual([]);
   });
 
+  test('the card draws its two faces instead of saying 点一下; the gift box says nothing', async ({ page, request }) => {
+    const after = (selector) => page.evaluate((s) => getComputedStyle(document.querySelector(s), '::after').content, selector);
+    await open(page, await urlOf(request, (l) => l.date === '2026-08-12'), THEME);
+    const card = page.locator('#theme-root .letter-body .flip-card');
+    const cue = card.locator('svg.cue');
+    await expect(cue, 'one pictogram under the card: the written side, the photo side').toHaveCount(1);
+    await expect(cue, 'a screen reader still hears what the picture means').toHaveAttribute('aria-label', '点一下，换一面');
+    expect(await after('#theme-root .flip-card'), 'no generated sentence under the card').toMatch(/^(none|normal)$/);
+    const lit = () => cue.evaluate((svg) => ['a', 'b'].map((face) => getComputedStyle(svg.querySelector('.' + face)).stroke));
+    const [front, back] = await lit();
+    expect(front, 'the face that is up is the brighter one').not.toBe(back);
+    await card.click({ position: { x: 20, y: 20 } });
+    await expect(card).toHaveClass(/is-flipped/);
+    expect(await lit(), 'turned over, the other face lights up').toEqual([back, front]);
+    await open(page, await urlOf(request, (l) => l.standalone), THEME);
+    await expect(page.locator('#theme-root #gift-container')).toBeVisible();
+    expect(await after('#theme-root #gift-container'), 'no generated sentence under the box').toMatch(/^(none|normal)$/);
+  });
+
   test('the letter itself is on the first screen of a desktop', async ({ page, request }) => {
     test.skip(!wide(page), 'the two-column letter page is the desktop layout');
     for (const find of [(l) => l.date === '2024-11-19', (l) => l.quiet, (l) => l.title.length > 12]) {
