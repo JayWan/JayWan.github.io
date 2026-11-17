@@ -2,7 +2,7 @@
 
 这个网站有好几套主题，每次到访自动挑一套。这份文档写给要做主题的人：一个主题需要哪些文件、拿到手的 `ctx` 里有什么、哪些规矩必须守、怎么在本地看和测。
 
-最朴素的完整例子是 [`probe/`](probe/)（`theme.js` 约 150 行）。它把 `ctx` 的每一项都用了一遍，建议先读它，再读这里。
+最朴素的完整例子是 [`probe/`](probe/)（`theme.js` 不到 200 行）。它把 `ctx` 的每一项都用了一遍，建议先读它，再读这里。
 
 - [一、它是怎么工作的](#一它是怎么工作的)
 - [二、一个主题由什么组成](#二一个主题由什么组成)
@@ -10,7 +10,7 @@
 - [四、ctx 里有什么](#四ctx-里有什么)
 - [五、生命周期](#五生命周期)
 - [六、信的正文](#六信的正文)
-- [七、三种要特别对待的信](#七三种要特别对待的信)
+- [七、要特别对待的几种信](#七要特别对待的几种信)
 - [八、网站自己的声音和彩蛋](#八网站自己的声音和彩蛋)
 - [九、规矩](#九规矩)
 - [十、本地预览和测试](#十本地预览和测试)
@@ -142,6 +142,7 @@ interface Ctx {
     fmt: Fmt;
   };
   widgets: { init(el: Element): void };
+  prose: { prepare(el: Element, letter?: Letter): Element };   // 正文的统一整理，核心已经替主题调过，见第六节
 }
 ```
 
@@ -165,13 +166,15 @@ interface Days { met: number | null; together: number | null; married: number | 
 
 ### `ctx.letters`
 
-一个普通数组（最早的在前），外加三个帮手：
+一个普通数组（最早的在前，按信**真正写下的那一天**排），外加四个帮手：
 
 ```ts
 interface Letters extends Array<Letter> {
-  byUrl(url: string): Letter | null;   // 路径或完整网址、编码过或没编码过都可以
+  byUrl(url: string | URL | Element): Letter | null;   // 路径、完整网址、编码过或没编码过都可以，也可以直接传一个 <a>
   byNo(no: number): Letter | null;
   latest: Letter;                      // 最新的一封
+  years: { year: number; letters: Letter[] }[];   // 从第一封信那年到最新一封那年，一年一项，最早的在前；
+                                                  // 没有人写信的年份（现在是 2020 和 2022）也有一项，letters 是 []
 }
 
 interface Letter {
@@ -179,13 +182,14 @@ interface Letter {
   index: number;            // 在数组里的位置（no - 1）
   title: string;
   url: string;              // "/story/2026/08/12/木婚快乐/"，可以直接放进 href
-  date: string;             // "2026-08-12"
-  time: string;             // "19:25"，front matter 里写的时间；很多封只是占位（00:00、01:00）
+  date: string;             // "2026-08-12"，信真正写下的那一天（见下面「日期」）
+  time: string | null;      // "19:25"，front matter 里写的时间；很多封只是占位（00:00、01:00）。真实日期和网址不一致的信是 null
   year: number;             // 2026
   doy: number;              // 一年里的第几天，1–366
-  author: string;           // "Pikajay" | "Pikachi" | "Claude" | …
-  role: 'him' | 'her' | 'guest';        // him = Pikajay，her = Pikachi，其他人都是 guest
-  days: Days;               // 写这封信那天，各过了多少天
+  author: string;           // 第一作者："Pikajay" | "Pikachi" | "Claude" | …
+  authors: string[];        // 所有作者，第一作者在前：["Pikajay"]、["Pikajay", "Pikachi"]、["Claude"]
+  role: 'him' | 'her' | 'both' | 'guest';   // him = Pikajay，her = Pikachi，both = 两个人一起写的，其他人都是 guest
+  days: Days;               // 写这封信那天，各过了多少天；信里自己说了数字的，以信为准（见下面「天数」）
   quote: string | null;     // 从信里摘的一句
   place: string | null;
   song: { title: string; src: string; duration: number | null; artist: string | null } | null;
@@ -204,13 +208,21 @@ interface Cover {
   color: string;            // 平均色，"#474a52"
   lqip: string;             // 16px 的模糊小图，data: URI
   focus: [number, number];  // 裁切时要保住的中心点，0–1
+  own: boolean;             // false = 这张封面是网上找的图，不是他们自己拍的照片（现在有 10 封）
   base: string; widths: number[];   // 缩略图：`${base}-${width}.avif` / `.jpg`
 }
 ```
 
 `song.title` 是 mp3 的文件名去掉扩展名（他们就是这样给歌起名的）。`song.duration` 是秒，可能带小数；`artist` 来自 mp3 的 ID3 标签，有几首没有。
 
-**`song`、`cover`、`quote`、`place` 都可能是 `null`，作者也不只有两个人。** 现在的 31 封信恰好每一封都有歌、封面和摘句，作者只有 Pikajay 和 Pikachi，所以照着现有数据写，很容易写出 `letter.song.title` 这样的代码；下一封信只要没配歌，整个主题就会抛异常、全站退回旧版。测试会把数据改写成「有一封客人写的信、有一封没有歌没有封面没有摘句的信」再把每个主题跑一遍（见[第十节](#十本地预览和测试)）。
+**`song`、`cover`、`quote`、`place` 都可能是 `null`，作者也不只有两个人。** 现在的 32 封信恰好每一封都有歌、封面和摘句，所以照着现有数据写，很容易写出 `letter.song.title` 这样的代码；下一封信只要没配歌，整个主题就会抛异常、全站退回旧版。测试会把数据改写成「有一封客人写的信、有一封没有歌没有封面没有摘句的信」再把每个主题跑一遍（见[第十节](#十本地预览和测试)）。
+
+几件数据上的事，都已经在核心里处理好，主题照着字段用就对了：
+
+- **日期。** 「One Year」是 2017-02-21 写的，但 front matter 里的 `date` 当年打错了，并且成了它的网址。这封信在 front matter 里另有 `written_on: 2017-02-21`：`letter.date`（以及 `year`、`doy`、`days`、排序和编号）用的都是真实的这一天，`letter.time` 是 `null`，`letter.url` 保持原样。**界面上的日期一律用 `letter.date`，不要从网址里取。**
+- **天数。** `letter.days` 是按日历算的整天数，但信里自己写了数字的以信为准：「221 FOREVER」说认识 295 天，「和小天使的三百天」说在一起 300 天（他们有时把当天也算进去，日历上是 294 和 299）。front matter 里写的是 `days: { met: 295 }` / `days: { together: 300 }`。
+- **作者。** `role` 有四种，主题四种都要能画。`both` 现在只有「教小天使发布文章」（front matter 里 `coauthor: Pikachi`，正文大半是她写的，那是她第一次在这个网站上写字）；`guest` 现在是第 32 封，Claude 写的。**她写的信不是例外。** 要标作者，就每一封都标（`probe` 的写法：「他写的」「她写的」「两个人一起写的」「Claude 写的」）；不要只在她的信或客人的信上加记号。
+- **封面是不是他们自己的照片。** `cover.own === false` 的封面是早年从网上找的配图。主题不要把这样的图当成他们的照片来放大、做成相片或铺满首屏；`probe` 的做法是把它压得很小。
 
 ### `ctx.page`
 
@@ -303,8 +315,11 @@ interface Player {
 
 ```ts
 interface Router {
-  go(url: string): Promise<boolean>;     // 等同于点了一个链接。true = 没有换页
-  back(url?: string): Promise<boolean>;  // 「回到目录」，默认 url 是 '/'。见下面
+  go(url: string, options?: { replace?: boolean }): Promise<boolean>;
+                                         // 等同于点了一个链接。true = 没有换页。replace 见下面「历史记录」
+  home(): Promise<boolean>;              // 「回到目录」，就是 back('/')
+  back(url?: string): Promise<boolean>;  // 「回到 url」，默认 url 是 '/'。见下面
+  lastRead: Letter | null;               // 刚读过的那封信；这个标签页里还没打开过信时是 null
   prefetch(url: string): void;           // 提前把一封信的 HTML 取回来（指针移上去或手指按下时调用）
   current: Route;                        // 现在屏幕上的这一页
   soft: boolean;                         // mount 返回了 show 之后为 true
@@ -318,11 +333,16 @@ type Route =
 
 `mount()` 返回 `{ show(route) }` 之后，核心会接管这样的点击：同源的 `<a>`（HTML 的和 SVG 里的都算），路径是 `/` 或某封信的地址，没有查询参数，没有 `target`、`download`，没有按着修饰键。其他链接照常跳转。指向**当前这一页**里某个锚点的链接（`href="#某个id"`）也不接管，由浏览器自己滚过去，所以「跳到正文」这样的链接可以照常写。
 
-一次不换页的跳转做这些事：取回那封信的页面 → 取出 `.content-body` → `ctx.widgets.init` → `history.pushState` → 改 `document.title` → 更新 `ctx.page` → 调 `show(route)` → 等它结束（可以返回 Promise）→ 设置滚动位置。
+一次不换页的跳转做这些事：取回那封信的页面 → 取出 `.content-body` → `ctx.prose.prepare`（见[第六节](#六信的正文)）→ `ctx.widgets.init` → 写历史记录（新增一条或替换当前这条，见下一条）→ 改 `document.title` → 更新 `ctx.page` → 调 `show(route)` → 等它结束（可以返回 Promise）→ 设置滚动位置。
 
+- **历史记录，所有主题都一样：从目录打开一封信是新增一条；从一封信到另一封信（上一封 / 下一封）是替换当前这条。** 于是目录永远在信的后面一步，在任何一封信上按后退都回到目录，而不是把翻过的信一封封倒回去。这是默认规则，点链接和 `router.go(url)` 都照它办，主题什么都不用做：上一封 / 下一封写成普通的 `<a href>` 就是替换。想明确指定时传 `router.go(url, { replace: true })`（替换）或 `{ replace: false }`（新增）。翻到 `standalone` 的那封信时是整页加载，核心同样用替换的方式加载，后退仍然回到目录。
 - **滚动位置**：点链接过去是顶部，后退 / 前进是当时离开的位置，这个值在 `route.scrollY` 里（记的是 `window.scrollY`）。链接带着锚点（`/story/…/#某个id`）时 `route.hash` 是 `"#某个id"`，核心会滚到那个元素。主题想自己管滚动（比如信是原地展开的），就让 `show` 返回 `false`（或 resolve 成 `false`），核心便不再动它。无论谁来管，**后退之后读者必须回到离开时的位置**。`show(route)` 被调用的那一刻，页面还停在上一个视图的滚动位置，需要的话可以在函数开头读 `window.scrollY`。
 - **`show()` 不会重叠。** 上一次 `show` 返回的 Promise 还没结束时（比如转场动画还在放），下一次跳转会等它，最多等 2 秒；这期间读者又点了几次，只有最后一次会被画出来。所以 `show` 里不用防备「画到一半又被调用」，但也因此**只在确实需要核心等待时才返回 Promise**（等的是「滚动位置可以设置了」这一刻，不必等整段动画放完），并且它一定要结束。
-- **「回到目录」**：给链接加上 `data-back` 属性，`<a href="/" data-back>`。读者如果正是从目录点进这封信的，这个链接就等同于后退键：回到目录离开时的位置，也不会多出一条历史记录；如果不是（直接打开的信、从上一封翻过来的），它就是一个普通的链接，去目录的顶部。键盘的 Esc 等其他入口用 `router.back('/')`，效果相同。
+- **「回到目录」**：给链接加上 `data-back` 属性，`<a href="/" data-back>`；键盘的 Esc 等其他入口调 `router.home()`（就是 `router.back('/')`），效果相同。目录如果就在后面一步（读者是从目录点进来的，之后不管翻了多少封），它等同于后退键：回到目录，不会多出一条历史记录。目录不在后面（直接打开的信），它就新增一条目录的记录。不带 `data-back` 的普通 `<a href="/">`（比如页眉的站名）永远是新增一条、去目录的顶部。
+- **回到目录时，眼前应该是刚读过的那封信，而不是当初出发的位置。** 核心把「刚读过的那封信」记在 `router.lastRead` 里（整页加载之后也还在，存在这个标签页的 `sessionStorage` 里）。读者从目录点开第 29 封，一路翻到第 21 封，再回目录，这时目录应该停在第 21 封那里。
+  - `show(home)` 没有返回 `false` 的主题（滚动交给核心）：核心先恢复离开时的位置；如果读者翻过信（现在的 `lastRead` 不是当初点开的那一封），或者这条目录记录是 `home()` 新增的，而目录里指向 `lastRead` 的链接（`<a href="{letter.url}">`）又不在屏幕上，核心就滚动窗口，把离得最近的那个链接放到屏幕中间。读者原样后退（点开一封、读完、后退）时目录一动不动。核心只滚动窗口；固定或吸附在屏幕上的元素里的链接（比如播放条上那封信的名字）不算目录。
+  - `show(home)` 返回 `false` 的主题（自己管滚动）：自己读 `router.lastRead`，把那封信带到眼前。
+  - 两种主题都可以在 `show(home)` 里用 `router.lastRead` 给那一封做个记号（`probe` 给它的标题加了下划线）。
 - **等待中的提示**：信还在路上时，`<html>` 上有 `data-navigating` 属性，取到就去掉。`shared/widgets.css` 只把指针改成了「忙」，主题可以用 `html[data-navigating] …` 画自己的提示（给它加一点 `animation-delay`，网快的时候就不会闪一下）。超过 8 秒还没取到，就改成整页跳转。
 - `prefetch` 只取 HTML，不会下载信里的照片（有的一张就 4 MB）；照片要到这封信真的被打开时才开始加载。所以可以放心在 `pointerenter` / `touchstart` 上调用。
 - 取回来的信在本次到访里一直缓存着，再次打开拿到的是同一个节点。
@@ -354,20 +374,28 @@ type Route =
     date(day: string, style?: 'zh' | 'iso' | 'dot' | 'md' | 'weekday' | 'year'): string;
     //   'zh' 2026年8月12日（默认） 'iso' 2026-08-12   'dot' 2026.08.12
     //   'md' 8月12日              'weekday' 星期三   'year' 2026
+    season(day: string | Date): '春' | '夏' | '秋' | '冬' | '';
+    //   按月份（北半球）：3–5 月春，6–8 月夏，9–11 月秋，12–2 月冬。season('2016-06-08') → "夏"
     days(n: number | null): string;      // 4007 → "4007 天"；null → ""
     clock(seconds: number): string;      // 241.6 → "4:01"
   }
   ```
 
+  **一封信的季节用 `fmt.season(letter.date)`，不要用节气或天文季节来算。** 6 月 8 日的「Hang Zhou」写着「夏花烂漫」，按夏至来算它却成了春天。
+
 ### `ctx.widgets.init(el)`
 
 让一段信的正文里的小部件活起来（现在是翻转卡片）。核心对进来时的正文和每一段取回来的正文都已经调过一次；主题把正文搬进自己的版式之后**再调一次**，卡片会按新的宽度重新量高度。可以重复调用。
+
+### `ctx.prose.prepare(el, letter)`
+
+把一段正文从「旧版页面写的样子」整理成「任何主题都能直接排的样子」，做了什么见[第六节](#六信的正文)。**主题通常不需要调用它**：进来时的那段正文在 `mount` 之前、每一段取回来的正文在交给 `show` 之前，核心都已经整理过，主题拿到的永远是整理好的。同一段正文再调一次什么都不会发生（正文上有 `data-prose` 标记）。旧版（classic）下从不调用。
 
 ## 五、生命周期
 
 1. `<head>`：内联脚本选好主题，在 `<html>` 上写 `data-theme="<id>"`、`lang="zh-Hans"`、`color-scheme`，把视口改成 `width=device-width,initial-scale=1,viewport-fit=cover`，然后依次写出字体 CSS、`shared/widgets.css`、`theme.css`（都会挡住首帧），并预取核心模块和 `theme.js`。
 2. 页面解析。旧版的 DOM 是隐藏的（`body` 下除了 `#theme-root`、`script`、`style` 以外的一切都是 `display: none !important`）。信的页面里 `.content-body` 是活的，信自带的内联脚本此时已经执行。
-3. `<body>` 末尾：核心读数据、组装 `ctx`、引入 `theme.js`、调用 `mount(ctx)`。
+3. `<body>` 末尾：核心读数据、组装 `ctx`（信的页面在这一步整理正文：`ctx.prose.prepare`，然后 `ctx.widgets.init`）、引入 `theme.js`、调用 `mount(ctx)`。
 4. `mount` 结束（可以是 async）后：路由开始工作，`<html>` 上出现 `data-theme-ready="<id>"`。需要「JS 就绪后才开始」的入场动画用它来开启，不要用它来隐藏内容。
 5. 之后每次站内跳转：`show(route)`。一次只有一个 `show` 在跑（见 [`ctx.router`](#ctxrouter)）。
 
@@ -381,15 +409,28 @@ type Route =
 
 ## 六、信的正文
 
-`route.contentEl`（进来时是 `ctx.page.contentEl`）是 kramdown 渲染出来的 HTML。31 封信里出现过的东西：
+`route.contentEl`（进来时是 `ctx.page.contentEl`）是 kramdown 渲染出来的 HTML，**并且已经被核心用 `ctx.prose.prepare` 整理过**。旧版页面里有不少只在旧版样式下才成立的写法（用背景图放的照片、没有尺寸的图片、写死的高度），每个主题都得做同样的修补，所以统一在核心里做一次，主题拿到手的正文是这样的：
 
-- 段落、`<br>`、`<b>`、`<em>`、链接
-- `<blockquote>`：多数是歌词，每行一个 `<br>`
+- 段落、`<br>`、`<b>`、`<em>`、链接、带 `id` 的标题
+- **照片**：每一张都是 `<figure class="letter-figure"><img …></figure>`；原来单独包着一张图的 `<p>` 或 `<div align="center">` 已经换成了这个 `figure`。旧版用 `<div class="img img--NxLeading" style="background-image:url(…)">` 放的 21 张也已经换成了它，一张都没有少。
+  - `<img>` 上有 `width` / `height`（原图尺寸，页面不会跳）、`loading="lazy"`、`decoding="async"`、`alt`；有缩略图的带 `srcset` 和 `sizes`，原图地址留在 `data-orig`。
+  - `figure` 上的类：`is-gif`（会动的图，`<img>` 上同时有 `data-gif`，主题可以决定怎么对待它，比如尊重 `prefers-reduced-motion`）、`is-portrait`（竖图）、`is-small`（原图不到 400px 宽，不要放大）。
+  - 作者自己给图片写过宽度（`width: 70%`）的，这个值在 `figure` 的 `--fig-w` 上。
+  - 默认样式在 `shared/widgets.css`：保持比例，不超出版心，不放大，居中，竖图不超过一屏高。主题可以整个覆盖。
+  - 夹在一句话中间的 `<img>` 留在原处，只补了尺寸。
+- `<blockquote class="lyrics">`：用 `<br>` 一行一行排的引文，多数是歌词。结尾那行「- 某某」包在 `<span class="quote-by">` 里。只有一句话加一个出处的引文不算 `lyrics`。
 - `<blockquote class="largeQuote">`：大号的引语（2021 年那封里网站自己的留言就是它）
 - `<blockquote class="u--startsWithDoubleQuote">`（22 处）：以 `“` 开头的引语。旧版用 `text-indent: -0.4em` 把引号悬挂到版心外面；新主题可以照做，也可以不管
-- `<img>`，有的包在 `<div align="center">` 或 `<p style="text-align:center">` 里，有的带内联的 `width`
-- `<div class="img img--fullContainer img--14xLeading" style="background-image:url(…)">`：用背景图放的照片和 GIF，高度由类名决定（5x–16x）
-- 「木婚快乐」里的 `.flip-card`，「29, 28, π」里的礼物盒（内联 `<style>`、`<script>` 和一块 `position: fixed` 的 `<canvas>`）
+- **粗体**：「教小天使发布文章」里她写的那 14 行，每行开头一个 `<b>`、从不关闭（kramdown 把它们一层套一层）。整理之后是每行一个独立的 `<b>`，不嵌套，也不会漏到信的外面。那些行本来就是粗体，是她自己加的。
+- 写死的高度（`style="height: 800px"`）已经去掉，其余的内联样式保留；信里自带的 `<style>`、带 `id` 的元素和两件小部件不动。
+- 「木婚快乐」里的 `.flip-card`，「29, 28, π」里的礼物盒（内联 `<style>`、`<script>` 和一块 `position: fixed` 的 `<canvas>`）。它们原样保留，只是里面的图片补了尺寸，卡片正面最后的日期和地点两行是 `<p class="letter-signoff">`。
+
+**这两封信是「东西」，不是文字加配图，任何主题都不能把它们摊平、预先打开或换成占位符：**
+
+- 翻转卡片：正面是打出来的信和落款（「2026年8月12日 7:25 PM」「Oak Creek 家中」），背面是那张手写卡片的照片；点一下（或用键盘 Enter / 空格）翻面。整页打开和不换页跳转过来都要能翻。
+- 礼物盒：读者点了才打开，打开后是那张图片和一句「生日快乐，我的小天使！」，彩纸铺满整个屏幕。
+
+它们的结构性样式在 `shared/widgets.css`，主题只负责「换皮」（下面表格里的自定义属性）。
 
 规矩：
 
@@ -402,7 +443,7 @@ type Route =
 
 `shared/widgets.css` 在每个新主题下都会先于 `theme.css` 加载，里面是正文离不开的结构性样式，主题不用重写：
 
-- 正文里的 `img`、`video` 不超出容器；`.img` 和 `.img--NxLeading` 的高度（N × `--letter-leading`，默认 `1.5rem`）
+- 正文里的 `img`、`video` 不超出容器；`figure.letter-figure` 的默认排法（见上）
 - 翻转卡片的结构和翻转动作
 - 礼物盒在新主题下需要的几处修正（比如把写死的深色文字改成跟随主题）
 
@@ -410,7 +451,7 @@ type Route =
 
 | 属性 | 默认值 | 作用 |
 |---|---|---|
-| `--letter-leading` | `1.5rem` | 正文的一行；照片块的高度是它的整数倍 |
+| `--letter-leading` | `1.5rem` | 正文的一行；照片上方的间距是它 |
 | `--flip-front-bg` / `--flip-front-ink` / `--flip-front-border` / `--flip-front-pad` | `#fafaf8` / `#23221f` / `1px solid #e8e8e4` / `2rem 1.5rem` | 卡片正面（文字那面）。默认是一张浅色的卡片配深色的字，放在深色主题里也读得清；要改就底色和字色一起改 |
 | `--flip-back-bg` / `--flip-back-pad` / `--flip-photo-shadow` | `#f5f0e8` / `1.5rem` / 一道浅影 | 卡片背面（照片那面） |
 | `--flip-hint-ink` / `--flip-hint-opacity` | 当前文字色 / `.45` | 卡片底部那行提示 |
@@ -419,11 +460,13 @@ type Route =
 
 这些规则的优先级都很低，在 `theme.css` 里直接覆盖也可以。
 
-## 七、三种要特别对待的信
+## 七、要特别对待的几种信
 
-**客人写的信（`role === 'guest'`）。** 第 32 封是 Claude 写的，孩子也出生了，所以不要假设只有两个作者。每个主题用自己的语言给客人的信一个安静的位置（唱片的附赠曲目、一颗路过的天体、一篇跋、一张标着「Claude 写的」的相片），不要藏起来，也不要比他们俩的信更显眼。
+**客人写的信（`role === 'guest'`）。** 第 32 封「装修好了，钥匙在门垫下面」是 Claude 写的，孩子也出生了，所以不要假设只有两个作者。每个主题用自己的语言给客人的信一个安静的位置（唱片的附赠曲目、一颗路过的天体、一篇跋、一张标着「Claude 写的」的相片），不要藏起来，也不要比他们俩的信更显眼。按 `role` 查表的代码要给 `guest` 留一项，或者有默认值：`({ him: 'A', her: 'B' })[letter.role]` 在客人的信上是 `undefined`。名字从 `letter.authors` 里取，不要写死成 Claude。
 
-这个仓库里现在还没有客人的信。想看效果：把任意一封信 front matter 里的 `author:` 临时改成 `Claude`，重新构建（看完改回去，不要提交）。按 `role` 查表的代码要给 `guest` 留一项，或者有默认值：`({ him: 'A', her: 'B' })[letter.role]` 在客人的信上是 `undefined`。
+**两个人一起写的信（`role === 'both'`）。** 现在是「教小天使发布文章」：开头几行是他写的，后面大半是她的。它既不是「他的信」也不是「她的信」，按作者分栏、分面、分色的主题要给它一个说得通的位置，`letter.authors` 里有两个名字。
+
+**她写的信（`role === 'her'`）不需要特别对待，这正是要说的。** 现在有 4 封。不要只给她的信加标签、换颜色或者单独归一类，好像他写才是常态：要标作者就每一封都标，要分就两边对等地分。
 
 **沉重的信（`quiet === true`）。** 现在是 2026-02-06 的「世界赠予我们的」，写的是流产。它周围不要有俏皮的动效：不漂、不弹、不抖，悬停放大也不要。照常排版即可。
 
@@ -462,8 +505,20 @@ type Route =
 - 每封信都能用 Tab 到达，焦点看得见，Esc 能关掉浮层，后退键做读者预期的事。
 - `<html lang="zh-Hans">` 由核心设置。
 
+**读信的路（每个主题都一样）**
+- 上一封 / 下一封不增加历史记录，在任何一封信上后退都回到目录（核心的默认规则，见 [`ctx.router`](#ctxrouter)；主题不要用 `{ replace: false }` 把它改回去）。
+- **每封信的末尾都有回目录的入口**，不能只在顶上有。读完一封长信，目录要在一次点按之内：一个 `<a href="/" data-back>`，或者一条始终留在屏幕上的栏。
+- 回到目录时，刚读过的那封信在眼前（`router.lastRead`）。
+- **手机上，最新的一封信在首页第一屏里就点得到**，不用滚动。
+- **手机上，歌一旦在放，暂停键要在拇指够得着的地方**：屏幕的下半部分，并且读者往下读的时候它一直在。它和所有能放歌的控件一样带 `data-play`。
+- 一首歌放完就停。一封信的歌后面永远不接另一封信的歌（核心不会自动放下一首，主题也不要自己接）。
+
 **文字**
 - 界面上的字都用中文，平实，是他们俩的语气。没有爱心，没有粉色，没有花体字，没有婚礼套路。
+- 没有人写信的年份（`letters.years` 里 `letters` 为空的那几项）写「没有信」或「这一年没有写信」。**不要写「无信」**，它读起来也是「言而无信」的那个无信。
+- 一封信的季节用 `fmt.season(letter.date)`（按月份），不要用节气。
+- 日期用 `letter.date`，天数用 `letter.days`（信里自己说的数字优先），不要自己从网址或日期重新算。
+- 要标作者就每一封都标；封面不是他们自己照片的（`cover.own === false`）不要当成照片来展示。
 
 **边界**
 - 主题的 CSS 可以写 `html`、`body`、`#theme-root` 以及它里面的一切。不要试图把 `#theme-root` 以外的东西显示出来。
@@ -497,13 +552,18 @@ npx playwright test --ui                     # 带界面，能一步步看
 - 首页上有 `ctx.ui.hunger().text` 那句话，有 `ctx.ui.switcher()`
 - 信的正文在 `.letter-body` 里面
 - 把数据改写成「最新的一封是客人写的、有一封没有歌没有封面没有摘句没有地点」之后，首页和这两封信照样画得出来，没有报错（整页打开和不换页跳转都试）
-- 翻转卡片点一下翻过去，用键盘能翻回来
-- 礼物盒点开后彩纸铺满整个屏幕（验证的就是「祖先没有 transform」）
+- 翻转卡片（整页打开和不换页跳转各试一次）：正面是打出来的信和落款，照片在翻面之前看不见；点一下翻过去，照片加载出来并保持比例；用键盘能翻回来
+- 礼物盒：一开始是关着的；点开后彩纸铺满整个屏幕（验证的就是「祖先没有 transform」），盒子里的图片加载出来，下面是「生日快乐，我的小天使！」
 - 首页 → 点一封信（不换页）→ 点 `[data-play]` 歌响了 → 后退（不换页，回到原来的滚动位置，歌还在放）→ 前进
+- 一封信读到末尾（正文最后一行滚到屏幕上方）时，屏幕上有回目录的入口：指向 `/` 的链接，或带 `data-back` 的元素
+- 首页上没有「无信」两个字
+- 手机尺寸（402 × 874）下：首页不滚动就有一个看得见的、指向最新一封信的 `<a href>`；歌放起来之后往下读，屏幕下半部分一直有一个看得见的 `[data-play]`（这一项只在能真的出声的 Chrome 里查）
 - 402px 宽、`prefers-reduced-motion: reduce` 下各种页面都不溢出
 - 两个文件没有超出体积上限；首页冷缓存打开、读者什么都还没做时，一共传输不超过 700 KB（文本按 gzip 后算；超了的话，测试会列出最重的几个文件）
 
-测试靠三个约定找到东西：正文容器叫 `.letter-body`；放歌的控件带 `data-play`；首页用普通的 `<a href="{letter.url}">` 链接到信。
+测试靠三个约定找到东西：正文容器叫 `.letter-body`；放歌的控件（包括常驻的播放 / 暂停键）带 `data-play`；首页用普通的 `<a href="{letter.url}">` 链接到信。
+
+核心自己的行为用 `probe` 来测（`tests/core.spec.mjs`、`tests/prose.spec.mjs`、`tests/eggs.spec.mjs`）：上一封 / 下一封替换历史记录、`router.home()`、`router.lastRead`、回到目录时把刚读过的信带到眼前；32 封信逐封检查整理前后图片一张不少、每张都加载得出来、没有横向滚动、粗体没有多也没有少；四种 `role`、信里自己说的天数、`fmt.season`、`letters.years`。
 
 改了核心或模板之后，还要确认旧版没有被动到：让每一页都以 classic 打开，再和线上版本逐页对比。
 
