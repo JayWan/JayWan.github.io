@@ -1,0 +1,374 @@
+/* 「笺」 folio — 纸与墨，一点朱。竖排的目录，横排的信。没有动效。
+   说明见同目录 README.md。shared/widgets.css 已经先于本文件加载。 */
+
+:root{
+  --paper:#F4F1EA;        /* 纸：暖白，不发黄。和 _data/themes.yml 里的 ground 一致 */
+  --paper-lit:#FCFAF6;    /* 被指到的那一列、图版的衬纸 */
+  --ink:#211E1A;          /* 墨 */
+  --ink-2:#5F584F;        /* 淡墨：注记 */
+  --ink-3:#8E867A;        /* 更淡：只给不承载信息的字 */
+  --red:#A03A29;          /* 朱：纸上「印」的东西、日数、眉批、着重号 */
+  --frame:#BF9382;        /* 版框（上下栏线） */
+  --rule:#E3D7CC;         /* 界行、横格 */
+
+  /* 西文字体在前：字母和数字出自 Garamond，汉字和中文标点落到仿宋（F221 Garamond 的 unicode-range 不含引号、破折号） */
+  --fs:"F221 Garamond","F221 Fangsong","STFangsong","FangSong","STKaiti","Kaiti SC","Songti SC","Noto Serif CJK SC",serif;
+  --lat:"F221 Garamond En","F221 Garamond",Georgia,"F221 Fangsong",serif;
+
+  --page:1296px;          /* 版心宽 */
+  --n:12;                 /* 一叶几行（竖着的行）。theme.js 读它来分叶 */
+  --cell-h:520px;         /* 格高 */
+  --foot:54px;            /* 下栏：日数 */
+  --tian:150px;           /* 天头：眉批写在这里 */
+  --t:29px;               /* 目录题名 */
+  --wari:15.5px;          /* 夹注 */
+  --pad:26px;
+  --bar-h:54px;           /* 底边那一行歌 */
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:var(--paper);color:var(--ink)}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
+  font-synthesis:none;font-kerning:normal;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+#theme-root{min-height:100vh;min-height:100svh;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+#theme-root [hidden]{display:none !important}
+:where(#theme-root) a{color:inherit}
+:where(#theme-root) :is(h1,h2,h3,h4,h5,h6,p,ol,ul,dl,dd,figure,blockquote){margin:0}
+:where(#theme-root) :is(h1,h2){font-weight:400}
+.fo-main:focus{outline:none}
+
+.v{writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:mixed}
+.tcy{-webkit-text-combine:horizontal;text-combine-upright:all;font-family:var(--lat)}
+#theme-root :lang(en){font-family:var(--lat)}
+:where(#theme-root) :focus-visible{outline:1.5px solid var(--red);outline-offset:3px}
+
+/* ══════════════ 首页：目录 ══════════════ */
+.home{padding:calc(28px + env(safe-area-inset-top)) max(24px,calc((100% - var(--page)) / 2)) 0}
+.spread{display:grid;direction:rtl;grid-template-columns:minmax(0,1fr)}
+.spread--pair{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.leaf{direction:ltr;padding-top:var(--tian);padding-bottom:36px;scroll-margin-top:8px;min-width:0}
+.cols{list-style:none;padding:0;display:grid;direction:rtl;grid-template-columns:repeat(var(--k,var(--n)),minmax(0,1fr));row-gap:var(--tian)}
+.cell{direction:ltr;text-align:start;position:relative;height:var(--cell-h);min-width:0;
+  border-top:2px solid var(--frame);border-bottom:1px solid var(--frame);
+  border-left:1px solid var(--rule);box-shadow:1px 0 0 var(--rule)}
+/* 下栏的那条线贯穿整叶，空行也有 */
+.leaf:not(.leaf--title) .cell::after,.feet .cell::after{content:"";position:absolute;left:0;right:0;bottom:var(--foot);border-top:1px solid var(--rule);pointer-events:none}
+
+/* 扉页：同一张笺 */
+.leaf--title .cols{row-gap:0}
+.leaf--title .cell{display:flex;justify-content:center;padding-top:var(--pad)}
+.cell--name{grid-column:span 2}
+.name{font:400 64px/1 var(--lat);letter-spacing:.075em;white-space:nowrap}
+.cell--sub{flex-direction:column;align-items:center;justify-content:flex-start}
+.sub-kind{font:28px/1.22 var(--fs);letter-spacing:.34em;white-space:nowrap}
+.pens{margin:auto 0 22px}
+.cell--flh h2{font:23px/1.3 var(--fs);letter-spacing:.6em;white-space:nowrap}
+.leaf--title .cell--fl,.leaf--lost .cell--fl{display:flex;grid-column:span 2;padding-top:0;flex-direction:row-reverse}
+.half{flex:1;display:flex;justify-content:center;padding-top:var(--pad);min-width:0}
+.half+.half{border-right:1px solid var(--rule)}
+.half p{font:17px/1.3 var(--fs);letter-spacing:.07em;white-space:nowrap}
+.leaf--title .cell--latest{padding-top:0}
+.cell--latest .col{width:100%}
+.latest-k{font:13.5px/1 var(--fs);letter-spacing:.34em;color:var(--red);margin-bottom:16px;white-space:nowrap}
+
+/* 翻到某一年 */
+.yidx{display:flex;justify-content:space-between;align-items:center;margin:22px 0 0;font:16.5px/1 var(--lat);letter-spacing:.05em;font-variant-numeric:oldstyle-nums}
+.yidx-k{font:13.5px/1 var(--fs);letter-spacing:.34em;color:var(--red);min-width:44px}
+.yidx a{display:flex;align-items:center;justify-content:center;min-width:48px;min-height:44px;text-decoration:none}
+.yidx a:lang(zh-Hans){font:16px/1 var(--fs)}
+.yidx a.is-blank{color:var(--ink-3)}
+
+/* 年 */
+.yr{height:100%;display:flex;flex-direction:column;align-items:center;padding-top:var(--pad)}
+.yr-t{font:40px/1 var(--fs);letter-spacing:.14em;white-space:nowrap}
+.yr-n{margin-top:14px;font:16px/1 var(--fs);letter-spacing:.24em;color:var(--ink-2);white-space:nowrap}
+.yr-foot{margin-top:auto;height:var(--foot);display:flex;align-items:center;font:13px/1 var(--fs);letter-spacing:.34em;padding-left:.34em;color:var(--ink-2)}
+.leaf--blank .yr-t{color:var(--ink-3)}
+.leaf--slim{padding-top:36px}
+.leaf--slim .cell{height:236px}
+.leaf--slim .cell::after{display:none}
+
+/* 信：一列 */
+.col{display:flex;flex-direction:column;align-items:center;height:100%;padding-top:var(--pad);
+  text-decoration:none;-webkit-tap-highlight-color:transparent;outline-offset:-5px}
+.t{flex:none;display:flex;flex-direction:row-reverse;align-items:flex-start;gap:5px;
+  font-family:var(--fs);font-size:var(--t);letter-spacing:.07em}
+.ln{display:flex;flex-direction:column;align-items:center}
+.lt{line-height:1.22;white-space:nowrap}
+.lt .lat{font-size:.88em;letter-spacing:.03em}
+.wari{margin-top:10px;font-family:var(--fs);font-size:var(--wari);line-height:1.24;letter-spacing:.05em;color:var(--ink-2);white-space:nowrap}
+.wari>span{display:block}
+.wari .lat{font-size:.94em;letter-spacing:.03em}
+.wari .it{font-style:italic;font-size:1em}
+/* 从夹注到日数的一道虚线，像目录里的引导点 */
+.lead{flex:1;min-height:0;width:0;margin:12px 0 10px;border-left:1px dotted var(--frame);opacity:.75}
+.day{flex:none;margin-top:auto;height:var(--foot);display:flex;align-items:center;font:19px/1 var(--lat);letter-spacing:.04em;color:var(--red);font-variant-numeric:oldstyle-nums}
+.day--k{font:13px/1 var(--fs);letter-spacing:.34em;padding-left:.34em;color:var(--ink-2)}
+.leaf--title .day{height:auto;padding-bottom:20px}
+
+/* 眉批：每一排默认印一句；指到别的列就换成那一列的 */
+.mei{position:absolute;right:calc(50% - .92em);bottom:calc(100% + 14px);height:7.45em;
+  font:16px/1.84 var(--fs);letter-spacing:.06em;color:var(--red);visibility:hidden;pointer-events:none}
+.mei.mei--l{right:auto;left:10px}
+.is-mei .mei,.cell--latest .mei,.is-read .mei{visibility:visible}
+.is-off .mei{visibility:hidden}
+.cell.is-read{background:var(--paper-lit)}
+.leaf:has(.col:focus-visible) .cell:not(:focus-within) .mei{visibility:hidden}
+.cell:focus-within .mei{visibility:visible}
+@media (hover:hover){
+  .cell--letter:hover,.cell--latest:hover,.cell--foot:has(a):hover{background:var(--paper-lit)}
+  .cell:hover>a.col .lt{color:var(--red)}
+  .leaf:has(.cell--letter:hover) .cell--letter:not(:hover) .mei{visibility:hidden}
+  .cell--letter:hover .mei{visibility:visible}
+  .yidx a:hover,.bar-back:hover,.now-home:hover,.theme-switcher a:hover{color:var(--red)}
+}
+
+/* 缺页 */
+.home--lost{padding-bottom:40px}
+.leaf--lost{padding-top:40px}
+
+/* 版权页 */
+.colophon{padding:56px 24px calc(64px + env(safe-area-inset-bottom));text-align:center;color:var(--ink-2)}
+.colophon-today{font:17px/2 var(--fs);letter-spacing:.14em;color:var(--ink)}
+.colophon-today .n{font-size:20px;color:var(--red);letter-spacing:.04em;margin:0 .2em;font-variant-numeric:oldstyle-nums}
+.colophon-voice{max-width:34em;margin:22px auto 0;font:16px/1.9 var(--fs);letter-spacing:.06em;color:var(--ink-2)}
+.voice-k{display:block;font-size:13px;letter-spacing:.34em;padding-left:.34em;color:var(--red)}
+.colophon-name{margin-top:40px;font:14px/2 var(--lat);letter-spacing:.34em;padding-left:.34em;color:var(--ink)}
+.colophon-c{font:14px/2 var(--lat);letter-spacing:.06em}
+.theme-switcher{margin-top:14px}
+.theme-switcher ul{display:flex;flex-wrap:wrap;justify-content:center;gap:0 2px;margin:0;padding:0;list-style:none}
+.theme-switcher a{display:flex;align-items:center;min-height:44px;padding:0 11px;font:14px/1 var(--fs);letter-spacing:.1em;color:var(--ink-2);text-decoration:none}
+.theme-switcher a[aria-current]{color:var(--ink);text-decoration:underline;text-decoration-color:var(--red);text-underline-offset:6px;text-decoration-thickness:1px}
+[data-view="letter"] .colophon{padding-top:44px}
+[data-view="letter"] .colophon-today,[data-quiet] .colophon-voice{display:none}
+
+/* ══════════════ 读信：笺 ══════════════ */
+.letter{--lh:36px;--fz:19px;--shift:6px;--letter-leading:var(--lh)}
+.bar{display:flex;align-items:center;justify-content:space-between;height:calc(68px + env(safe-area-inset-top));
+  padding:env(safe-area-inset-top) max(20px,calc((100% - var(--page)) / 2)) 0;font-family:var(--fs)}
+.bar-back{display:inline-flex;align-items:center;min-height:44px;min-width:44px;font-size:16px;letter-spacing:.3em;text-decoration:none}
+.bar-back::before{content:"";width:22px;height:1px;background:currentColor;margin-right:12px}
+.bar-name{font:13.5px/1 var(--lat);letter-spacing:.34em;padding-left:.34em}
+.bar-no{font:16px/1 var(--lat);letter-spacing:.06em;color:var(--ink-2);min-width:44px;text-align:right;font-variant-numeric:oldstyle-nums}
+.bar-no b{font-weight:400;color:var(--red)}
+.bar-no b:lang(zh-Hans){font-family:var(--fs);letter-spacing:.2em}
+
+.sheet{display:grid;justify-content:center;padding:20px 20px 0;
+  grid-template-columns:264px 56px minmax(0,740px) 236px;
+  grid-template-areas:". . head head" "side . body tiji" "side . feet feet"}
+.side{grid-area:side;min-width:0}.tiji{grid-area:tiji}.head{grid-area:head}.body{grid-area:body}.feet{grid-area:feet}
+
+/* 笺头：像单位信笺上印的那一行 */
+.head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:0 1px 10px;font:14px/1.2 var(--fs);letter-spacing:.2em;color:var(--red);white-space:nowrap}
+.head :lang(en){letter-spacing:.24em;font-size:13px}
+.head-r{letter-spacing:.16em;overflow:hidden;text-overflow:ellipsis}
+
+/* 横格。字落在格线上：行高就是格距，段落、歌词、图都占整数行 */
+.body{min-width:0;border:1px solid var(--frame);border-right:0;
+  padding:var(--lh) 46px calc(var(--lh) * 2 - var(--shift) - 1px);
+  font:var(--fz)/var(--lh) var(--fs);overflow-wrap:break-word;
+  background-image:linear-gradient(to bottom,transparent calc(var(--lh) - 1px),var(--rule) calc(var(--lh) - 1px));
+  background-size:100% var(--lh);background-position:0 calc(var(--shift) * -1)}
+.body .content-body>:first-child{margin-top:0}
+.body p{text-indent:2em;text-align:justify;line-break:strict}
+.body :is(em,i,code,span,a,sup,sub,b,strong){line-height:1}
+/* 仿宋没有粗体也没有斜体：加粗改成朱色着重号，em 是一道细线（西文仍是斜体） */
+.body :is(b,strong){font-weight:400;-webkit-text-emphasis:dot var(--red);text-emphasis:dot var(--red);-webkit-text-emphasis-position:under right;text-emphasis-position:under right}
+.body :is(em,i){font-style:italic;text-decoration:underline;text-decoration-color:var(--frame);text-decoration-thickness:1px;text-underline-offset:5px}
+.body code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,"F221 Fangsong",monospace;font-size:.8em;color:var(--ink-2);-webkit-text-emphasis:none;text-emphasis:none}
+.body a{text-decoration-thickness:1px;text-underline-offset:4px}
+.body p.fo-sign{text-indent:0;text-align:right;color:var(--ink-2)}
+
+.body blockquote{margin:var(--lh) 0;padding:0 0 0 2em;font-size:calc(var(--fz) - 1px);color:var(--ink-2);letter-spacing:.02em}
+.body blockquote p{text-indent:0;text-align:left}
+.body blockquote.u--startsWithDoubleQuote{text-indent:-.36em}
+.body blockquote.largeQuote{font-size:calc(var(--fz) + 1px);color:var(--ink);letter-spacing:.04em}
+.body .q-en{font-style:italic;letter-spacing:0;font-size:1.06em}
+.body blockquote+blockquote{margin-top:0}
+@supports (text-wrap:pretty){ @media (min-width:720px){ .body :is(p,blockquote,li){text-wrap:pretty} } }
+@supports (text-autospace:normal){ .body{text-autospace:normal} }
+.body :is(h1,h2,h3,h4,h5,h6){margin:var(--lh) 0 0;font-weight:400;font-family:var(--fs);line-height:var(--lh)}
+.body :is(h1,h2,h3){font-size:24px;letter-spacing:.12em}
+.body h4{font-size:21px;letter-spacing:.06em}
+.body :is(h5,h6){font-size:17px;letter-spacing:.14em;color:var(--ink-2)}
+.body :is(ol,ul){padding-left:2em}
+.body li{text-align:justify}
+.body li::marker{color:var(--ink-2)}
+.body hr{height:var(--lh);margin:0;border:0}
+
+/* 信里的图：保持原来的颜色，带一圈衬纸，宽度随图。高度由脚本凑成整行（.fo-snap） */
+.body .fo-snap{position:relative;margin-top:var(--lh);margin-bottom:var(--lh)}
+.body :is(figure,.fo-fig){text-align:center;text-indent:0;line-height:0}
+.body :is(figure,.fo-fig) img{display:inline-block;vertical-align:top;width:auto;height:auto;max-width:100%;max-height:calc(var(--lh) * 15);
+  padding:5px;border:1px solid var(--rule);background:var(--paper-lit)}
+.body img[style*="width"]{max-height:none}
+.body figure figcaption{font-size:14px;line-height:var(--lh);color:var(--ink-2)}
+.body div.img{border:5px solid var(--paper-lit);outline:1px solid var(--rule);background-color:var(--paper-lit)}
+
+/* 翻转卡片：一张小一号的笺，自己也有横格 */
+.letter{--flip-margin:var(--lh) 0;--flip-front-bg:var(--paper-lit);--flip-front-ink:var(--ink);--flip-front-border:1px solid var(--frame);
+  --flip-front-pad:calc(var(--lh) - 1px) 30px calc(var(--lh) * 2 - 1px);--flip-back-bg:var(--paper-lit);--flip-back-pad:14px;--flip-photo-shadow:none;
+  --flip-hint-ink:var(--ink-2);--flip-hint-opacity:1;--flip-focus:var(--red);
+  --gift-ink:var(--ink);--gift-margin:var(--lh) 0;--gift-radius:0;--gift-shadow:none}
+.body .flip-card-front{background-image:linear-gradient(to bottom,transparent calc(var(--lh) - 1px),var(--rule) calc(var(--lh) - 1px));
+  background-size:100% var(--lh);background-position:0 calc(var(--shift) * -1)}
+.body .flip-card-back{border:1px solid var(--frame)}
+.body .flip-card-hint{margin-top:var(--lh);font-size:14px;line-height:var(--lh);letter-spacing:.14em;text-indent:0}
+.body .flip-card-front::after,.body .flip-card-back::after{position:absolute;right:14px;bottom:0;font-size:13px;line-height:var(--lh);letter-spacing:.2em;color:var(--red)}
+.body .flip-card-front::after{content:"点一下，翻到背面"}
+.body .flip-card-back::after{content:"点一下，翻回正面";position:static;display:block;text-align:right;line-height:30px;margin-bottom:-8px}
+.body .gift-scene{text-indent:0;line-height:var(--lh)}
+.body .gift-scene p{text-indent:0;text-align:center}
+
+/* 题记：竖在右边的书口 */
+.tiji{border:1px solid var(--frame);border-left:1px solid var(--rule);min-width:0}
+.tiji-in{position:sticky;top:0;display:flex;flex-direction:row-reverse;justify-content:center;align-items:flex-start;padding:38px 0 34px;gap:18px;max-height:100svh}
+.tiji-title{display:flex;flex-direction:row-reverse;gap:6px;font:40px/1.16 var(--fs);letter-spacing:.1em}
+.tiji-title .lt{line-height:1.16}
+.tiji-k{font-size:14px;line-height:1;letter-spacing:.34em;color:var(--red);margin-left:8px;padding-top:4px}
+.tiji-quote{padding-top:3.4em;font:17px/1.85 var(--fs);letter-spacing:.07em;color:var(--ink-2);white-space:nowrap}
+
+/* 左边空白里的东西：图版、歌、日数 */
+.side-in{position:sticky;top:24px}
+.plate{margin-bottom:32px}
+.plate--tall{max-width:190px}
+.plate-btn{display:block;width:100%;padding:6px;border:1px solid var(--rule);background:var(--paper-lit);cursor:pointer;line-height:0;-webkit-appearance:none;appearance:none;border-radius:0;color:inherit}
+.plate-btn picture{display:block}
+.plate-btn img{display:block;width:100%;height:auto;filter:grayscale(1) sepia(.16) contrast(1.06) brightness(1.03)}
+.plate.is-color .plate-btn img{filter:none}
+.plate figcaption{display:flex;justify-content:space-between;gap:8px;margin-top:9px;font:14px/1.5 var(--fs);letter-spacing:.08em;color:var(--ink-2)}
+.plate figcaption .n{font-size:15px;letter-spacing:.02em}
+
+.song-k{font:14px/1 var(--fs);letter-spacing:.42em;color:var(--red)}
+.song-t{margin-top:11px;font:23px/1.4 var(--fs);letter-spacing:.06em}
+.song-a{font:14.5px/1.5 var(--fs);letter-spacing:.1em;color:var(--ink-2)}
+.song-c{display:flex;align-items:center;margin:4px 0 0 -6px}
+.play{flex:none;width:44px;height:44px;padding:0;border:0;background:none;color:var(--ink);cursor:pointer;-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent;border-radius:50%}
+.play svg{display:block;width:44px;height:44px}
+.play-ring{fill:none;stroke:currentColor;stroke-width:1}
+.ic-play,.ic-pause{fill:currentColor}
+.ic-pause,.play[aria-pressed="true"] .ic-play{display:none}
+.play[aria-pressed="true"] .ic-pause{display:block}
+.play.is-loading .play-ring{stroke-dasharray:2 3}
+.song-bar{flex:1;height:44px;margin:0 12px 0 4px;position:relative;cursor:pointer}
+.song-bar::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:var(--frame)}
+.song-bar i{position:absolute;left:0;top:calc(50% - 1px);height:3px;width:0;background:var(--ink)}
+.song-time{font:16px/1 var(--lat);letter-spacing:.04em;color:var(--ink-2);font-variant-numeric:tabular-nums;min-width:2.2em;text-align:right;white-space:nowrap}
+.song-err{min-height:1.5em;font:14px/1.5 var(--fs);letter-spacing:.08em;color:var(--red)}
+
+.counts{margin-top:14px;padding-top:20px;border-top:1px solid var(--rule)}
+.counts>div{display:grid;grid-template-columns:4.2em 1fr;align-items:baseline}
+.counts dt{font:14px/2.1 var(--fs);letter-spacing:.3em;color:var(--ink-2)}
+.counts dd{font:14px/2.1 var(--fs);letter-spacing:.12em;color:var(--ink-2);white-space:nowrap}
+.counts dd .n{font-size:17.5px;letter-spacing:.03em;color:var(--ink);margin:0 .3em;font-variant-numeric:oldstyle-nums}
+.counts dd .pen{font-size:17.5px;letter-spacing:.03em;color:var(--ink)}
+
+/* 信末的一小叶：上一封 | 目录 | 下一封，和目录是同一套格子 */
+.feet{padding-top:calc(var(--lh) * 1.5);display:flex;justify-content:flex-end;--cell-h:324px;--t:21px;--wari:14.5px;--pad:20px;--foot:46px}
+.feet .cols{width:372px;row-gap:0}
+.feet .latest-k{margin-bottom:12px}
+.feet .day{font-size:17px}
+.foot-none{font:15px/1.3 var(--fs);letter-spacing:.14em;color:var(--ink-2);white-space:nowrap}
+.cell--home .lt{letter-spacing:.3em}
+
+/* 底边的一行：歌载入以后一直在；窄屏读信时还带着「目录」 */
+.now{display:none;position:fixed;left:0;right:0;bottom:0;z-index:5;align-items:center;gap:6px;
+  padding:5px calc(16px + env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
+  background:var(--paper-lit);border-top:1px solid var(--frame)}
+.now[data-on]{display:flex}
+.now-t{flex:1;min-width:0;font:17px/1.2 var(--fs);letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;min-height:44px;display:flex;align-items:center}
+.now-k{flex:none;font-size:13px;letter-spacing:.3em;color:var(--red);margin-right:.9em}
+.now-home{display:none;align-items:center;min-height:44px;padding:0 4px 0 14px;margin-left:8px;border-left:1px solid var(--rule);font:15px/1 var(--fs);letter-spacing:.3em;text-decoration:none}
+[data-song] .colophon{padding-bottom:calc(64px + var(--bar-h) + env(safe-area-inset-bottom))}
+@media (min-width:1180px){
+  .now[data-on][data-same]{display:none}
+  [data-song]:has(.now[data-same]) .colophon{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+}
+html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(--red)}
+
+/* ══════════════ 窄一些的桌面 ══════════════ */
+@media (max-width:1343px){ :root{--page:1200px} }
+@media (max-width:1239px){ :root{--n:10} .leaf--title :is(.cell--gap,.cell--flh){display:none} }
+@media (max-width:1059px){ :root{--n:8} .leaf--title .fl-a{display:none} }
+
+/* ══════════════ 平板与手机：图版和题记并排做开篇，正文一栏 ══════════════ */
+@media (max-width:1179px){
+  .sheet{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto 1fr;
+    grid-template-areas:"plate tiji" "song tiji" "counts counts" "head head" "body body" "feet feet";
+    max-width:780px;margin:0 auto;padding:6px 14px 0;column-gap:24px}
+  .side,.side-in{display:contents}
+  .plate{grid-area:plate;margin-bottom:22px;max-width:340px}
+  .song{grid-area:song;align-self:end}
+  .counts{grid-area:counts;display:flex;gap:34px;margin:14px 0 26px;padding:14px 1px 0}
+  .counts>div{display:block}
+  .counts dt,.counts dd{line-height:1.5}
+  .counts dd .n{margin:0 .1em 0 0}
+  .counts dd .u{display:none}
+  .tiji{border:0}
+  .tiji-in{position:static;padding:0;max-height:none;gap:14px;justify-content:flex-start}
+  .body{border-right:1px solid var(--frame)}
+  /* 读信时底边那一行一直在 */
+  [data-view="letter"] .now{display:flex}
+  [data-view="letter"] .now-home{display:flex}
+  [data-view="letter"] .colophon{padding-bottom:calc(64px + var(--bar-h) + env(safe-area-inset-bottom))}
+}
+
+@media (max-width:719px){
+  :root{--n:6;--cell-h:384px;--foot:46px;--tian:150px;--t:21.5px;--wari:12.5px;--pad:20px}
+  .home{padding:calc(8px + env(safe-area-inset-top)) 16px 0}
+  .leaf{padding-bottom:18px}
+  .leaf--title .cell--fl{grid-column:span 1}
+  .half+.half{border-right:0}
+  .half p{font-size:13.5px;letter-spacing:.05em;line-height:1.2}
+  .name{font-size:45px}
+  .sub-kind{font-size:21.5px}
+  .pens{margin-bottom:16px}
+  .latest-k{font-size:12.5px;margin-bottom:12px}
+  .yidx{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));margin-top:14px;font-size:16px}
+  .yidx a{min-width:0}
+  .yr-t{font-size:27px}
+  .yr-n{font-size:13.5px;margin-top:12px}
+  .yr-foot,.day--k{font-size:12px}
+  .t{gap:3px}
+  .wari{margin-top:7px;line-height:1.2}
+  .lead{margin:9px 0 6px}
+  .day{font-size:16px}
+  .leaf--title .day{padding-bottom:14px}
+  .mei{font-size:13.5px;line-height:1.56;right:0;bottom:calc(100% + 10px)}
+  .mei.mei--l{left:4px}
+  .leaf--slim{padding-top:18px}
+  .leaf--slim .cell{height:190px}
+  .colophon{padding-top:40px}
+  .colophon-today{font-size:15.5px;letter-spacing:.1em}
+  .colophon-voice{font-size:15px}
+
+  .letter{--lh:34px;--fz:17.5px;--shift:6px}
+  .bar{height:calc(56px + env(safe-area-inset-top));padding-left:16px;padding-right:16px}
+  .bar-name{font-size:12.5px}
+  .sheet{padding:4px 12px 0;column-gap:16px}
+  .head{font-size:13px;letter-spacing:.14em}
+  .head :lang(en){font-size:12px;letter-spacing:.2em}
+  .head-r{letter-spacing:.1em}
+  .body{padding-left:17px;padding-right:17px}
+  .body p,.body li{text-align:left}
+  .body blockquote{padding:0 0 0 1.5em}
+  .body :is(h1,h2,h3){font-size:22px}
+  .letter{--flip-front-pad:calc(var(--lh) - 1px) 14px calc(var(--lh) * 2 - 1px);--flip-back-pad:8px}
+  .tiji-title{font-size:32px;gap:6px}
+  .tiji-quote{font-size:15px;line-height:1.75;padding-top:2.4em}
+  .plate{margin-bottom:16px}
+  .plate-btn{padding:5px}
+  .plate figcaption{font-size:13px;letter-spacing:.04em}
+  .plate figcaption .n{font-size:14px}
+  .song-t{font-size:20px;margin-top:9px}
+  .counts{justify-content:space-between;gap:10px;margin:8px 0 22px}
+  .feet{--cell-h:292px;--t:19px}
+  .feet .cols{width:100%}
+  .now-t{font-size:16px}
+}
+@media (max-width:349px){ :root{--n:5} .leaf--title .fl-b{display:none} }
+
+/* 这个主题本来就不动；保险起见 */
+@media (prefers-reduced-motion:reduce){
+  #theme-root *,#theme-root *::before,#theme-root *::after{scroll-behavior:auto !important}
+}
