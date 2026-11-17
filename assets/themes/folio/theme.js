@@ -346,10 +346,22 @@ export default {
     function yearIndex() {
       /* 跋只有一篇时，「跋」直接打开它（最新的一封离第一屏只有一下） */
       const to = (g) => (g.guest && g.list.length === 1 ? g.list[0].url : '#' + g.id);
-      return h('nav', { class: 'yidx', 'aria-label': '去哪一年' },
+      const nav = h('nav', { class: 'yidx', 'aria-label': '去哪一年' },
         h('span', { class: 'yidx-k' }, h('span', {}, '去哪'), h('span', {}, '一年')),
         groups.map((g) => h('a', { href: to(g), class: g.list.length ? '' : 'is-blank', lang: g.guest ? null : 'en', 'aria-label': g.label }, g.guest ? '跋' : String(g.year))));
+      nav.addEventListener('click', (e) => { if (e.target.closest('a[href^="#"]') && !location.hash) jumpFrom = window.scrollY; });
+      return nav;
     }
+    /* 跳到某一年是页内的锚点：浏览器会记一条历史，但核心关掉了浏览器自己的滚动恢复（路径没变时它也不插手），
+       于是按「后退」页面纹丝不动。这里补上：后退回到出发的地方，前进回到那一叶。 */
+    let jumpFrom = null;
+    window.addEventListener('hashchange', () => {
+      if (root.dataset.view !== 'home' || !homeEl) return;
+      const id = decodeURIComponent(location.hash.slice(1));
+      const leafEl = id && homeEl.querySelector('#' + (window.CSS && CSS.escape ? CSS.escape(id) : id));
+      if (leafEl) leafEl.scrollIntoView();
+      else if (!id && jumpFrom != null) window.scrollTo(0, jumpFrom);
+    });
 
     let homeEl = null;
     function homeView() {

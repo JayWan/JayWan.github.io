@@ -109,6 +109,26 @@ test.describe('theme "folio": from the contents to a letter and back', () => {
   });
 });
 
+test.describe('theme "folio": the year index', () => {
+  test('a year brings its leaf to the top; Back returns to where the reader was, Forward to the leaf', async ({ page }) => {
+    await open(page, '/', THEME);
+    await page.evaluate(() => document.fonts.ready);
+    const years = await page.evaluate(() => window.__theme.ctx.letters.years.filter((y) => y.letters.length).map((y) => y.year));
+    const year = years[Math.floor(years.length / 2)];
+    await page.evaluate(() => window.scrollTo(0, 120));
+    const link = page.locator(`#theme-root .yidx a[href="#y${year}"]`);
+    await link.click();
+    const top = () => page.evaluate((y) => Math.round(document.getElementById(`y${y}`).getBoundingClientRect().top), year);
+    await expect.poll(top, `the ${year} leaf is at the top of the screen`).toBeLessThan(40);
+    const at = await page.evaluate(() => Math.round(window.scrollY));
+    await page.goBack();
+    await expect.poll(() => page.evaluate(() => Math.round(window.scrollY)), 'Back returns to where the jump started').toBe(120);
+    expect(await view(page)).toBe('home');
+    await page.goForward();
+    await expect.poll(() => page.evaluate(() => Math.round(window.scrollY)), 'Forward returns to the leaf').toBe(at);
+  });
+});
+
 test.describe('theme "folio": a letter', () => {
   test('text sits on the ruled lines and pictures keep their colours and proportions', async ({ page, request }) => {
     const { letters } = await getIsland(request);
