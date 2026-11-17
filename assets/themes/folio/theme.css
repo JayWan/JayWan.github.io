@@ -421,7 +421,7 @@ html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(-
   :root{--t:20px;--wari:12.5px}
   .col.is-long .wari{line-height:1.08}
 }
-@media (max-width:349px){ :root{--n:5} .leaf--title .fl-b{display:none} .leaf--slim .cell{height:216px} }
+@media (max-width:349px){ :root{--n:5} .leaf--title .fl-b{display:none} .leaf--slim .cell{height:216px} .yidx{grid-template-columns:repeat(6,minmax(0,1fr))} }
 
 /* 这个主题本来就不动；保险起见 */
 @media (prefers-reduced-motion:reduce){
