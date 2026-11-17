@@ -235,4 +235,94 @@ test.describe('夜航 (drift)', () => {
     expect(await top()).toBeLessThanOrEqual(40);
     await expect(page.locator('#theme-root .sheet .letter-body .content-body')).toBeVisible();
   });
+
+  test('an open letter keeps the keyboard focus: Tab walks its own controls, Esc returns to its print', async ({ page }) => {
+    await open(page, '/', 'drift');
+    const url = await page.evaluate(() => window.__theme.ctx.letters.byNo(26).url);
+    await open(page, url, 'drift');                      // a hard load: the focus starts on the page, not in the letter
+    const where = () => page.evaluate(() => {
+      const el = document.activeElement;
+      return { inSheet: Boolean(el && el.closest('#theme-root .sheet')), open: !document.querySelector('#theme-root .sheet').hidden };
+    });
+    for (let i = 0; i < 12; i++) {
+      await page.keyboard.press('Tab');
+      expect(await where(), `Tab no. ${i + 1} stays in the letter, and the letter stays open`).toEqual({ inSheet: true, open: true });
+    }
+    await page.keyboard.press('Shift+Tab');
+    expect(await where()).toEqual({ inSheet: true, open: true });
+    await page.keyboard.press('Escape');
+    await expect.poll(() => pathOf(page)).toBe('/');
+    await expect.poll(() => page.evaluate(() => document.activeElement && document.activeElement.getAttribute('href'))).toBe(url);
+  });
+
+  test('pictures in a letter keep their place before they load; the progress line takes a finger', async ({ page, baseURL }) => {
+    await open(page, '/', 'drift');
+    const url = await page.evaluate(() => window.__theme.ctx.letters.find((l) => l.date === '2016-06-08').url);   // Hang Zhou: five pictures
+    // the pictures are on their way for as long as this test looks at them
+    let arrive;
+    const held = new Promise((resolve) => { arrive = resolve; });
+    await page.route((u) => u.href.startsWith(baseURL) && /\/assets\/(m|images)\/posts\//.test(u.pathname), async (route) => { await held; await route.abort().catch(() => {}); });
+    await page.goto(`${url}?theme=drift`, { waitUntil: 'domcontentloaded' });      // the load event would wait for them
+    await page.waitForSelector('html[data-theme-ready="drift"]');
+    const figures = await page.evaluate(() => [...document.querySelectorAll('#theme-root .letter-body .letter-figure > img')].map((img) => {
+      const box = img.getBoundingClientRect();
+      return { loaded: img.complete && img.naturalWidth > 0, width: Math.round(box.width), height: Math.round(box.height), ratio: Number(img.getAttribute('width')) / Number(img.getAttribute('height')) };
+    }));
+    expect(figures.length, 'the letter has its pictures').toBeGreaterThanOrEqual(5);
+    for (const figure of figures) {
+      expect(figure.loaded).toBe(false);
+      expect(figure.height, 'a picture that has not arrived is as tall as it will be').toBeGreaterThan(60);
+      expect(Math.abs(figure.width / figure.height - figure.ratio), 'and has its own proportions').toBeLessThan(0.03);
+    }
+    // the whole height of the progress line belongs to it (its lower half used to lie under the letter's body)
+    const hit = await page.evaluate(() => {
+      const line = document.querySelector('#theme-root .track-line');
+      const box = line.getBoundingClientRect();
+      const at = (y) => document.elementFromPoint(box.left + box.width / 2, y);
+      return { height: Math.round(box.height), upper: line.contains(at(box.top + 6)), lower: line.contains(at(box.bottom - 6)) };
+    });
+    expect(hit.height).toBeGreaterThanOrEqual(44);
+    expect(hit, 'a tap just above and just below the hairline both reach it').toMatchObject({ upper: true, lower: true });
+    arrive();
+  });
+
+  test('titles break after their own comma; a guest signs with the date alone', async ({ browser, baseURL }) => {
+    for (const viewport of [{ width: 1440, height: 900 }, { width: 402, height: 874 }]) {
+      const context = await browser.newContext({ baseURL, viewport, reducedMotion: 'reduce' });
+      const page = await context.newPage();
+      await open(page, '/', 'drift');
+      await page.evaluate(() => document.fonts.ready);
+      const guest = await page.evaluate(() => { const l = window.__theme.ctx.letters.find((x) => x.role === 'guest'); return l ? { url: l.url, standalone: l.standalone } : null; });
+      // every phrase of every title on the river sits on one line (「装修好了，／钥匙在门垫下面」, never 「钥／匙」)
+      const broken = await page.evaluate(() => [...document.querySelectorAll('#theme-root .cap-title .nb')]
+        .filter((span) => span.getBoundingClientRect().height > parseFloat(getComputedStyle(span).lineHeight) * 1.5)
+        .map((span) => span.textContent));
+      expect(broken, `at ${viewport.width}px`).toEqual([]);
+      if (guest && !guest.standalone) {
+        await open(page, guest.url, 'drift');
+        const sign = await page.locator('#theme-root .sheet-sign').textContent();
+        expect(sign, 'the count of days is the couple\'s, not the guest\'s').not.toContain('认识的第');
+        expect(await page.locator('#theme-root .sh-title').textContent()).toBe(await page.evaluate(() => window.__theme.ctx.page.letter.title));
+      }
+      await context.close();
+    }
+  });
+
+  test('Forward into a letter that closed itself opens it at its top', async ({ page }) => {
+    await open(page, '/', 'drift');
+    const url = await openFromRiver(page, 22);
+    await page.evaluate(() => {
+      const sheet = document.querySelector('#theme-root .sheet').getBoundingClientRect();
+      window.scrollTo(0, sheet.bottom + window.scrollY + 60);
+    });
+    await expect.poll(() => pathOf(page), 'walked past its end, the letter closes itself').toBe('/');
+    await page.goForward();
+    await expect.poll(() => pathOf(page)).toBe(url);
+    const top = () => page.evaluate(() => Math.round(document.querySelector('#theme-root .sheet').getBoundingClientRect().top));
+    await expect.poll(top, 'the reader is at the top of the letter, not beyond its end').toBeGreaterThanOrEqual(0);
+    expect(await top()).toBeLessThanOrEqual(40);
+    await page.waitForTimeout(1500);                     // and it stays open (it used to close itself again at once)
+    expect(await pathOf(page)).toBe(url);
+    await expect(page.locator('#theme-root .sheet')).toBeVisible();
+  });
 });
