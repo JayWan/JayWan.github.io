@@ -333,6 +333,21 @@ test.describe('router: the corners', () => {
     release();
     await expect(page.locator('#theme-root h1')).toHaveText(target.title);
     await expect(page.locator('html[data-navigating]')).toHaveCount(0);
+
+    // the reader does not wait and goes somewhere that needs no fetch: the sign goes at once
+    const slow = letters[8];
+    let letGo;
+    const stuck = new Promise((resolve) => { letGo = resolve; });
+    await page.route(`**${new URL(slow.url, baseURL).pathname}`, async (route) => { await stuck; await route.continue(); });
+    await ctx(page, (c, url) => { c.router.go(url); }, slow.url);
+    await expect(page.locator('html')).toHaveAttribute('data-navigating', '');
+    expect(await ctx(page, (c) => c.router.go('/'))).toBe(true);
+    await expect(page.locator('#theme-root .p-list')).toBeVisible();
+    await expect(page.locator('html[data-navigating]')).toHaveCount(0);
+    letGo();
+    await page.waitForTimeout(400);
+    await expect(page.locator('#theme-root .p-list'), 'the letter that arrived late is not shown').toBeVisible();
+    await expect(page).toHaveURL(new URL('/', baseURL).href);
   });
 
   test('a letter that takes too long to arrive is loaded as a normal page', async ({ page, request, baseURL }) => {

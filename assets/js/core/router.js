@@ -61,7 +61,6 @@ export function createRouter({ letters, site, page, prepare = () => {} }) {
   let key = '';                 // key of the history entry we are on
   let serial = 0;               // counts navigations: a slow one must not overwrite a newer one
   let showing = null;           // settles when the show() now running has finished; null when none is
-  let waiting = 0;              // navigations waiting for the network (drives data-navigating)
   let seq = 0;
 
   // Unique even when the clock stands still (tests freeze it) and across reloads of the same tab.
@@ -76,8 +75,9 @@ export function createRouter({ letters, site, page, prepare = () => {} }) {
   function recall() {
     try { for (const [k, y] of Object.entries(JSON.parse(sessionStorage.getItem(STORE)) || {})) scrolls.set(k, y); } catch { /* storage unavailable */ }
   }
+  const note = (k, y) => { scrolls.delete(k); scrolls.set(k, y); };   // most recently used last: remember() keeps the last 40
   function remember() {
-    scrolls.set(key, window.scrollY);
+    note(key, window.scrollY);
     try { sessionStorage.setItem(STORE, JSON.stringify(Object.fromEntries([...scrolls].slice(-40)))); } catch { /* storage unavailable */ }
   }
 
@@ -135,15 +135,17 @@ export function createRouter({ letters, site, page, prepare = () => {} }) {
     return body;
   }
 
-  async function build(target) {
+  /** The route for `target`, fetching the letter if need be. `mine` is the navigation's number:
+   *  data-navigating on <html> always speaks for the newest navigation only. */
+  async function build(target, mine) {
+    html.removeAttribute('data-navigating');                           // whatever was awaited until now is no longer wanted
     if (target.type === 'home') return { type: 'home', url: '/', hash: target.hash };
     if (bodies.has(target.path)) return { type: 'letter', url: target.url, hash: target.hash, letter: target.letter, contentEl: bodies.get(target.path) };
     html.setAttribute('data-navigating', '');
-    waiting++;
     try {
       return { type: 'letter', url: target.url, hash: target.hash, letter: target.letter, contentEl: await liveBody(target) };
     } finally {
-      if (--waiting === 0) html.removeAttribute('data-navigating');
+      if (mine === serial) html.removeAttribute('data-navigating');
     }
   }
 
@@ -199,19 +201,20 @@ export function createRouter({ letters, site, page, prepare = () => {} }) {
     if (!target) { location.assign(url); return false; }
     if (target.path === currentPath) {
       serial++;                                                        // whatever was on its way is no longer wanted
+      html.removeAttribute('data-navigating');
       if (target.hash) location.assign(target.url + target.hash);      // an anchor on this page: a fragment navigation, no reload
       else window.scrollTo(0, 0);
       return true;
     }
     const mine = ++serial;
     let route;
-    try { route = await build(target); } catch { if (mine === serial) location.assign(url); return false; }
+    try { route = await build(target, mine); } catch { if (mine === serial) location.assign(url); return false; }
     if (mine !== serial) return false;                                 // the reader clicked something else meanwhile
     await idle();
     if (mine !== serial) return false;
     try {
       history.replaceState(stamp({ scroll: window.scrollY }), '');     // remember where we were on the page we leave
-      scrolls.set(key, window.scrollY);
+      note(key, window.scrollY);
       const from = currentPath;
       key = newKey();
       history.pushState({ f221: key, from }, '', target.url + target.hash);
@@ -264,7 +267,7 @@ export function createRouter({ letters, site, page, prepare = () => {} }) {
     const scrollY = scrolls.has(key) ? scrolls.get(key) : state.scroll || 0;
     try {
       if (!target) throw new Error('not a page the theme can draw');
-      const route = await build(target);
+      const route = await build(target, mine);
       if (mine !== serial) return;
       await idle();
       if (mine !== serial) return;
@@ -304,7 +307,7 @@ export function createRouter({ letters, site, page, prepare = () => {} }) {
     }
     document.addEventListener('click', onClick);
     window.addEventListener('popstate', onPop);
-    window.addEventListener('scroll', () => scrolls.set(key, window.scrollY), { passive: true });
+    window.addEventListener('scroll', () => note(key, window.scrollY), { passive: true });
     window.addEventListener('pagehide', remember);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') remember(); });   // iOS often skips pagehide
   }
