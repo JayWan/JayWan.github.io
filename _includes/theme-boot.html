@@ -116,7 +116,7 @@ html:not([data-theme="classic"]) body>:not(#theme-root):not(script):not(style){d
   if (!(w.CSS && CSS.supports && CSS.supports('width', '1lh'))) { id = 'classic'; by = 'old'; }
   else if (C.page === 'other') { id = 'classic'; by = 'page'; }
   else if (q && find(q)) { id = q; by = 'url'; }
-  else if (q !== 'random' && r && find(r.id) && now - r.t < C.idle * 6e4) { id = r.id; by = 'visit'; }
+  else if (q !== 'random' && r && find(r.id) && M.abs(now - r.t) < C.idle * 6e4) { id = r.id; by = 'visit'; }
   else if (C.d[md]) { id = C.d[md]; by = 'date'; }
   else if (!live) { p = night ? dark : pool(); id = p[M.floor(now / 108e5) % p.length]; by = 'clock'; }
   else { id = roll(c && c.id, night ? dark : pool()); by = night ? 'night' : 'bag'; }

@@ -197,6 +197,13 @@ test.describe('choosing a theme', () => {
     expect(await read(page)).toEqual({ id: first.id, by: 'visit' });
   });
 
+  test('a clock that jumped back does not pin the theme', async ({ context }) => {
+    const first = await visit(context, la('2026-01-05', '10:00'));          // recorded while the clock was a day ahead
+    const next = await visit(context, la('2026-01-04', '10:00'));
+    expect(next.by).toBe('bag');
+    expect(next.id).not.toBe(first.id);
+  });
+
   test('a browser older than the baseline always gets classic', async ({ context }) => {
     await context.addInitScript(() => { CSS.supports = () => false; });
     expect(await visit(context, la('2026-01-05'), '/__boot/?theme=drift')).toEqual({ id: 'classic', by: 'old' });
