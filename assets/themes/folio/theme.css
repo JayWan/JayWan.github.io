@@ -182,8 +182,8 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .body :is(em,i,code,span,a,sup,sub,b,strong){line-height:1}
 /* 仿宋没有粗体也没有斜体：加粗改成朱色着重号（脚本给每个汉字包一层 .dz；text-emphasis 会把行撑高 2px），em 是一道细线（西文仍是斜体） */
 .body :is(b,strong){font-weight:400}
-.body .dz{position:relative}
-.body .dz::after{content:"";position:absolute;left:50%;top:100%;width:3.4px;height:3.4px;margin:1.5px 0 0 -1.7px;border-radius:50%;background:var(--red)}
+.body .dz{padding-bottom:5px;background:radial-gradient(circle closest-side,var(--red) 82%,transparent) no-repeat 50% 100%/3.6px 3.6px}
+.body p.fo-voice{text-indent:0;margin-left:-15px;padding-left:14px;border-left:1px solid var(--red)}
 .body :is(b,strong) .lz{text-decoration:underline;text-decoration-color:var(--red);text-decoration-thickness:1px;text-underline-offset:5px}
 .body :is(em,i){font-style:italic;text-decoration:underline;text-decoration-color:var(--frame);text-decoration-thickness:1px;text-underline-offset:5px}
 .body code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,"F221 Fangsong",monospace;font-size:.8em;color:var(--ink-2)}
@@ -374,6 +374,7 @@ html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(-
   .head-r{letter-spacing:.1em}
   .body{padding-left:17px;padding-right:17px}
   .body p,.body li{text-align:left}
+  .body p.fo-voice{margin-left:-9px;padding-left:8px}
   .body blockquote{padding:0 0 0 1.5em}
   .body :is(h1,h2,h3){font-size:22px}
   .letter{--flip-front-pad:calc(var(--lh) - 1px) 14px calc(var(--lh) * 2 - 1px);--flip-back-pad:8px}

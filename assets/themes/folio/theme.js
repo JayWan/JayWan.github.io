@@ -431,12 +431,25 @@ export default {
           if (/[A-Za-z]{3}/.test(t) && !/[㐀-鿿]/.test(t)) { p.classList.add('q-en'); p.lang = 'en'; }
         }
       }
-      /* 着重号：加粗的每个汉字包一层，点画在字的正下方（不占行高）；西文画一道细线 */
+      /* 整段都是加粗的（第 12 封里她写的那些行）：不逐字加点，在段落左边画一道朱线，像旁线 */
+      for (const p of el.querySelectorAll('p')) {
+        if (p.closest('.flip-card, .gift-scene, blockquote') || p.querySelector('.dz, .lz')) continue;
+        const w = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+        let all = true, n = 0;
+        for (let t = w.nextNode(); t && all; t = w.nextNode()) {
+          const text = t.nodeValue.trim();
+          if (!text) continue;
+          n += text.length;
+          if (!t.parentNode.closest('b, strong')) all = false;
+        }
+        if (all && n > 12) p.classList.add('fo-voice');
+      }
+      /* 着重号：其余加粗的每个汉字包一层，点画在字的正下方（不占行高）；西文画一道细线 */
       const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
       const texts = [];
       for (let t = walker.nextNode(); t; t = walker.nextNode()) {
         const p = t.parentNode;
-        if (p.closest('b, strong') && !p.closest('code, .dz, .lz') && /[\u3400-\u9fffA-Za-z0-9]/.test(t.nodeValue)) texts.push(t);
+        if (p.closest('b, strong') && !p.closest('code, .dz, .lz, .fo-voice') && /[\u3400-\u9fffA-Za-z0-9]/.test(t.nodeValue)) texts.push(t);
       }
       for (const t of texts) {
         const parts = t.nodeValue.match(/[\u3400-\u9fff]|[A-Za-z0-9][A-Za-z0-9 .,'’!?-]*[A-Za-z0-9]|[A-Za-z0-9]|[^\u3400-\u9fffA-Za-z0-9]+/g) || [];
