@@ -7,7 +7,7 @@
 //   - the home view links to letters with ordinary <a href="{letter.url}">
 
 import { test, expect } from '@playwright/test';
-import { themeIds, samplePages, getIsland, watch, open, expectNoSidewaysScroll, firstLetterLink } from './helpers.mjs';
+import { themeIds, samplePages, getIsland, watch, open, themeOf, expectNoSidewaysScroll, firstLetterLink, rewriteIsland } from './helpers.mjs';
 
 const state = (page) => page.evaluate(() => {
   const s = window.__theme.ctx.player.state;
@@ -30,6 +30,11 @@ for (const theme of themeIds) {
           const body = page.locator('#theme-root .letter-body .content-body');
           await expect(body, 'the letter body was moved into .letter-body').toHaveCount(1);
           expect((await body.innerText()).trim().length).toBeGreaterThan(50);
+        }
+        if (kind === 'home') {
+          const line = await page.evaluate(() => window.__theme.ctx.ui.hunger().text);
+          await expect(page.locator('#theme-root'), "the site's own line, ctx.ui.hunger().text, is on the home page, unchanged").toContainText(line);
+          await expect(page.locator('#theme-root nav.theme-switcher a[data-theme-id]').first(), 'ctx.ui.switcher() is on the page').toBeAttached();
         }
         await expectNoSidewaysScroll(page);
 
@@ -109,7 +114,7 @@ for (const theme of themeIds) {
       const play = page.locator('#theme-root [data-play]:visible').first();
       await expect(play, 'a song control marked with data-play').toBeVisible();
       await play.click();
-      await expect.poll(() => seen.audio().length, 'the song is requested on click').toBeGreaterThan(0);
+      await expect.poll(() => seen.audio().length, 'the first visible [data-play] on a letter page starts a song when clicked').toBeGreaterThan(0);
       const audible = browserName === 'chromium';        // Playwright's WebKit on Linux cannot decode MP3
       if (audible) {
         await expect.poll(async () => (await state(page)).playing, 'the song plays').toBe(true);
@@ -150,6 +155,57 @@ for (const theme of themeIds) {
       await expect(page).toHaveURL(new URL(standalone.url, baseURL).href);
       expect(await page.evaluate(() => window.__sameDocument), 'a new document').toBeUndefined();
       expect(await page.evaluate(() => typeof window.openGiftBox), 'its script ran').toBe('function');
+    });
+
+    test('a letter by a guest, and a letter with no song, cover, quote or place', async ({ page, request, baseURL }) => {
+      // The archive has no such letters yet, but the next one may be either (the first guest letter
+      // is on its way), and a theme that trips over one of them takes the whole site back to
+      // classic. So the tests make them: the data island of every page is rewritten on its way to
+      // the browser.
+      const { letters } = await getIsland(request);
+      const ordinary = letters.filter((l) => !l.standalone && !l.quiet);
+      const guest = ordinary[ordinary.length - 1];                         // the newest one: it leads the home page
+      const bare = ordinary[1];
+      await rewriteIsland(page, baseURL, (data) => {
+        for (const letter of data.letters) {
+          if (letter.no === guest.no) letter.author = 'Claude';
+          if (letter.no === bare.no) Object.assign(letter, { song: null, cover: null, quote: null, place: null });
+        }
+      });
+      const seen = watch(page, baseURL);
+
+      for (const path of ['/', guest.url, bare.url]) {
+        await open(page, path, theme);
+        await expect(page.locator('html'), `${path}: the theme is still the theme`).toHaveAttribute('data-theme', theme);
+        expect(await page.evaluate(([g, b]) => {
+          const { letters: all } = window.__theme.ctx;
+          return [all.byNo(g).role, all.byNo(b).song, all.byNo(b).cover, all.byNo(b).quote];
+        }, [guest.no, bare.no]), 'the page really has the rewritten letters').toEqual(['guest', null, null, null]);
+        if (path !== '/') await expect(page.locator('#theme-root .letter-body .content-body')).toHaveCount(1);
+        await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+        await expectNoSidewaysScroll(page);
+      }
+
+      // and by soft navigation, where the theme supports it
+      await open(page, '/', theme);
+      if (await page.evaluate(() => window.__theme.ctx.router.soft)) {
+        for (const letter of [guest, bare]) {
+          expect(await page.evaluate((url) => window.__theme.ctx.router.go(url), letter.url), `soft navigation to ${letter.title}`).toBe(true);
+          await expect(page.locator('#theme-root .letter-body .content-body')).toBeVisible();
+          expect(await page.evaluate(() => window.__theme.ctx.page.letter.no)).toBe(letter.no);
+          await page.goBack();
+          await expect(page).toHaveURL(new URL('/', baseURL).href);
+        }
+      }
+      // the player skips a letter without a song instead of stopping at it
+      expect(await page.evaluate((no) => {
+        const { letters: all, player } = window.__theme.ctx;
+        player.toggle(all.byNo(no));                                       // no song: nothing happens
+        return player.state.letter;
+      }, bare.no)).toBe(null);
+      expect(seen.errors, 'no errors').toEqual([]);
+      expect(await themeOf(page)).toBe(theme);
+      await page.unrouteAll({ behavior: 'ignoreErrors' });
     });
 
     test('phone width with reduced motion: every kind of page still fits', async ({ browser, request, baseURL }) => {

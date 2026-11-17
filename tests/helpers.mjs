@@ -61,6 +61,26 @@ export async function open(page, path, theme) {
 
 export const themeOf = (page) => page.evaluate(() => document.documentElement.dataset.theme);
 
+const ISLAND = /(<script type="application\/json" id="letters-data">)([\s\S]*?)(<\/script>)/;
+
+/** From now on every page this browser page loads or fetches carries a changed data island:
+ *  `change(data)` edits the parsed island in place. For testing letters the archive does not
+ *  have yet (a guest's letter, a letter without a song). */
+export async function rewriteIsland(page, baseURL, change) {
+  // Pages only (no file extension), and only this site's: Firefox prefetches <link rel="next">,
+  // which names the public address, and that request is none of our business.
+  await page.route((url) => url.href.startsWith(baseURL) && !/\.[a-z0-9]+$/i.test(url.pathname), async (route) => {
+    const response = await route.fetch();
+    if (!(response.headers()['content-type'] || '').includes('text/html')) return route.fulfill({ response });
+    const body = (await response.text()).replace(ISLAND, (whole, open, json, close) => {
+      const data = JSON.parse(json);
+      change(data);
+      return open + JSON.stringify(data).replace(/</g, '\\u003c') + close;
+    });
+    return route.fulfill({ response, body });
+  });
+}
+
 export async function expectNoSidewaysScroll(page) {
   const { scrollWidth, innerWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }));
   expect(scrollWidth, 'the page must not scroll sideways').toBeLessThanOrEqual(innerWidth + 1);
