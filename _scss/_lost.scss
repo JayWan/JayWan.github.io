@@ -8,23 +8,11 @@
 @use "typography" as *;
 
 .section--lost {
-  padding: 22vh 0 2 * $leading;
+  // a fifth of the screen above the lines, and never less than clears the logo and the hamburger
+  padding: max(22vh, #{3 * $leading}) 0 2 * $leading;
   text-align: center;
 
   h2 {
     margin-top: 0;
-  }
-}
-
-// The row of theme names rests on the bottom edge of the first screen (.section--footer--floor,
-// _theme-switcher.scss). On a screen too low to hold the three lines and that row apart, a phone
-// held sideways, the row follows the lines instead.
-@media (max-height: 520px) {
-  .section--lost {
-    padding-top: 3 * $leading;
-  }
-
-  .section--footer--floor {
-    position: static;
   }
 }

@@ -2,35 +2,28 @@
 // Theme switcher
 // --------------------------------------------------
 //
-// The row of theme names: 旧版 / 夜航 / 笺 / 唱片 / 绕日.
-// The markup is the <nav class="theme-switcher"> every theme gets from the core; under this
-// theme the core also places it (assets/js/core/eggs.js, classicSwitcher), twice.
+// The names of the themes: 旧版 / 夜航 / 笺 / 唱片 / 绕日.
+// The other themes keep a control in their top right corner that opens a list of them. This
+// theme has had such a control all along: the three lines of the hamburger, and the drawer they
+// open (.sidebar). So the names are in the drawer, one row under its logo, placed there by the
+// core (assets/js/core/eggs.js, classicSwitcher).
 //
-// At the foot of the page:
-//
-//   letter   inside the footer the page already has, under the © line
-//   home     in a footer of its own after the last card (.section--footer--switcher)
-//   404      the same footer, resting on the bottom edge of the first screen, under the page's
-//            three lines (_lost.scss; on a low screen it follows them instead)
-//
-// And in the drawer the hamburger opens (.sidebar), under its logo: one tap away wherever the
-// page has been scrolled to. The rules for that one are at the end of this file.
-//
-// Both are written by a script, so without JavaScript none of this applies, and nothing here
-// touches an element the old pages already had.
+// The row is written by a script, so without JavaScript none of this applies, and nothing here
+// touches an element the old pages already had, except that the hamburger can now be reached and
+// pressed from a keyboard (the script makes it focusable; the ring below shows where the focus is).
 
 @use "colors" as *;
 @use "typography" as *;
 
-// The other themes' names are quieter than the © line above them (4.6 : 1 on white).
-$switcher-quiet: rgba(0, 0, 0, 0.54);
-
-.theme-switcher {
-  // The half line under the row keeps it clear of the heart button of a letter page (fixed,
-  // 30px + 44px from the bottom) when a phone is scrolled to the very end: the footer's own
-  // padding below is 2 × $leading.
-  margin: 0 0 0.5 * $leading;
-  padding: 0 0 env(safe-area-inset-bottom, 0px);
+// One line, in the drawer's own colours: white on $gray-darker, the current theme as bright as
+// the titles of the letters below it.
+.sidebar .theme-switcher {
+  // The drawer is 14rem wide with 20px of padding and, in some browsers, a scrollbar, which
+  // leaves 251 to 268px; the five names, each a finger wide, need 268. So the row may use 14px
+  // of that padding on either side.
+  margin: 0.5 * $leading -14px 0;
+  padding: 0;
+  font-size: 0.6rem;
 
   ul {
     display: flex;
@@ -53,87 +46,37 @@ $switcher-quiet: rgba(0, 0, 0, 0.54);
     justify-content: center;
     min-width: 44px; // a finger's worth, also for a name of one character
     min-height: 44px;
-    padding: 0 0.5rem;
-    white-space: nowrap;
-    color: $switcher-quiet;
-    background-image: none;
-
-    &:hover {
-      color: $text-color;
-    }
-
-    &:focus-visible {
-      color: $text-color;
-      outline: 2px solid $text-color;
-      outline-offset: -5px;
-      border-radius: 3px;
-    }
-  }
-}
-
-// The theme being shown: the colour of the text around it and the hairline every link of this
-// theme has (see `a` in _typography.scss), set under the name. (nav. so that it outranks
-// `.section--footer a`, wherever this partial is listed.)
-nav.theme-switcher a[aria-current="true"] {
-  color: $text-color;
-  background-image: linear-gradient(to bottom, rgba($link-color, 0) 75%, rgba($link-color, 0.8) 75%);
-  background-position: 0 calc(50% + 0.62em);
-  background-size: 2px 2px;
-  background-clip: content-box; // as wide as the name, not as the tap target
-}
-
-// A narrow phone (360px, 320px): at the foot of the page the names stand closer together and
-// the row may use 10px of the page's 15px margin on either side, so that it still fits on one
-// line there, also in a fallback face wider than Roboto. Every name keeps its 44px.
-@media (max-width: 374px) {
-  .section--footer .theme-switcher {
-    margin-left: -10px;
-    margin-right: -10px;
-
-    a {
-      padding: 0 4px;
-    }
-  }
-}
-
-// A footer that holds nothing but the row (home, 404): the cards above already end with a
-// line of space, so it needs none of its own on top.
-.section--footer--switcher {
-  padding-top: 0;
-}
-
-// The 404 page is three lines near the top of one screen: there the footer rests on the bottom
-// edge of that screen (nothing on that page is positioned, so this is the page itself). On a
-// screen too low for both, _lost.scss lets it follow the lines.
-.section--footer--floor {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-}
-
-// In the drawer: one line under the logo, in the drawer's own colours (white on $gray-darker,
-// the current theme as bright as the titles of the letters below it).
-.sidebar .theme-switcher {
-  // The drawer is 14rem wide with 20px of padding and, in some browsers, a scrollbar, which
-  // leaves 251 to 268px; the five names, each a finger wide, need 268. So the row may use 14px
-  // of that padding on either side.
-  margin: 0.5 * $leading -14px 0;
-  padding: 0;
-  font-size: 0.6rem;
-
-  a {
     padding: 0 4px;
+    white-space: nowrap;
     color: rgba($white, 0.6);
+    background-image: none;
 
     &:hover,
     &:focus-visible {
       color: $white;
-      outline-color: $white;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $white;
+      outline-offset: -5px;
+      border-radius: 3px;
     }
   }
 
+  // The theme being shown: the hairline every link of this theme has (see `a` in
+  // _typography.scss), set under the name, as wide as the name and not as the tap target.
   a[aria-current="true"] {
     color: rgba($white, 0.9);
     background-image: linear-gradient(to bottom, rgba($white, 0) 75%, rgba($white, 0.8) 75%);
+    background-position: 0 calc(50% + 0.62em);
+    background-size: 2px 2px;
+    background-clip: content-box;
   }
+}
+
+// The hamburger under a keyboard's focus.
+.sidebar-toggle-wrapper:focus-visible {
+  outline: 2px solid $text-color;
+  outline-offset: 4px;
+  border-radius: 3px;
 }

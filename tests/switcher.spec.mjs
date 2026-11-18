@@ -1,20 +1,20 @@
-// Getting from one theme to another with something a reader can see.
+// Changing theme with something a reader can see, in the top right corner of every page.
 //
-// Every new theme places ctx.ui.switcher() itself. The classic page has no theme code, so the
-// core places it there (eggs.classicSwitcher, styled by _scss/_theme-switcher.scss): a row of
-// theme names at the foot of the home page, of every letter and of the 404 page, and the same
-// row in the drawer the hamburger opens, which is on screen wherever the page has been scrolled
-// to. These tests pin down both rows, the trip from classic to each theme and back, and what
-// the address bar and the Back button do afterwards.
+// Every new theme places ctx.ui.switcher() itself: a button in the top right corner that shows
+// the name of the theme being worn and, pressed, opens a list of the themes. The classic page has
+// no theme code, and its top right corner has had a control that opens all along: the hamburger
+// and its drawer. The core puts the names in that drawer (eggs.classicSwitcher, styled by
+// _scss/_theme-switcher.scss). No page has a row of names at its foot any more.
+//
+// These tests pin down the control in every theme and on every kind of page, the trip from
+// classic to each theme and back, and what the address bar and the Back button do afterwards.
 
 import { test, expect } from '@playwright/test';
-import { themeIds, samplePages, otherSites, expectNoSidewaysScroll } from './helpers.mjs';
+import { themeIds, samplePages, otherSites, expectNoSidewaysScroll, pickTheme, OWN_SWITCHER as OWN, DRAWER_SWITCHER as DRAWER } from './helpers.mjs';
 
 const NEW_THEMES = themeIds.filter((id) => id !== 'probe');          // the themes a reader can be given, besides classic
 const KINDS = [['home', 'the home page'], ['letter', 'a letter'], ['lost', 'the 404 page']];
-const FOOT = 'footer.section--footer nav.theme-switcher';          // the two rows of the classic page
-const DRAWER = 'nav.sidebar nav.theme-switcher';
-const OWN = '#theme-root nav.theme-switcher';                      // the row(s) a new theme places itself
+const TOGGLE = `${OWN} .theme-switcher-toggle`;
 
 /** Open a page under classic and wait until the core has run. */
 async function openClassic(page, path) {
@@ -22,92 +22,29 @@ async function openClassic(page, path) {
   await page.goto(`${path}?theme=classic`);
   await page.waitForFunction(() => window.__theme && window.__theme.up === 1);
 }
-
-/** What a switcher lists: [id, name, href, current?] per link, in order. */
-const listed = (nav) => nav.locator('a[data-theme-id]').evaluateAll((links) => links.map((a) => [a.dataset.themeId, a.textContent, a.getAttribute('href'), a.getAttribute('aria-current') === 'true']));
-
-/** Words a stylesheet puts around a row (generated content is not part of innerText). */
-const generated = (nav) => nav.evaluate((row) => [row, ...row.querySelectorAll('*')]
-  .flatMap((el) => ['::before', '::after'].map((pseudo) => getComputedStyle(el, pseudo).content))
-  .filter((content) => content && !['none', 'normal', '""', "''"].includes(content)));
-
-const search = (page) => new URL(page.url()).search;
-
-for (const [kind, where] of KINDS) {
-  test(`classic, ${where}: the themes are listed at the foot of the page`, async ({ page, request }) => {
-    const pages = await samplePages(request);
-    const errors = [];
-    page.on('pageerror', (err) => errors.push(String(err)));
-    await openClassic(page, pages[kind]);
-
-    const nav = page.locator(FOOT);
-    await expect(nav).toHaveCount(1);
-    await expect(nav).toBeVisible();
-    expect((await nav.getAttribute('aria-label')).trim().length, 'it has an accessible name').toBeGreaterThan(0);
-
-    // the list: every theme a visit can be given, by name, in the order of the registry
-    const registry = await page.evaluate(() => window.__theme.themes.filter((t) => t[3]).map((t) => [t[0], t[1]]));
-    expect(registry.map((t) => t[0])).toEqual(expect.arrayContaining(['classic', ...NEW_THEMES]));
-    expect(registry.map((t) => t[0]), 'the reference theme is never offered').not.toContain('probe');
-    expect(await listed(nav)).toEqual(registry.map(([id, name]) => [id, name, `?theme=${id}`, id === 'classic']));
-    // names and nothing else: no sentence explaining what the row is for, in the markup or from the stylesheet
-    expect((await nav.innerText()).split('\n').map((s) => s.trim()).filter(Boolean)).toEqual(registry.map((t) => t[1]));
-    expect(await generated(nav)).toEqual([]);
-
-    // where: in the classic footer, the last thing on the page
-    await expect(nav.locator('xpath=ancestor::footer[contains(@class, "section--footer")]')).toHaveCount(1);
-    if (kind === 'letter') await expect(page.locator('.section--footer .container > div').first(), 'under the © line the page always had').toContainText('Fan & Wan');
-    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-    if (kind === 'letter') await expect(page.locator('.modal-toggle-group'), 'the heart button of a letter is showing').toHaveClass(/active/);
-    const place = () => page.evaluate((FOOT) => {
-      const nav = document.querySelector(FOOT);
-      const row = nav.getBoundingClientRect();
-      // what the page shows below the row (the buttons that float over the page are not part of its flow)
-      const later = [...document.querySelectorAll('body *')].filter((el) => {
-        if (nav.contains(el) || el.contains(nav) || el.closest('.sidebar, .sidebar-toggle-wrapper, .modal-toggle-group, .fullscreenModal')) return false;
-        const box = el.getBoundingClientRect();
-        return getComputedStyle(el).visibility !== 'hidden' && box.height > 0 && box.width > 0 && box.top >= row.bottom - 1;
-      });
-      return { onScreen: row.top >= 0 && row.bottom <= window.innerHeight, later: later.map((el) => el.className || el.tagName), toTheEnd: Math.round(document.documentElement.scrollHeight - window.scrollY - row.bottom) };
-    }, FOOT);
-    await expect.poll(async () => (await place()).onScreen, 'with the page scrolled to its end the row is on screen').toBe(true);
-    const { later, toTheEnd } = await place();
-    expect(later, 'nothing follows it').toEqual([]);
-    expect(toTheEnd, 'it keeps clear of the bottom edge of the screen').toBeGreaterThanOrEqual(40);
-    expect(toTheEnd, 'and is not lost below a screenful of nothing').toBeLessThan(200);
-
-    // every name can be tapped: at least 44px high, inside the screen, nothing lying on top of it
-    // (on a letter the heart button floats in the bottom right corner)
-    const targets = await nav.locator('a[data-theme-id]').evaluateAll((links) => links.map((a) => {
-      const box = a.getBoundingClientRect();
-      const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
-      const heart = document.querySelector('.modal-toggle-group.active');
-      const h = heart && heart.getBoundingClientRect();
-      return { id: a.dataset.themeId, height: Math.round(box.height), inside: box.left >= 0 && box.right <= window.innerWidth, onTop: top === a || a.contains(top),
-        underHeart: Boolean(h) && box.left < h.right && box.right > h.left && box.top < h.bottom && box.bottom > h.top };
-    }));
-    for (const target of targets) {
-      expect(target.height, `${target.id}: tall enough for a finger`).toBeGreaterThanOrEqual(44);
-      expect(target, target.id).toMatchObject({ inside: true, onTop: true, underHeart: false });
-    }
-    await expectNoSidewaysScroll(page);
-
-    // in the classic theme's own type: the footer's face and size, the current theme in the text colour
-    const type = await page.evaluate((FOOT) => {
-      const css = (el) => { const s = getComputedStyle(el); return { family: s.fontFamily, size: s.fontSize, color: s.color }; };
-      return { current: css(document.querySelector(`${FOOT} a[aria-current="true"]`)), other: css(document.querySelector(`${FOOT} a:not([aria-current])`)), footer: css(document.querySelector(FOOT).closest('footer')) };
-    }, FOOT);
-    expect(type.current.family).toBe(type.footer.family);
-    expect(type.current.family).toContain('Roboto');
-    expect(type.current.size).toBe(type.footer.size);
-    expect(type.current.color, 'the current theme is in the colour of the text').toBe(type.footer.color);
-    expect(type.other.color, 'the others are quieter').not.toBe(type.footer.color);
-    expect(errors).toEqual([]);
-  });
+/** Open a page under a new theme and wait until it has drawn. */
+async function openTheme(page, path, theme) {
+  await page.goto(`${path}?theme=${theme}`);
+  await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
 }
 
+/** What a list of themes holds: [id, name, href, current?] per link, in order. */
+const listed = (nav) => nav.locator('a[data-theme-id]').evaluateAll((links) => links.map((a) => [a.dataset.themeId, a.textContent, a.getAttribute('href'), a.getAttribute('aria-current') === 'true']));
+
+/** Words a stylesheet puts around a list (generated content is not part of innerText). A mark
+ *  drawn with an empty or a symbol-only ::before / ::after is not words. */
+const generated = (nav) => nav.evaluate((row) => [row, ...row.querySelectorAll('*')]
+  .flatMap((el) => ['::before', '::after'].map((pseudo) => getComputedStyle(el, pseudo).content))
+  .filter((content) => content && !['none', 'normal'].includes(content) && /\p{L}/u.test(content)));
+
+const search = (page) => new URL(page.url()).search;
+/** The themes a list holds: the ones a visit can be given, plus the one being worn if it is a hidden one (the reference theme). */
+const registryOf = (page) => page.evaluate(() => window.__theme.themes.filter((t) => t[3] || t[0] === window.__theme.id).map((t) => [t[0], t[1]]));
+
+// ------------------------------------------------------------------ classic: the drawer
+
 for (const [index, [kind, where]] of KINDS.entries()) {
-  test(`classic, ${where}: the same names are in the drawer, one tap from anywhere on the page`, async ({ page, request, isMobile }) => {
+  test(`classic, ${where}: the names are in the drawer the hamburger opens, and nowhere else`, async ({ page, request, isMobile }) => {
     const pages = await samplePages(request);
     const errors = [];
     page.on('pageerror', (err) => errors.push(String(err)));
@@ -116,45 +53,53 @@ for (const [index, [kind, where]] of KINDS.entries()) {
     const steps = await page.evaluate(() => history.length);
     const press = (target) => (isMobile ? target.tap() : target.click());
 
+    // one list on the page, in the drawer; nothing at the foot of the page
+    await expect(page.locator('.theme-switcher')).toHaveCount(1);
+    await expect(page.locator('footer .theme-switcher, .section--footer--switcher'), 'no row at the foot of the page').toHaveCount(0);
     // closed, the drawer shows nothing of it (and so is no stop for the Tab key)
     const nav = page.locator(DRAWER);
     await expect(nav).toHaveCount(1);
     await expect(nav).toBeHidden();
     await expectNoSidewaysScroll(page);
 
-    // the hamburger stays on screen however far the page has been scrolled; the foot of the page does not
+    // the hamburger is in the top right corner and stays there however far the page has been scrolled
     await page.evaluate(() => window.scrollTo(0, Math.floor((document.documentElement.scrollHeight - window.innerHeight) / 2)));
     const burger = page.locator('label.sidebar-toggle-wrapper');
     await expect(burger).toBeInViewport({ ratio: 1 });
+    const corner = await burger.evaluate((el) => { const box = el.getBoundingClientRect(); return { fromRight: window.innerWidth - box.right, top: box.top }; });
+    expect(corner.fromRight, 'at the right edge').toBeLessThan(80);
+    expect(corner.top, 'at the top').toBeLessThan(80);
     await press(burger);
     await expect(nav).toBeVisible();
     await expect.poll(() => page.evaluate(() => Math.round(window.innerWidth - document.querySelector('nav.sidebar').getBoundingClientRect().right)), 'the drawer has slid in').toBe(0);
 
-    // the same list as at the foot of the page, names and nothing else
-    const registry = await page.evaluate(() => window.__theme.themes.filter((t) => t[3]).map((t) => [t[0], t[1]]));
+    // the list: every theme a visit can be given, by name, in the order of the registry; names and nothing else
+    const registry = await registryOf(page);
+    expect(registry.map((t) => t[0])).toEqual(expect.arrayContaining(['classic', ...NEW_THEMES]));
+    expect(registry.map((t) => t[0]), 'the reference theme is never offered').not.toContain('probe');
     expect(await listed(nav)).toEqual(registry.map(([id, name]) => [id, name, `?theme=${id}`, id === 'classic']));
-    expect(await listed(nav)).toEqual(await listed(page.locator(FOOT)));
+    expect((await nav.getAttribute('aria-label')).trim().length, 'it has an accessible name').toBeGreaterThan(0);
     expect((await nav.innerText()).split('\n').map((s) => s.trim()).filter(Boolean)).toEqual(registry.map((t) => t[1]));
     expect(await generated(nav)).toEqual([]);
 
     // where: one line under the drawer's logo, above its first letter, inside the drawer
     const box = await page.evaluate((DRAWER) => {
-      const nav = document.querySelector(DRAWER);
-      const drawer = nav.closest('nav.sidebar');
+      const row = document.querySelector(DRAWER);
+      const drawer = row.closest('nav.sidebar');
       const edge = drawer.getBoundingClientRect();
       const css = (el) => { const s = getComputedStyle(el); return { family: s.fontFamily, color: s.color }; };
       return {
-        tops: [...new Set([...nav.querySelectorAll('a')].map((a) => Math.round(a.getBoundingClientRect().top)))],
-        row: nav.getBoundingClientRect().toJSON(),
+        tops: [...new Set([...row.querySelectorAll('a')].map((a) => Math.round(a.getBoundingClientRect().top)))],
+        row: row.getBoundingClientRect().toJSON(),
         logoBottom: drawer.querySelector('.textLogo').getBoundingClientRect().bottom,
         firstLetterTop: drawer.querySelector('.sidebar-recentPosts li').getBoundingClientRect().top,
         drawer: { left: edge.left, right: edge.left + drawer.clientLeft + drawer.clientWidth },
-        targets: [...nav.querySelectorAll('a')].map((a) => {
+        targets: [...row.querySelectorAll('a')].map((a) => {
           const r = a.getBoundingClientRect();
           const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
           return { id: a.dataset.themeId, width: Math.round(r.width), height: Math.round(r.height), left: r.left, right: r.right, onTop: top === a || a.contains(top) };
         }),
-        current: css(nav.querySelector('a[aria-current="true"]')), other: css(nav.querySelector('a:not([aria-current])')), drawerType: css(drawer),
+        current: css(row.querySelector('a[aria-current="true"]')), other: css(row.querySelector('a:not([aria-current])')), drawerType: css(drawer),
       };
     }, DRAWER);
     expect(box.tops, 'the names are on one line').toHaveLength(1);
@@ -172,7 +117,7 @@ for (const [index, [kind, where]] of KINDS.entries()) {
     expect(box.current.color, 'the current theme stands out from the others').not.toBe(box.other.color);
     await expectNoSidewaysScroll(page);
 
-    // a name pressed there does what a name at the foot does
+    // a name pressed there changes theme: the same page, a clean address, no step added to Back
     const theme = NEW_THEMES[index % NEW_THEMES.length];
     await press(nav.locator(`a[data-theme-id="${theme}"]`));
     await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
@@ -184,43 +129,260 @@ for (const [index, [kind, where]] of KINDS.entries()) {
 }
 
 for (const width of [375, 360, 320]) {
-  test(`classic: on a phone ${width}px wide both rows stay on one line`, async ({ page, request, isMobile }) => {
+  test(`classic: on a phone ${width}px wide the names in the drawer stay on one line`, async ({ page, request, isMobile }) => {
     const pages = await samplePages(request);
     await page.setViewportSize({ width, height: 640 });
     await openClassic(page, pages.letter);
-    const lines = (row) => page.locator(`${row} a[data-theme-id]`).evaluateAll((links) => ({
-      tops: [...new Set(links.map((a) => Math.round(a.getBoundingClientRect().top)))].length,
-      small: links.filter((a) => { const box = a.getBoundingClientRect(); return box.width < 44 || box.height < 44; }).map((a) => a.dataset.themeId),
-      outside: links.filter((a) => { const box = a.getBoundingClientRect(); return box.left < 0 || box.right > window.innerWidth; }).map((a) => a.dataset.themeId),
-    }));
-    await page.locator(FOOT).scrollIntoViewIfNeeded();
-    expect(await lines(FOOT), 'at the foot of the page').toEqual({ tops: 1, small: [], outside: [] });
-    await expectNoSidewaysScroll(page);
-
     const burger = page.locator('label.sidebar-toggle-wrapper');
     await (isMobile ? burger.tap() : burger.click());
     await expect(page.locator(DRAWER)).toBeVisible();
     await expect.poll(() => page.evaluate(() => Math.round(window.innerWidth - document.querySelector('nav.sidebar').getBoundingClientRect().right)), 'the drawer has slid in').toBe(0);
-    expect(await lines(DRAWER), 'in the drawer').toEqual({ tops: 1, small: [], outside: [] });
+    const lines = await page.locator(`${DRAWER} a[data-theme-id]`).evaluateAll((links) => ({
+      tops: [...new Set(links.map((a) => Math.round(a.getBoundingClientRect().top)))].length,
+      small: links.filter((a) => { const box = a.getBoundingClientRect(); return box.width < 44 || box.height < 44; }).map((a) => a.dataset.themeId),
+      outside: links.filter((a) => { const box = a.getBoundingClientRect(); return box.left < 0 || box.right > window.innerWidth; }).map((a) => a.dataset.themeId),
+    }));
+    expect(lines).toEqual({ tops: 1, small: [], outside: [] });
     await expectNoSidewaysScroll(page);
   });
 }
 
-test('classic: the row leaves room for the home indicator of a phone', async ({ request }) => {
-  // env(safe-area-inset-bottom) is 0 in every test browser; what can be checked is that the rule asks for it.
-  const css = await (await request.get('/assets/css/main.css')).text();
-  expect(css).toMatch(/\.theme-switcher\s*\{[^}]*env\(safe-area-inset-bottom/);
+test('classic: the hamburger and the names behind it can be reached and used with the keyboard', async ({ page, request, isMobile }) => {
+  test.skip(isMobile, 'a phone has no Tab key');
+  const pages = await samplePages(request);
+  await openClassic(page, pages.lost);                                 // the page with the fewest stops on the way
+  const onBurger = () => page.evaluate(() => Boolean(document.activeElement && document.activeElement.matches('label.sidebar-toggle-wrapper')));
+  const onName = () => page.evaluate((DRAWER) => { const a = document.activeElement; return a && a.closest(DRAWER) ? a.dataset.themeId : null; }, DRAWER);
+  for (let i = 0; i < 12 && !(await onBurger()); i++) await page.keyboard.press('Tab');
+  expect(await onBurger(), 'Tab arrives at the hamburger').toBe(true);
+  const ring = () => page.evaluate(() => { const s = getComputedStyle(document.activeElement); return { style: s.outlineStyle, width: parseFloat(s.outlineWidth) }; });
+  expect(await ring(), 'the focus can be seen').toEqual({ style: 'solid', width: 2 });
+  await expect(page.locator('label.sidebar-toggle-wrapper')).toHaveAttribute('aria-expanded', 'false');
+
+  await page.keyboard.press('Enter');                                  // opens the drawer; the focus goes to the first name
+  await expect(page.locator(DRAWER)).toBeVisible();
+  await expect(page.locator('label.sidebar-toggle-wrapper')).toHaveAttribute('aria-expanded', 'true');
+  expect(await onName()).toBe('classic');
+  expect((await ring()).style, 'the focus can be seen in the drawer').toBe('solid');
+
+  await page.keyboard.press('Escape');                                 // closes it; the focus is back on the hamburger
+  await expect(page.locator(DRAWER)).toBeHidden();
+  expect(await onBurger()).toBe(true);
+
+  await page.keyboard.press('Space');
+  await expect(page.locator(DRAWER)).toBeVisible();
+  await page.keyboard.press('Tab');
+  const next = await onName();
+  expect(next, 'Tab moves on to the next name').toBe(await page.evaluate(() => window.__theme.themes.filter((t) => t[3])[1][0]));
+  await page.keyboard.press('Enter');
+  await page.waitForSelector(`html[data-theme-ready="${next}"]`);
+  expect(search(page)).toBe('');
 });
 
+test('classic: a name in the drawer opened in a new tab is an ordinary link to that theme', async ({ page, request, context, isMobile }) => {
+  test.skip(isMobile, 'no modifier keys on a phone');
+  const pages = await samplePages(request);
+  const theme = NEW_THEMES[NEW_THEMES.length - 1];
+  await openClassic(page, pages.home);
+  await page.locator('label.sidebar-toggle-wrapper').click();
+  await expect(page.locator(DRAWER)).toBeVisible();
+  const [tab] = await Promise.all([
+    context.waitForEvent('page'),
+    page.locator(`${DRAWER} a[data-theme-id="${theme}"]`).click({ modifiers: ['ControlOrMeta'] }),
+  ]);
+  await tab.waitForSelector(`html[data-theme-ready="${theme}"]`);
+  expect(search(tab)).toBe('');
+  expect(await page.evaluate(() => document.documentElement.dataset.theme), 'the page it was opened from has not moved').toBe('classic');
+});
+
+test('without JavaScript there is no switcher: classic is the only theme then', async ({ browser, baseURL, request }) => {
+  const pages = await samplePages(request);
+  const context = await browser.newContext({ baseURL, javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.route(/^https:\/\//, (route) => route.abort());
+  for (const [kind] of KINDS) {
+    await page.goto(pages[kind]);
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'classic');
+    await expect(page.locator('.theme-switcher'), kind).toHaveCount(0);
+    await expect(page.locator('a[href*="theme="]'), kind).toHaveCount(0);
+    await expect(page.locator('label.sidebar-toggle-wrapper[tabindex]'), `${kind}: the hamburger is as it always was`).toHaveCount(0);
+  }
+  await context.close();
+});
+
+test('where there is nothing to switch to, nothing is offered', async ({ page, request }) => {
+  // a browser too old for the new themes always gets classic: a list of names would only reload the page
+  const pages = await samplePages(request);
+  await page.addInitScript(() => { CSS.supports = () => false; });
+  await otherSites(page);
+  for (const [kind] of KINDS) {
+    await page.goto(pages[kind]);
+    await page.waitForFunction(() => window.__theme && window.__theme.up === 1);
+    expect(await page.evaluate(() => [document.documentElement.dataset.theme, window.__theme.by]), kind).toEqual(['classic', 'old']);
+    await expect(page.locator('.theme-switcher'), kind).toHaveCount(0);
+  }
+});
+
+// ------------------------------------------------------------------ the new themes: a control in the top right corner
+
+/** The switcher controls of a new theme that are showing right now (a theme may keep one per bar; one shows at a time). */
+const showing = async (page) => {
+  const all = [];
+  for (const toggle of await page.locator(TOGGLE).elementHandles()) if (await toggle.isVisible()) all.push(toggle);
+  return all;
+};
+
+for (const theme of themeIds) {                                       // the reference theme too: it is what a new theme is copied from
+  for (const [kind, where] of KINDS) {
+    test(`"${theme}", ${where}: one control in the top right corner opens the list of themes`, async ({ page, request, isMobile }) => {
+      const pages = await samplePages(request);
+      const errors = [];
+      page.on('pageerror', (err) => errors.push(String(err)));
+      await openTheme(page, pages[kind], theme);
+      const path = decodeURI(new URL(page.url()).pathname);
+      const steps = await page.evaluate(() => history.length);
+      const registry = await registryOf(page);
+      const name = registry.find((t) => t[0] === theme)[1];
+
+      // one control, on the screen the reader arrives at, in its top right corner
+      const toggles = await showing(page);
+      expect(toggles.length, 'one control is showing').toBe(1);
+      const toggle = toggles[0];
+      const at = await toggle.evaluate((button) => {
+        const box = button.getBoundingClientRect(), x = box.left + box.width / 2, y = box.top + box.height / 2;
+        const hit = document.elementFromPoint(x, y);
+        return {
+          tag: button.tagName, expanded: button.getAttribute('aria-expanded'), text: button.innerText.trim(),
+          top: box.top, bottom: box.bottom, left: box.left, right: box.right, width: box.width, height: box.height, x, y,
+          screen: [window.innerWidth, window.innerHeight],
+          covered: !(hit && (hit === button || button.contains(hit))),
+          listShowing: Boolean(button.closest('nav').querySelector('ul').getClientRects().length),
+        };
+      });
+      expect(at.tag).toBe('BUTTON');
+      expect(at.expanded, 'closed until it is pressed').toBe('false');
+      expect(at.listShowing, 'the list is not showing yet').toBe(false);
+      expect(at.text, 'it shows the name of the theme being worn, and no other words').toBe(name);
+      expect(at.top, 'on the screen without scrolling').toBeGreaterThanOrEqual(0);
+      expect(at.top, 'at the top of the screen').toBeLessThan(160);
+      expect(at.x, 'in the right half of the screen').toBeGreaterThan(at.screen[0] * 0.55);
+      expect(at.right, 'inside the screen').toBeLessThanOrEqual(at.screen[0] + 0.5);
+      expect(at.height, 'tall enough for a finger').toBeGreaterThanOrEqual(44);
+      expect(at.width, 'wide enough for a finger').toBeGreaterThanOrEqual(44);
+      expect(at.covered, 'nothing lies on top of it').toBe(false);
+      await expectNoSidewaysScroll(page);
+
+      // pressed, it opens: every theme a visit can be given, by name, in the order of the registry
+      await (isMobile ? toggle.tap() : toggle.click());
+      const nav = page.locator(`${OWN}[data-open]`);
+      await expect(nav).toHaveCount(1);
+      await expect(nav.locator('.theme-switcher-toggle')).toHaveAttribute('aria-expanded', 'true');
+      const list = nav.locator('ul');
+      await expect(list).toBeVisible();
+      expect(await listed(nav)).toEqual(registry.map(([id, n]) => [id, n, `?theme=${id}`, id === theme]));
+      expect((await nav.getAttribute('aria-label')).trim().length, 'it has an accessible name').toBeGreaterThan(0);
+      expect((await list.innerText()).split('\n').map((s) => s.trim()).filter(Boolean), 'names and nothing else').toEqual(registry.map((t) => t[1]));
+      expect(await generated(nav), 'no words added by the stylesheet').toEqual([]);
+
+      // the open list: inside the screen, on top of everything, a finger can press every name, the theme being worn is marked
+      await page.waitForTimeout(350);                                    // a theme may let it unfold
+      const names = await list.locator('a[data-theme-id]').evaluateAll((links) => links.map((a) => {
+        const style = getComputedStyle(a), after = getComputedStyle(a, '::after'), before = getComputedStyle(a, '::before'), box = a.getBoundingClientRect();
+        const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+        const mark = (pseudo) => (pseudo.content !== 'none' && pseudo.content !== 'normal' ? `${pseudo.content} ${pseudo.width} ${pseudo.height} ${pseudo.borderTopWidth} ${pseudo.backgroundColor}` : '');
+        return {
+          id: a.dataset.themeId,
+          current: a.getAttribute('aria-current') === 'true',
+          look: [style.color, style.textDecorationLine, style.fontWeight, style.backgroundColor, mark(before), mark(after)].join(' | '),
+          height: Math.round(box.height),
+          inside: box.left >= -0.5 && box.right <= window.innerWidth + 0.5 && box.top >= -0.5 && box.bottom <= window.innerHeight + 0.5,
+          covered: !(hit && (hit === a || a.contains(hit))),
+        };
+      }));
+      const worn = names.filter((n) => n.current);
+      expect(worn.map((n) => n.id), 'one name is marked for assistive technology').toEqual([theme]);
+      const others = new Set(names.filter((n) => !n.current).map((n) => n.look));
+      expect(others.size, 'the other names look alike').toBe(1);
+      expect(others.has(worn[0].look), `the theme being worn looks different from the others (${worn[0].look})`).toBe(false);
+      expect(names.filter((n) => n.height < 44).map((n) => n.id), 'every name is at least 44px high').toEqual([]);
+      expect(names.filter((n) => !n.inside).map((n) => n.id), 'the whole list is inside the screen').toEqual([]);
+      expect(names.filter((n) => n.covered).map((n) => n.id), 'nothing lies on top of a name').toEqual([]);
+      await expectNoSidewaysScroll(page);
+
+      // it closes on Esc, and when something else is pressed
+      await page.keyboard.press('Escape');
+      await expect(list).toBeHidden();
+      expect(await toggle.getAttribute('aria-expanded')).toBe('false');
+      await (isMobile ? toggle.tap() : toggle.click());
+      await expect(list).toBeVisible();
+      await page.evaluate(() => document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
+      await expect(list).toBeHidden();
+      expect(decodeURI(new URL(page.url()).pathname), 'opening and closing it changes nothing else').toBe(path);
+
+      // a name pressed changes theme: the same page, a clean address, no step added to Back
+      const next = registry[(registry.findIndex((t) => t[0] === theme) + 1) % registry.length][0];
+      await (isMobile ? toggle.tap() : toggle.click());
+      const link = list.locator(`a[data-theme-id="${next}"]`);
+      await (isMobile ? link.tap() : link.click());
+      await page.waitForFunction((id) => window.__theme && window.__theme.up === 1 && document.documentElement.dataset.theme === id, next);
+      expect(decodeURI(new URL(page.url()).pathname), 'the reader stays on the page they were reading').toBe(path);
+      expect(search(page), 'nothing is left in the address').toBe('');
+      expect(await page.evaluate(() => history.length), 'changing clothes adds no step to Back').toBe(steps);
+      expect(errors).toEqual([]);
+    });
+  }
+
+  test(`"${theme}": no row of names is left at the foot of a page, and the control is never doubled`, async ({ page, request }) => {
+    const pages = await samplePages(request);
+    for (const from of [pages.home, pages.letter]) {
+      await openTheme(page, from, theme);
+      for (const part of [0, 0.5, 1]) {
+        await page.evaluate((p) => window.scrollTo(0, Math.round((document.documentElement.scrollHeight - window.innerHeight) * p)), part);
+        await page.waitForTimeout(250);
+        expect((await showing(page)).length, `${from} at ${part * 100}%: at most one control on screen`).toBeLessThanOrEqual(1);
+        // names are only ever seen inside an open control
+        const loose = await page.locator(`${OWN} a[data-theme-id]`).evaluateAll((links) => links.filter((a) => a.getClientRects().length && !a.closest('nav[data-open]')).length);
+        expect(loose, `${from} at ${part * 100}%: no names outside an open control`).toBe(0);
+      }
+    }
+  });
+
+  test(`"${theme}": the control and its list work from the keyboard`, async ({ page, request, isMobile }) => {
+    test.skip(isMobile, 'a phone has no Tab key');
+    const pages = await samplePages(request);
+    for (const from of [pages.lost, pages.letter]) {                       // the page with the fewest stops, and a letter
+      await openTheme(page, from, theme);
+      const onToggle = () => page.evaluate(() => Boolean(document.activeElement && document.activeElement.matches('.theme-switcher-toggle')));
+      for (let i = 0; i < 60 && !(await onToggle()); i++) await page.keyboard.press('Tab');
+      expect(await onToggle(), `${from}: Tab arrives at the control`).toBe(true);
+      const ring = () => page.evaluate(() => { const s = getComputedStyle(document.activeElement); return s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) >= 1; });
+      expect(await ring(), `${from}: the focus can be seen`).toBe(true);
+      await page.keyboard.press('Enter');
+      const list = page.locator(`${OWN}[data-open] ul`);
+      await expect(list).toBeVisible();
+      await page.keyboard.press('Tab');
+      const first = await page.evaluate((OWN) => { const a = document.activeElement; return a && a.closest(`${OWN}[data-open] ul`) ? a.dataset.themeId : null; }, OWN);
+      expect(first, `${from}: Tab moves into the list`).toBe((await registryOf(page))[0][0]);
+      expect(await ring(), `${from}: the focus can be seen in the list`).toBe(true);
+      await page.keyboard.press('Escape');
+      await expect(list).toBeHidden();
+      expect(await onToggle(), `${from}: Esc gives the focus back to the control`).toBe(true);
+      expect(decodeURI(new URL(page.url()).pathname), 'and the page has not moved').toBe(from);
+    }
+  });
+}
+
+// ------------------------------------------------------------------ from one theme to another
+
 for (const [index, theme] of NEW_THEMES.entries()) {
-  test(`from classic to "${theme}" and back`, async ({ page, request }) => {
+  test(`from classic to "${theme}" and back`, async ({ page, request, isMobile }) => {
     const pages = await samplePages(request);
     const start = [pages.letter, pages.home, pages.lost][index % 3];        // each kind of page takes its turn as the way out
     await openClassic(page, start);
     const path = new URL(page.url()).pathname;
     const steps = await page.evaluate(() => history.length);
 
-    await page.locator(`${FOOT} a[data-theme-id="${theme}"]`).click();
+    await pickTheme(page, theme, { isMobile });
     await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
     expect(new URL(page.url()).pathname, 'the same page').toBe(path);
     expect(search(page), 'nothing is left in the address').toBe('');
@@ -236,107 +398,20 @@ for (const [index, theme] of NEW_THEMES.entries()) {
     await page.goto(pages.letter);
     await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
 
-    // ... and back, from a letter and from the home page, with what the theme itself shows: its
-    // switcher is on the page, marks itself, and its link to classic can be scrolled to and pressed
+    // ... and back, from a letter and from the home page, with the theme's own control
     for (const from of [pages.letter, pages.home]) {
-      if (from !== pages.letter) {
-        await page.goto(`${from}?theme=${theme}`);
-        await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
-      }
-      // The row the reader has at hand: the first one that is showing. ("drift" has two: one at the
-      // foot of its river and one at the end of an open letter, because the foot of the river is a
-      // dozen screens from there and walking to it closes the letter.)
-      const own = page.locator(OWN).filter({ visible: true }).first();
-      await expect(own, `"${theme}" has the switcher on ${from}`).toBeVisible();
-      await expect(own.locator('a[aria-current="true"]')).toHaveAttribute('data-theme-id', theme);
-      const back = own.locator('a[data-theme-id="classic"]');
-      await back.scrollIntoViewIfNeeded();
-      await expect(back).toBeVisible();
-      expect((await back.boundingBox()).height, 'tall enough for a finger').toBeGreaterThanOrEqual(44);
-      await back.click();
+      if (from !== pages.letter) await openTheme(page, from, theme);
+      await pickTheme(page, 'classic', { isMobile });
       await page.waitForFunction(() => document.documentElement.dataset.theme === 'classic' && window.__theme.up === 1);
       expect(search(page)).toBe('');
       expect(decodeURI(new URL(page.url()).pathname), 'the reader stays on the page they were reading, a letter included').toBe(from);
-      await expect(page.locator(`${FOOT} a[aria-current="true"]`)).toHaveAttribute('data-theme-id', 'classic');
+      await expect(page.locator(`${DRAWER} a[aria-current="true"]`)).toHaveAttribute('data-theme-id', 'classic');
       await expect(page.locator('#theme-root')).toBeEmpty();
     }
   });
 }
 
-// What assets/themes/README.md asks of every theme's own row: on the home page and on a letter,
-// in sight without a search, names only, the theme being worn marked so that it can be seen.
-for (const theme of NEW_THEMES) {
-  test(`"${theme}": its own row marks the theme being worn, and a finger can press every name`, async ({ page, request }) => {
-    const pages = await samplePages(request);
-    for (const from of [pages.home, pages.letter]) {
-      await page.goto(`${from}?theme=${theme}`);
-      await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
-      // Handles, not locators: walking to the row at the foot of the river closes the letter in
-      // "drift", and the row inside that letter is then no longer showing.
-      const rows = [];
-      for (const row of await page.locator(OWN).elementHandles()) if (await row.isVisible()) rows.push(row);
-      // one row per page; "drift" with a letter open has two (the end of the letter, the foot of the river)
-      expect(rows.length, `rows showing on ${from}`).toBe(theme === 'drift' && from === pages.letter ? 2 : 1);
-      for (const row of rows) {
-        // Bring the row to the middle of the screen and measure in the same step. A letter whose
-        // pictures are still arriving keeps growing: measured a moment after the scroll, the row
-        // may have been pushed off the screen, and a point off the screen has nothing under it.
-        const links = await row.evaluate((nav) => {
-          nav.scrollIntoView({ block: 'center', behavior: 'instant' });
-          return [...nav.querySelectorAll('a[data-theme-id]')].map((a) => {
-            const style = getComputedStyle(a), after = getComputedStyle(a, '::after'), box = a.getBoundingClientRect();
-            const x = box.left + box.width / 2, y = box.top + box.height / 2;
-            const hit = document.elementFromPoint(x, y);
-            return {
-              id: a.dataset.themeId,
-              current: a.getAttribute('aria-current') === 'true',
-              look: [style.color, style.textDecorationLine, style.fontWeight, after.content !== 'none' && after.content !== 'normal' ? `${after.content} ${after.borderTopWidth} ${after.height}` : ''].join(' | '),
-              width: Math.round(box.width), height: Math.round(box.height),
-              onScreen: x >= 0 && x <= window.innerWidth && y >= 0 && y <= window.innerHeight,
-              covered: !(hit && (hit === a || a.contains(hit))),
-            };
-          });
-        });
-        expect(links.filter((l) => !l.onScreen).map((l) => l.id), 'the row can be brought onto the screen').toEqual([]);
-        const worn = links.filter((l) => l.current);
-        expect(worn.map((l) => l.id), 'one name is marked for assistive technology').toEqual([theme]);
-        const others = new Set(links.filter((l) => !l.current).map((l) => l.look));
-        expect(others.size, 'the other names look alike').toBe(1);
-        expect(others.has(worn[0].look), `the theme being worn looks different from the others (${worn[0].look})`).toBe(false);
-        expect(links.filter((l) => l.height < 44).map((l) => l.id), 'every name is at least 44px high').toEqual([]);
-        expect(links.filter((l) => l.covered).map((l) => l.id), 'nothing lies on top of a name').toEqual([]);
-      }
-      await expectNoSidewaysScroll(page);
-    }
-  });
-
-  test(`"${theme}": at the end of a letter the row is in reach, and Tab arrives at it`, async ({ page, request, isMobile }) => {
-    const pages = await samplePages(request);
-    for (const letter of [pages.flip, pages.letter]) {                      // a long letter near the top of the list, and an early one
-      await page.goto(`${letter}?theme=${theme}`);
-      await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
-      // From the last line of the letter to the nearest row below it, in screens.
-      const screens = await page.evaluate((OWN) => {
-        const end = document.querySelector('#theme-root .letter-body').getBoundingClientRect().bottom;
-        const tops = [...document.querySelectorAll(OWN)].filter((nav) => nav.getClientRects().length).map((nav) => nav.getBoundingClientRect().top).filter((top) => top >= end - 1);
-        return tops.length ? (Math.min(...tops) - end) / window.innerHeight : null;
-      }, OWN);
-      expect(screens, `${letter}: a row follows the letter`).not.toBeNull();
-      expect(screens, `${letter}: within a screen and a half of its last line`).toBeLessThan(1.5);
-      expect(decodeURI(new URL(page.url()).pathname)).toBe(letter);
-
-      if (isMobile) continue;                                               // a phone has no Tab key
-      const focused = () => page.evaluate((OWN) => { const a = document.activeElement; return a && a.closest(OWN) ? a.dataset.themeId : null; }, OWN);
-      for (let i = 0; i < 60 && !(await focused()); i++) await page.keyboard.press('Tab');
-      expect(await focused(), `${letter}: Tab arrives at the row`).not.toBeNull();
-      expect(decodeURI(new URL(page.url()).pathname), 'and the letter is still the page').toBe(letter);
-      const ring = await page.evaluate(() => { const s = getComputedStyle(document.activeElement); return s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) >= 1; });
-      expect(ring, 'the focus can be seen').toBe(true);
-    }
-  });
-}
-
-test('after switching, Back and Forward stay in the new theme and the address stays clean', async ({ page, request }) => {
+test('after switching, Back and Forward stay in the new theme and the address stays clean', async ({ page, request, isMobile }) => {
   const pages = await samplePages(request);
   const theme = NEW_THEMES[0];
   await openClassic(page, pages.home);
@@ -345,7 +420,7 @@ test('after switching, Back and Forward stay in the new theme and the address st
   await page.waitForFunction(() => window.__theme && window.__theme.up === 1 && window.__theme.page === 'letter');
   expect(await page.evaluate(() => [document.documentElement.dataset.theme, window.__theme.by])).toEqual(['classic', 'visit']);
 
-  await page.locator(`${FOOT} a[data-theme-id="${theme}"]`).click();                                  // change there
+  await pickTheme(page, theme, { isMobile });                                                          // change there
   await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
   expect(search(page)).toBe('');
 
@@ -353,86 +428,10 @@ test('after switching, Back and Forward stay in the new theme and the address st
   await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
   expect(new URL(page.url()).pathname).toBe('/');
   expect(search(page)).toBe('');
-  await expect(page.locator('body > footer.section--footer--switcher'), 'nothing of the classic page is left').toHaveCount(0);
+  await expect(page.locator('nav.sidebar'), 'nothing of the classic page is left').toHaveCount(0);
 
   await page.goForward();
   await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
   expect(decodeURI(new URL(page.url()).pathname)).toBe(pages.letter);
   expect(search(page)).toBe('');
-});
-
-test('classic: the row can be reached and used with the keyboard', async ({ page, request, isMobile }) => {
-  test.skip(isMobile, 'a phone has no Tab key');
-  const pages = await samplePages(request);
-  await openClassic(page, pages.lost);                                 // the page with the fewest stops on the way
-  // (the row in the drawer is no stop on the way: a closed drawer is not there for the keyboard either)
-  const focused = () => page.evaluate((FOOT) => { const a = document.activeElement; return a && a.closest(FOOT) ? a.dataset.themeId : null; }, FOOT);
-  for (let i = 0; i < 12 && !(await focused()); i++) await page.keyboard.press('Tab');
-  expect(await focused(), 'Tab arrives at the first name').toBe('classic');
-  const ring = await page.evaluate(() => { const s = getComputedStyle(document.activeElement); return { style: s.outlineStyle, width: parseFloat(s.outlineWidth) }; });
-  expect(ring.style, 'focus can be seen').toBe('solid');
-  expect(ring.width).toBeGreaterThanOrEqual(2);
-  await page.keyboard.press('Tab');
-  const next = await focused();
-  expect(next, 'Tab moves on to the next name').toBe(await page.evaluate(() => window.__theme.themes.filter((t) => t[3])[1][0]));
-  await page.keyboard.press('Enter');
-  await page.waitForSelector(`html[data-theme-ready="${next}"]`);
-  expect(search(page)).toBe('');
-});
-
-test('classic: a link of the row opened in a new tab is an ordinary link to that theme', async ({ page, request, context, isMobile }) => {
-  test.skip(isMobile, 'no modifier keys on a phone');
-  const pages = await samplePages(request);
-  const theme = NEW_THEMES[NEW_THEMES.length - 1];
-  await openClassic(page, pages.home);
-  const [tab] = await Promise.all([
-    context.waitForEvent('page'),
-    page.locator(`${FOOT} a[data-theme-id="${theme}"]`).click({ modifiers: ['ControlOrMeta'] }),
-  ]);
-  await tab.waitForSelector(`html[data-theme-ready="${theme}"]`);
-  expect(search(tab)).toBe('');
-  expect(await page.evaluate(() => document.documentElement.dataset.theme), 'the page it was opened from has not moved').toBe('classic');
-});
-
-test('without JavaScript there is no switcher: classic is the only theme then', async ({ browser, baseURL, request }) => {
-  const pages = await samplePages(request);
-  const context = await browser.newContext({ baseURL, javaScriptEnabled: false });
-  const page = await context.newPage();
-  await page.route(/^https:\/\//, (route) => route.abort());
-  for (const [kind] of KINDS) {
-    await page.goto(pages[kind]);
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'classic');
-    await expect(page.locator('.theme-switcher, .section--footer--switcher'), kind).toHaveCount(0);
-    await expect(page.locator('a[href*="theme="]'), kind).toHaveCount(0);
-  }
-  await context.close();
-});
-
-test('where there is nothing to switch to, nothing is offered', async ({ page, request }) => {
-  // a browser too old for the new themes always gets classic: a row of names would only reload the page
-  const pages = await samplePages(request);
-  await page.addInitScript(() => { CSS.supports = () => false; });
-  await otherSites(page);
-  for (const [kind] of KINDS) {
-    await page.goto(pages[kind]);
-    await page.waitForFunction(() => window.__theme && window.__theme.up === 1);
-    expect(await page.evaluate(() => [document.documentElement.dataset.theme, window.__theme.by]), kind).toEqual(['classic', 'old']);
-    await expect(page.locator('.theme-switcher, .section--footer--switcher'), kind).toHaveCount(0);
-  }
-});
-
-test('classic: a tap on a name is not one of the three taps of the hidden egg', async ({ page, request }) => {
-  // Three quick taps on the footer move on to the next theme (tests/eggs.spec.mjs). The row of
-  // names lives in that footer: a name pressed twice more by an impatient finger while the page
-  // is loading must still lead to that theme, not to the one after classic.
-  const pages = await samplePages(request);
-  await openClassic(page, pages.letter);
-  const [next, wanted] = await page.evaluate(() => { const ids = window.__theme.themes.filter((t) => t[3]).map((t) => t[0]); return [ids[(ids.indexOf('classic') + 1) % ids.length], ids[ids.length - 1]]; });
-  expect(wanted).not.toBe(next);
-  await page.evaluate(([FOOT, id]) => {
-    const a = document.querySelector(`${FOOT} a[data-theme-id="${id}"]`);
-    for (let i = 0; i < 3; i++) a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 }));
-  }, [FOOT, wanted]);
-  await page.waitForSelector('html[data-theme-ready]');
-  expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe(wanted);
 });

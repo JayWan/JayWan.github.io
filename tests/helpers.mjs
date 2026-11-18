@@ -112,3 +112,28 @@ export async function firstLetterLink(page, request, skip = 0) {
   if (!found) throw new Error('the home view has no visible <a href> to a letter');
   return found;
 }
+
+// ------------------------------------------------------------------ changing theme
+
+export const OWN_SWITCHER = '#theme-root nav.theme-switcher';      // the control a new theme places in its top right corner
+export const DRAWER_SWITCHER = 'nav.sidebar nav.theme-switcher';   // classic: the names in the drawer the hamburger opens
+
+/** Change theme the way a reader does: under a new theme through the control in its top right
+ *  corner, under classic through the drawer. The caller waits for the theme that was asked for. */
+export async function pickTheme(page, id, { isMobile = false } = {}) {
+  const press = (target) => (isMobile ? target.tap() : target.click());
+  if (await page.evaluate(() => document.documentElement.dataset.theme) === 'classic') {
+    const row = page.locator(DRAWER_SWITCHER);
+    if (!(await row.isVisible())) await press(page.locator('label.sidebar-toggle-wrapper'));
+    await row.waitFor({ state: 'visible' });
+    await press(row.locator(`a[data-theme-id="${id}"]`));
+    return;
+  }
+  let toggle = null;
+  for (const handle of await page.locator(`${OWN_SWITCHER} .theme-switcher-toggle`).elementHandles()) {
+    if (await handle.isVisible()) { toggle = handle; break; }
+  }
+  if (!toggle) throw new Error('no switcher control is showing');
+  await press(toggle);
+  await press(page.locator(`${OWN_SWITCHER}[data-open] a[data-theme-id="${id}"]`));
+}

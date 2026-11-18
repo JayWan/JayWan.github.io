@@ -87,61 +87,140 @@ export function switchTheme(id) {
   location.replace(`${location.pathname}?theme=${encodeURIComponent(id)}${location.hash}`);
 }
 
-/**
- * switcher(T) → <nav class="theme-switcher"> with one link per theme. Unstyled on purpose: the
- * theme decides how it looks. The links are real "?theme=<id>" links (they can be opened in a new
- * tab or copied); a plain click reloads the current page under that theme.
- *
- *   <nav class="theme-switcher" aria-label="换一种读法">
- *     <ul><li><a href="?theme=drift" data-theme-id="drift" aria-current="true">夜航</a></li> …</ul>
- *   </nav>
- */
-export function switcher(T) {
-  const list = el('ul');
+/** The list of themes a reader can change to: <ul> with one "?theme=<id>" link per theme. The
+ *  links are real links (they can be opened in a new tab or copied). */
+function themeList(T, props) {
+  const list = el('ul', props);
   for (const [id, name, , canDraw] of T.themes) {   // rows of the boot script: [id, name, dark, drawable, fonts]
     if (!canDraw && id !== T.id) continue;        // hidden or disabled themes only list themselves
     list.append(el('li', null, el('a', { href: `?theme=${encodeURIComponent(id)}`, 'data-theme-id': id, 'aria-current': id === T.id ? 'true' : null }, name)));
   }
-  const nav = el('nav', { class: 'theme-switcher', 'aria-label': '换一种读法' }, list);
-  nav.addEventListener('click', (event) => {
-    const a = event.target.closest('a[data-theme-id]');
-    if (!a || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;   // new-tab clicks stay ordinary links
+  return list;
+}
+
+/** A plain click on a name reloads the current page under that theme. */
+function pick(event) {
+  const a = event.target.closest && event.target.closest('a[data-theme-id]');
+  if (!a || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;   // new-tab clicks stay ordinary links
+  event.preventDefault();
+  switchTheme(a.dataset.themeId);
+}
+
+// One switcher is open at a time. The listeners that close it are on the document and are added
+// once, however many switchers a theme makes (some make a new one with every view they draw).
+let openNav = null;
+let switchers = 0;
+function setOpen(nav, open, refocus) {
+  if (openNav && openNav !== nav) setOpen(openNav, false);
+  const toggle = nav.querySelector('.theme-switcher-toggle');
+  const list = nav.querySelector('ul');
+  nav.toggleAttribute('data-open', open);
+  toggle.setAttribute('aria-expanded', String(open));
+  list.hidden = !open;
+  openNav = open ? nav : null;
+  if (!open && refocus && nav.contains(document.activeElement)) toggle.focus();
+}
+function closeFromOutside(event) {
+  if (!openNav) return;
+  if (!openNav.isConnected) { openNav = null; return; }
+  if (event.type === 'keydown') {
+    if (event.key !== 'Escape') return;
+    // Esc closes the list and nothing else: themes give Esc a meaning of their own (close the
+    // letter, go back to the list), and that is not what a reader with a list open is asking for.
     event.preventDefault();
-    switchTheme(a.dataset.themeId);
-  });
+    event.stopImmediatePropagation();
+    setOpen(openNav, false, true);
+    return;
+  }
+  if (!openNav.contains(event.target)) setOpen(openNav, false);      // a press or the focus somewhere else
+}
+
+/**
+ * switcher(T) → the control that changes theme. A theme places it in the top right corner of
+ * every view; pressed, it opens a list of the themes. Unstyled on purpose: the theme decides how
+ * it looks (the list is a small panel under the control).
+ *
+ *   <nav class="theme-switcher" aria-label="换一种读法">
+ *     <button type="button" class="theme-switcher-toggle" aria-expanded="false" aria-controls="theme-switcher-1">
+ *       <span class="theme-switcher-name">夜航</span><i aria-hidden="true"></i>
+ *     </button>
+ *     <ul id="theme-switcher-1" hidden>
+ *       <li><a href="?theme=classic" data-theme-id="classic">旧版</a></li>
+ *       <li><a href="?theme=drift" data-theme-id="drift" aria-current="true">夜航</a></li> …
+ *     </ul>
+ *   </nav>
+ *
+ * The button shows the name of the theme being worn; the <i> is there for the theme to draw a
+ * mark that says "this opens". While it is open the nav has the attribute data-open, the button
+ * says aria-expanded="true" and the list is not hidden. It closes on a second press, on Esc (the
+ * focus goes back to the button; while a list is open Esc does nothing else, whatever the theme
+ * uses that key for), and when a press or the focus lands outside it. A plain click
+ * on a name reloads the current page under that theme.
+ */
+export function switcher(T) {
+  const id = `theme-switcher-${++switchers}`;
+  const name = (T.themes.find((t) => t[0] === T.id) || [])[1] || T.id;
+  const toggle = el('button', { type: 'button', class: 'theme-switcher-toggle', 'aria-expanded': 'false', 'aria-controls': id },
+    el('span', { class: 'theme-switcher-name' }, name), el('i', { 'aria-hidden': 'true' }));
+  const nav = el('nav', { class: 'theme-switcher', 'aria-label': '换一种读法' }, toggle, themeList(T, { id, hidden: true }));
+  toggle.addEventListener('click', () => setOpen(nav, !nav.hasAttribute('data-open')));
+  nav.addEventListener('click', pick);
+  if (switchers === 1) {
+    document.addEventListener('pointerdown', closeFromOutside, true);
+    document.addEventListener('focusin', closeFromOutside, true);
+    window.addEventListener('keydown', closeFromOutside, true);       // on the way down, before any theme hears the key
+  }
   return nav;
 }
 
 /**
- * The classic page is plain HTML with no theme code of its own, so the core hangs the switcher on
- * it: the same <nav class="theme-switcher"> the other themes place themselves. Styled by
- * _scss/_theme-switcher.scss. It is put in two places.
- *
- * At the foot of the page, where a reader ends up and where the other themes keep theirs:
- *
- *   letter   inside the footer the page already has, under the © line
- *   home     in a footer of its own after the last card (the classic home page never had one)
- *   404      the same footer, resting on the bottom edge of the first screen, under the page's three lines
- *
- * And in the drawer the hamburger opens (nav.sidebar, on every classic page), under its logo. The
- * foot of a classic page is many screens away from where a reader arrives (the home page is twelve
- * screens long on a phone); the hamburger is on screen wherever the page has been scrolled to.
+ * The classic page is plain HTML with no theme code of its own, so the core gives it the way to
+ * the other themes. Its top right corner already has a control that opens: the three lines of the
+ * hamburger, on screen wherever a classic page has been scrolled to, and the drawer they open
+ * (nav.sidebar). The names of the themes go there, as one row under the drawer's logo. Styled by
+ * _scss/_theme-switcher.scss. Nothing else of the classic page is touched.
  *
  * Nothing is added where there is nothing to switch to: a browser too old for the new themes
  * (by 'old'), a page they cannot draw (by 'page'), a registry in which classic is the only theme.
  */
 export function classicSwitcher(T) {
   if (T.id !== 'classic' || T.by === 'old' || T.by === 'page' || document.querySelector('.theme-switcher')) return null;
-  const nav = switcher(T);
-  if (nav.querySelectorAll('a').length < 2) return null;
-  let foot = document.querySelector('footer.section--footer .container');
-  if (!foot) {
-    foot = el('div', { class: 'container container--content' });
-    document.body.append(el('footer', { class: `section--footer section--footer--switcher${T.page === '404' ? ' section--footer--floor' : ''}` }, foot));
-  }
-  foot.append(nav);
   const logo = document.querySelector('nav.sidebar > .textLogo');
-  if (logo) logo.after(switcher(T));
+  const nav = el('nav', { class: 'theme-switcher', 'aria-label': '换一种读法' }, themeList(T));
+  if (!logo || nav.querySelectorAll('a').length < 2) return null;
+  nav.addEventListener('click', pick);
+  logo.after(nav);
+
+  // The hamburger is a <label> for a hidden checkbox: a pointer and a finger can press it, a
+  // keyboard could not reach it. With the names of the themes behind it, it has to be reachable:
+  // Tab stops on it, Enter or Space opens the drawer and puts the focus on the first name, Esc
+  // closes the drawer again.
+  const burger = document.querySelector('label.sidebar-toggle-wrapper');
+  const box = document.getElementById('sidebar-checkbox');
+  if (burger && box) {
+    const sync = () => burger.setAttribute('aria-expanded', String(box.checked));
+    burger.tabIndex = 0;
+    burger.setAttribute('role', 'button');
+    burger.setAttribute('aria-label', '菜单');
+    sync();
+    box.addEventListener('change', sync);
+    burger.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      box.checked = !box.checked;
+      sync();
+      // (the drawer fades in: for a frame or two it is still hidden and cannot take the focus)
+      const first = nav.querySelector('a');
+      const reach = (tries) => { if (!box.checked) return; first.focus(); if (document.activeElement !== first && tries > 0) requestAnimationFrame(() => reach(tries - 1)); };
+      if (box.checked) reach(30);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || !box.checked) return;
+      box.checked = false;
+      sync();
+      burger.focus();
+    });
+  }
   return nav;
 }
 

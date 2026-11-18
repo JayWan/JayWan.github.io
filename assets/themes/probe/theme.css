@@ -5,7 +5,7 @@
  * so start from the browser's defaults):
  *   - html / body: ground colour, text colour, fonts, margins
  *   - everything inside #theme-root, including the letter's own HTML inside .letter-body
- *   - the unstyled pieces the core hands over: <nav class="theme-switcher">
+ *   - the unstyled pieces the core hands over: <nav class="theme-switcher"> (a button and the list it opens)
  * shared/widgets.css (flip card, gift box, photo blocks) is already loaded before this file.
  */
 
@@ -39,13 +39,21 @@ small, .p-days, .p-facts, .p-fine { color: var(--soft); font-size: .8125rem; }
 /* ---- header / footer ---- */
 .p-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
 .p-logo { font-weight: 700; letter-spacing: .12em; text-decoration: none; padding: .6rem 0; }
-.p-days { margin: 0; }
+.p-days { margin: 0; flex-basis: 100%; }
 .p-foot { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 .p-hunger { margin: 0 0 .5rem; }
 
-.theme-switcher ul { display: flex; flex-wrap: wrap; gap: 0 .25rem; margin: 0; padding: 0; list-style: none; }
-.theme-switcher a { display: inline-block; padding: .65rem .6rem; font-size: .8125rem; color: var(--soft); }   /* ≥ 44px tall */
-.theme-switcher a[aria-current] { color: var(--ink); text-decoration: none; font-weight: 700; }
+/* The switcher (ctx.ui.switcher()): a button in the top right corner with the name of this theme; pressed, the
+   list of themes drops under it. The core opens and closes it (the list has [hidden] while closed, the nav
+   has [data-open] while open); the theme draws it. Every target is at least 44px high. */
+.theme-switcher { position: relative; margin-left: auto; }
+.theme-switcher-toggle { display: inline-flex; align-items: center; gap: .45rem; min-width: 2.75rem; min-height: 2.75rem; padding: 0 .1rem 0 .75rem; font: inherit; font-size: .8125rem; color: var(--soft); background: none; border: 0; cursor: pointer; }
+.theme-switcher-toggle i { width: .4rem; height: .4rem; border: solid currentColor; border-width: 0 1px 1px 0; transform: translateY(-30%) rotate(45deg); }   /* the mark that says "this opens" */
+.theme-switcher[data-open] .theme-switcher-toggle { color: var(--ink); }
+.theme-switcher[data-open] .theme-switcher-toggle i { transform: translateY(20%) rotate(225deg); }
+.theme-switcher ul { position: absolute; z-index: 5; right: 0; top: 100%; min-width: 7rem; margin: 0; padding: .25rem 0; list-style: none; background: var(--ground); border: 1px solid var(--line); }
+.theme-switcher a { display: flex; align-items: center; min-height: 2.75rem; padding: 0 1rem; font-size: .8125rem; color: var(--soft); text-decoration: none; white-space: nowrap; }
+.theme-switcher a[aria-current] { color: var(--ink); font-weight: 700; }
 
 /* ---- home ---- */
 .p-lucky { margin: 1.25rem 0 0; padding: .65rem 1rem; font: inherit; font-size: .875rem; color: inherit; background: none; border: 1px solid var(--line); border-radius: 2rem; cursor: pointer; }

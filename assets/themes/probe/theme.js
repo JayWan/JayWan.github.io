@@ -49,11 +49,11 @@ export default {
     root.replaceChildren(
       h('header', { className: 'p-head' },
         h('a', { className: 'p-logo', href: '/' }, site.title),
+        ui.switcher(),                                          // the control that changes theme: top right, opens a list (styled in theme.css)
         h('p', { className: 'p-days' }, `认识 ${fmt.days(days.met)} · 在一起 ${fmt.days(days.together)} · 结婚 ${fmt.days(days.married)}`)),
       main,
       h('footer', { className: 'p-foot' },
         h('p', { className: 'p-hunger' }, ui.hunger().text),   // the site's own voice; every theme shows it
-        ui.switcher(),                                          // <nav class="theme-switcher">, styled in theme.css
         h('p', { className: 'p-fine' }, `${letters.length} 封信 · ${fmt.date(letters[0].date, 'year')} – ${fmt.date(site.today.date, 'year')}`)),
       bar.el,
     );

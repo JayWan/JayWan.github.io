@@ -7,12 +7,10 @@
 // address in the bar is the missing one, not "/404.html".
 
 import { test, expect } from '@playwright/test';
-import { themeIds, otherSites, expectNoSidewaysScroll } from './helpers.mjs';
+import { themeIds, otherSites, expectNoSidewaysScroll, pickTheme } from './helpers.mjs';
 
 const THEMES = ['classic', ...themeIds.filter((id) => id !== 'probe')];
 const NOWHERE = ['/no-such-page', '/no/such/letter/', '/story/2020/02/21/nothing-here/', '/404/', '/a/b/c/d.html'];
-const OWN = '#theme-root nav.theme-switcher';
-const FOOT = 'footer.section--footer nav.theme-switcher';
 const LOST = /404|四〇四/;                                           // how a theme writes it ("folio" counts in characters)
 
 /** Open a missing address under a theme and wait until the page is drawn. */
@@ -108,15 +106,12 @@ for (const theme of THEMES) {
   });
 }
 
-test('changing theme on a missing address stays on that address', async ({ page }) => {
+test('changing theme on a missing address stays on that address', async ({ page, isMobile }) => {
   await otherSites(page);
   const path = '/no/such/letter/';
   await openMissing(page, path, THEMES[0]);
   for (const next of [...THEMES.slice(1), THEMES[0]]) {
-    const row = page.locator(`${OWN}, ${FOOT}`).filter({ visible: true }).first();
-    const name = row.locator(`a[data-theme-id="${next}"]`);
-    await name.scrollIntoViewIfNeeded();
-    await name.click();
+    await pickTheme(page, next, { isMobile });                          // the control in the top right corner (classic: the drawer)
     await page.waitForFunction((id) => window.__theme && window.__theme.up === 1 && document.documentElement.dataset.theme === id, next);
     if (next !== 'classic') await page.waitForSelector(`html[data-theme-ready="${next}"]`);
     expect(address(page), `in "${next}"`).toBe(path);
@@ -124,16 +119,17 @@ test('changing theme on a missing address stays on that address', async ({ page 
   }
 });
 
-test('classic: the three lines and the row of themes never touch, also on a low screen', async ({ browser, baseURL }) => {
+test('classic: the three lines keep clear of the logo and the hamburger, also on a low screen', async ({ browser, baseURL }) => {
   for (const [width, height] of [[1440, 900], [402, 874], [874, 402], [700, 330], [320, 568]]) {
     const context = await browser.newContext({ baseURL, viewport: { width, height } });
     const page = await context.newPage();
     await otherSites(page);
     await openMissing(page, '/no/such/letter/', 'classic');
     const box = (selector) => page.locator(selector).evaluate((el) => { const r = el.getBoundingClientRect(); return { top: r.top + window.scrollY, bottom: r.bottom + window.scrollY }; });
-    const lines = await box('.section--lost .container'), row = await box(FOOT), burger = await box('label.sidebar-toggle-wrapper');
-    expect(row.top - lines.bottom, `${width}x${height}: the row is below the lines`).toBeGreaterThanOrEqual(24);
+    const lines = await box('.section--lost .container'), burger = await box('label.sidebar-toggle-wrapper'), logo = await box('a.brandLogo');
     expect(lines.top - burger.bottom, `${width}x${height}: the lines are below the menu button`).toBeGreaterThanOrEqual(8);
+    expect(lines.top - logo.bottom, `${width}x${height}: and below the logo`).toBeGreaterThanOrEqual(8);
+    await expect(page.locator('footer'), `${width}x${height}: the page ends with its three lines`).toHaveCount(0);
     if (height >= 600) expect(await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight), `${width}x${height}: one screen, nothing to scroll`).toBeLessThanOrEqual(1);
     await expectNoSidewaysScroll(page);
     await context.close();
