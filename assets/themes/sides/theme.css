@@ -18,13 +18,13 @@
   --pad: 48px;
   --pl: max(var(--pad), env(safe-area-inset-left, 0px));     /* 横屏时让开刘海 */
   --pr: max(var(--pad), env(safe-area-inset-right, 0px));
-  --ph: 64px;                                                 /* 播放器的高度 */
+  --ph: 64px;   /* 播放器的高度 */
   --sab: env(safe-area-inset-bottom, 0px);
 }
 [data-side="a"] { --side: var(--sea); --side-bg: var(--sea); }
 [data-side="b"] { --side: var(--forest); --side-bg: var(--forest); }
 [data-side="ab"] { --side: var(--ink); --side-bg: linear-gradient(90deg, var(--sea) 50%, var(--forest) 50%); }   /* 两个人写的：一半蓝一半绿 */
-[data-side="x"] { --side: var(--ink); --side-bg: var(--ink); }                                                     /* 客人写的：黑 */
+[data-side="x"] { --side: var(--ink); --side-bg: var(--ink); }   /* 客人写的：黑 */
 
 html { background: #EFEBE2; color: #14161B; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-padding-bottom: calc(var(--ph) + var(--sab) + 12px); }   /* 键盘聚焦到的东西不被贴底的播放器盖住 */
 body { margin: 0; }
@@ -88,7 +88,7 @@ body { margin: 0; }
 }
 .sd-cat { grid-area: cat; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; height: 44px; border-bottom: 1px solid var(--ink); white-space: nowrap; }
 .sd-cat > :last-child { grid-column: 3; justify-self: end; }
-.sd-mark { margin: 0; }                                   /* 厂牌：两种油墨在页眉正中各印一次 */
+.sd-mark { margin: 0; }   /* 厂牌：两种油墨在页眉正中各印一次 */
 
 .sd-mast { grid-area: mast; padding-top: 30px; min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); }
 .sd-title {
@@ -213,16 +213,25 @@ body { margin: 0; }
 }
 
 /* ---- 页脚 ---- */
-/* 网站自己那句话不为自己去下载字体：theme.js 只把「字体切片已经到手」的字换成主题的黑体（.sd-zh），
-   其余的字（现在是 嗝、累、睡 三个，要多下 60 KB，首页会超出 700 KB）由系统黑体画。字体重新切片之后就都是主题的字了。 */
+/* 网站自己那句话不为自己去下载字体：theme.js 只把「字体切片已经到手」的字换成主题的黑体（.sd-zh），其余的由系统黑体画（见 README）。 */
 .sd-foot { margin-top: 72px; padding-bottom: 20px; color: var(--ink-2); }
 .sd-hunger { margin: 0; padding: 18px 0 14px; border-top: 1px solid var(--ink); font: 500 15px/1.7 "F221 Grotesk", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; color: var(--ink); }
 .sd-zh { font-family: var(--zh); }
-.sd-foot-row { display: flex; justify-content: space-between; align-items: center; gap: 8px 24px; flex-wrap: wrap; border-top: 1px solid var(--rule); font: 500 12px/1.4 var(--zh); letter-spacing: .06em; }
-.theme-switcher ul { display: flex; flex-wrap: wrap; margin: 0 -8px 0 0; padding: 0; list-style: none; }
-.theme-switcher a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0 8px; text-decoration: none; }
-.theme-switcher a[aria-current] { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
-@media (hover: hover) { .theme-switcher a:hover { color: var(--ink); } }
+.sd-foot-row { display: flex; justify-content: space-between; align-items: baseline; gap: 4px 24px; flex-wrap: wrap; padding: 13px 0; border-top: 1px solid var(--rule); font: 500 12px/1.4 var(--zh); letter-spacing: .06em; }
+
+/* ---- 换主题：页眉最右边的一格。点开，细线下面挂出一条纸色的单子，穿着的那一套前面有个小方块 ---- */
+.sd-navr { display: flex; align-items: center; align-self: stretch; justify-self: end; }
+.sd-navr > span { padding-right: 14px; border-right: 1px solid var(--band-rule, var(--rule)); }
+.theme-switcher { position: relative; display: flex; align-self: stretch; margin-bottom: -1px; }
+.theme-switcher-toggle { display: flex; align-items: center; gap: 8px; min-width: 44px; min-height: 44px; margin-right: -8px; padding: 0 8px 0 14px; letter-spacing: inherit; }
+.theme-switcher i { width: .5em; height: .5em; margin: -.5em 1px 0 0; border: solid; border-width: 0 1.6px 1.6px 0; transform: rotate(45deg); }
+.theme-switcher[data-open] i { margin-top: 0; transform: rotate(225deg); }
+.theme-switcher ul { position: absolute; z-index: 60; top: calc(100% - 1px); right: 0; margin: 0; padding: 0; list-style: none; background: var(--paper); color: var(--ink); border: 1px solid var(--band-fg, var(--ink)); }
+.theme-switcher li + li { border-top: 1px solid var(--rule); }
+.theme-switcher a { display: flex; align-items: center; min-height: 44px; padding: 0 10px 0 28px; font: 500 14px/1.3 var(--zh); text-decoration: none; white-space: nowrap; }
+.theme-switcher [aria-current] { font-weight: 700; }
+.theme-switcher [aria-current]::before { content: ""; margin: 0 12px 0 -18px; border: 3px solid; }
+.theme-switcher :focus-visible { outline-offset: -5px; }
 
 /* ================= 信：内页说明 ================= */
 .sd-letter {
@@ -239,9 +248,9 @@ body { margin: 0; }
 .sd-letter[data-plain] .sd-band { border-bottom: 2px solid var(--side); }
 .sd-in { max-width: 1344px; margin: 0 auto; }
 .sd-nav { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 56px; border-bottom: 1px solid var(--band-rule); }
-.sd-nav a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; min-width: 44px; text-decoration: none; justify-self: start; }
+.sd-nav > a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; min-width: 44px; text-decoration: none; justify-self: start; }
 .sd-nav a.sd-brand { justify-self: center; }
-.sd-pos { justify-self: end; font-family: var(--zh); font-variant-numeric: tabular-nums; }
+.sd-pos { font-family: var(--zh); font-variant-numeric: tabular-nums; }
 .sd-head { display: grid; grid-template-columns: 400px minmax(0, 1fr); column-gap: 80px; grid-template-areas: "la lb" "no tx"; padding: 30px 0 40px; align-items: end; }
 .sd-lbls { display: contents; }
 .sd-lbl { margin: 0 0 16px; opacity: .9; align-self: start; font-size: 13px; }
@@ -358,7 +367,7 @@ body { margin: 0; }
 @media (hover: hover) {
   a.sd-pnt:hover { background: var(--side-bg); color: var(--paper); }
   a.sd-pnt:hover :is(.sd-pn-no, .sd-na, .sd-nb, .sd-pn-lbl, .sd-pn-song) { color: var(--paper); }
-  .sd-pn-back:hover { background: var(--ink); color: var(--paper); }
+  .sd-pn-back:hover, .theme-switcher a:hover { background: var(--ink); color: var(--paper); }
   .sd-pn-back:hover small { color: var(--paper); }
 }
 
@@ -434,7 +443,7 @@ html[data-navigating] .sd-player::after { content: ""; position: absolute; left:
 
   .sd-home { display: flex; flex-direction: column; align-items: stretch; }
   .sd-mast { display: contents; }
-  .sd-cat { order: 0; height: 40px; } .sd-title { order: 1; } .sd-info { order: 2; } .sd-latest { order: 3; } .sd-panel { order: 4; } .sd-ctl { order: 5; } .sd-tracks { order: 6; }
+  .sd-title { order: 1; } .sd-info { order: 2; } .sd-latest { order: 3; } .sd-panel { order: 4; } .sd-ctl { order: 5; } .sd-tracks { order: 6; }
   .sd-title { font-size: var(--ts, 29vw); margin: 22px 0 18px; white-space: normal; }
   .sd-title span { display: block; }
   .sd-title span + span { margin-top: .04em; }
@@ -482,7 +491,7 @@ html[data-navigating] .sd-player::after { content: ""; position: absolute; left:
   .sd-trk > .sd-chip-ab span { height: 18px; }
   .sd-play { grid-area: play; align-self: center; margin-right: -12px; }
   .sd-play svg { width: 18px; height: 18px; }
-  .sd-trk:active { background: var(--paper-2); }
+  .sd-trk:active, .theme-switcher a:active { background: var(--paper-2); }
   /* 手机上没有悬停：点了播放的那一行自己展开，露出小封套和摘句 */
   .sd-trk.is-open .sd-more { grid-area: more; display: grid; grid-template-columns: 92px minmax(0, 1fr); column-gap: 14px; align-items: start; padding: 10px 0 4px; }
   .sd-more .sd-slv { width: 92px; }
@@ -490,8 +499,6 @@ html[data-navigating] .sd-player::after { content: ""; position: absolute; left:
   .sd-more small { display: block; margin-top: 8px; font: 500 12px/1 var(--zh); letter-spacing: .08em; color: var(--side); }
 
   .sd-foot { margin-top: 48px; }
-  .sd-foot-row { padding-top: 12px; }
-  .sd-foot-row .theme-switcher { flex-basis: 100%; margin-left: -8px; }
 
   .sd-nav { grid-template-columns: 1fr auto; height: 48px; }
   .sd-nav a.sd-brand { display: none; }

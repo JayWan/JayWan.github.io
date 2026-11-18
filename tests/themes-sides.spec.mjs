@@ -173,6 +173,65 @@ test.describe('theme "sides": its own rules', () => {
     expect(seen.errors).toEqual([]);
   });
 
+  test('the way to another theme is the last cell of the strip at the top, on every band and down to a 320px phone', async ({ page, isMobile }) => {
+    await open(page, '/', theme);
+    const urls = await ctx(page, () => {
+      const { letters } = window.__theme.ctx;
+      const pick = (test) => letters.find(test);
+      return ['/', '/404.html', ...[pick((l) => l.role === 'him' && !l.quiet && !l.standalone), pick((l) => l.role === 'her' && !l.quiet), pick((l) => l.role === 'both'), pick((l) => l.quiet), pick((l) => l.role === 'guest')].filter(Boolean).map((l) => l.url)];
+    });
+    expect(urls.length, 'the home page, the 404 page and a letter of every band').toBeGreaterThanOrEqual(6);
+    for (const size of [{ width: 1440, height: 900 }, { width: 320, height: 568 }]) {
+      await page.setViewportSize(size);
+      for (const url of urls) {
+        await open(page, url, theme);
+        const toggle = page.locator('#theme-root .theme-switcher-toggle');
+        await expect(toggle, `${url}: one control`).toHaveCount(1);
+        await (isMobile ? toggle.tap() : toggle.click());
+        await expect(page.locator('#theme-root .theme-switcher[data-open] ul')).toBeVisible();
+        const at = await ctx(page, () => {
+          const nav = document.querySelector('#theme-root .theme-switcher'), button = nav.querySelector('button'), list = nav.querySelector('ul');
+          const strip = nav.closest('.sd-cat, .sd-nav'), own = nav.previousElementSibling, worn = list.querySelector('[aria-current]');
+          const box = (el) => el.getBoundingClientRect(), middle = (el) => box(el).top + box(el).height / 2;
+          const left = (el) => { const range = document.createRange(); range.selectNodeContents(el); return range.getBoundingClientRect().left; };
+          return {
+            strip: [box(strip).right, box(strip).bottom], button: box(button).toJSON(), list: box(list).toJSON(), screen: window.innerWidth,
+            ink: [getComputedStyle(button).color, getComputedStyle(strip).color], paper: [getComputedStyle(list).backgroundColor, getComputedStyle(document.documentElement).backgroundColor],
+            // the page's own small print (a letter's place in the list, 404) stands before it on the same line; the home page has none
+            own: nav.parentElement.matches('.sd-navr') ? [own.textContent.trim().length, Math.abs(middle(own) - middle(button)), box(own).right - box(button).left] : null,
+            names: [...list.querySelectorAll('a')].map((a) => [Math.round(box(a).height), box(a).left >= 0 && box(a).right <= window.innerWidth, Math.abs(left(a) - left(button.firstChild))]),
+            worn: [getComputedStyle(worn).fontWeight, getComputedStyle(worn, '::before').borderTopWidth],
+            foot: [document.querySelectorAll('#theme-root .sd-foot a[data-theme-id]').length, document.querySelector('#theme-root .sd-foot-row').textContent],
+          };
+        });
+        const where = `${url} at ${size.width}px`;
+        expect(at.button.top, `${where}: at the top of the page`).toBe(0);
+        expect(at.button.height, `${where}: a finger high`).toBeGreaterThanOrEqual(44);
+        expect(at.button.right, `${where}: inside the screen`).toBeLessThanOrEqual(at.screen);
+        expect(at.ink[0], `${where}: in the ink of its strip (paper on a band of colour)`).toBe(at.ink[1]);
+        if (url === '/') expect(at.own, 'the home page: the control stands alone').toBeNull();
+        else {
+          expect(at.own[0], `${where}: the page's own small print`).toBeGreaterThan(0);
+          expect(at.own[2], `${where}: stands before the control`).toBeLessThan(0.5);
+          expect(at.own[1], `${where}: on one line with it`).toBeLessThan(2);
+        }
+        // the list hangs from the rule under the strip, flush with its right end, on paper
+        expect(Math.abs(at.list.top - (at.strip[1] - 1)), `${where}: the list hangs from the rule`).toBeLessThan(0.6);
+        expect(Math.abs(at.list.right - at.strip[0]), `${where}: flush with the right end of the strip`).toBeLessThan(0.6);
+        expect(at.paper[0], `${where}: on paper`).toBe(at.paper[1]);
+        for (const [height, inside, shift] of at.names) {
+          expect(height, `${where}: a name is a finger high`).toBeGreaterThanOrEqual(44);
+          expect(inside, `${where}: inside the screen`).toBe(true);
+          expect(shift, `${where}: the names stand under the name on the button`).toBeLessThan(1.5);
+        }
+        expect(at.worn, `${where}: the theme being worn is bold and has a square before it`).toEqual(['700', '3px']);
+        expect(at.foot[0], `${where}: no names in the footer`).toBe(0);
+        expect(at.foot[1], `${where}: the footer ends with the small print of a sleeve`).toMatch(/^©.*STEREO · 双声道$/);
+        await expectNoSidewaysScroll(page);
+      }
+    }
+  });
+
   test('in the player, a title with an ampersand stays on one line', async ({ page, request }) => {
     const { letters } = await getIsland(request);
     const letter = letters.find((l) => l.title.includes('&'));
