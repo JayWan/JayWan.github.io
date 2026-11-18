@@ -124,12 +124,18 @@ export function switcher(T) {
 
 /**
  * The classic page is plain HTML with no theme code of its own, so the core hangs the switcher on
- * it: the same <nav class="theme-switcher"> the other themes place themselves, at the foot of the
- * page, where a reader ends up. Styled by _scss/_theme-switcher.scss.
+ * it: the same <nav class="theme-switcher"> the other themes place themselves. Styled by
+ * _scss/_theme-switcher.scss. It is put in two places.
+ *
+ * At the foot of the page, where a reader ends up and where the other themes keep theirs:
  *
  *   letter   inside the footer the page already has, under the © line
  *   home     in a footer of its own after the last card (the classic home page never had one)
  *   404      the same footer, resting on the bottom edge of the otherwise empty page
+ *
+ * And in the drawer the hamburger opens (nav.sidebar, on every classic page), under its logo. The
+ * foot of a classic page is many screens away from where a reader arrives (the home page is twelve
+ * screens long on a phone); the hamburger is on screen wherever the page has been scrolled to.
  *
  * Nothing is added where there is nothing to switch to: a browser too old for the new themes
  * (by 'old'), a page they cannot draw (by 'page'), a registry in which classic is the only theme.
@@ -144,6 +150,8 @@ export function classicSwitcher(T) {
     document.body.append(el('footer', { class: `section--footer section--footer--switcher${T.page === '404' ? ' section--footer--floor' : ''}` }, foot));
   }
   foot.append(nav);
+  const logo = document.querySelector('nav.sidebar > .textLogo');
+  if (logo) logo.after(switcher(T));
   return nav;
 }
 

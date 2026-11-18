@@ -3,8 +3,9 @@
 // The inline boot script (_includes/theme-boot.html) has already chosen the theme and loaded its
 // stylesheet before this runs. What is left to do here:
 //
-//   classic theme   the page is already there. Only the row of theme names at its foot is
-//                   added (eggs.classicSwitcher), and the eggs that are invisible until used.
+//   classic theme   the page is already there. Only the row of theme names is added, at its
+//                   foot and in its drawer (eggs.classicSwitcher), and the eggs that are
+//                   invisible until used.
 //   any other       build ctx, import /assets/themes/<id>/theme.js, call its mount(ctx),
 //                   then hand the returned view to the router.
 //
