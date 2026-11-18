@@ -449,14 +449,23 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 .foot { position: relative; z-index: 2; padding: 30px 24px calc(120px + env(safe-area-inset-bottom, 0px)); text-align: center; }
 .foot-name { margin: 0; font: 500 14px/1 var(--serif); letter-spacing: .34em; text-indent: .34em; color: var(--text-2); }
 .foot-hunger { margin: 22px auto 0; max-width: 30em; font: 400 16px/1.9 var(--serif); color: var(--text); text-wrap: balance; }
+/* The row of theme names. It is in two places: here at the foot of the river, and at the foot of an open
+   letter (.sheet-foot), because from the end of a letter the foot of the river is a dozen screens away.
+   The selectors start at #theme-root so that these colours win over "#theme-root a { color: inherit }". */
 .foot .theme-switcher { margin: 26px 0 0; }
-.foot .theme-switcher ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 6px; }
-.foot .theme-switcher a {
-  display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; text-decoration: none;
-  font: 500 13px/1 var(--serif); letter-spacing: .12em; color: var(--dim);
+.sheet-foot .theme-switcher { margin: 20px 0 0; }
+#theme-root .theme-switcher ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 6px; }
+#theme-root .theme-switcher a {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 12px; text-decoration: none;
+  font: 500 13px/1 var(--serif); letter-spacing: .12em; text-indent: .12em; color: var(--dim);
 }
-.foot .theme-switcher a[aria-current="true"] { color: var(--text); }
-@media (hover: hover) { .foot .theme-switcher a:hover { color: var(--text); } }
+/* the theme being worn: full strength, and a hairline under its name (the mark does not rest on colour alone) */
+#theme-root .theme-switcher a[aria-current="true"] { color: var(--text); }
+#theme-root .theme-switcher a[aria-current="true"]::after { content: ""; position: absolute; left: calc(12px + .12em); right: calc(12px + .12em); top: calc(50% + 13px); height: 1px; background: currentColor; }
+@media (hover: hover) { #theme-root .theme-switcher a:hover { color: var(--text); } }
+#theme-root .sheet-foot .theme-switcher a { color: var(--ink-2); }
+#theme-root .sheet-foot .theme-switcher a[aria-current="true"] { color: var(--ink); }
+@media (hover: hover) { #theme-root .sheet-foot .theme-switcher a:hover { color: var(--ink); } }
 .foot-c { margin: 14px 0 0; font: 400 12.5px/1 var(--mono); letter-spacing: .1em; color: var(--dim); }
 
 /* ═════════ phone ═════════ */

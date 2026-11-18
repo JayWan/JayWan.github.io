@@ -10,7 +10,8 @@
 //
 //   letter   inside the footer the page already has, under the © line
 //   home     in a footer of its own after the last card (.section--footer--switcher)
-//   404      the same footer, resting on the bottom edge of the otherwise empty page
+//   404      the same footer, resting on the bottom edge of the first screen, under the page's
+//            three lines (_lost.scss; on a low screen it follows them instead)
 //
 // And in the drawer the hamburger opens (.sidebar), under its logo: one tap away wherever the
 // page has been scrolled to. The rules for that one are at the end of this file.
@@ -101,8 +102,9 @@ nav.theme-switcher a[aria-current="true"] {
   padding-top: 0;
 }
 
-// The 404 page has no content to follow: there the footer rests on the bottom edge of the
-// first screen (nothing on that page is positioned, so this is the page itself).
+// The 404 page is three lines near the top of one screen: there the footer rests on the bottom
+// edge of that screen (nothing on that page is positioned, so this is the page itself). On a
+// screen too low for both, _lost.scss lets it follow the lines.
 .section--footer--floor {
   position: absolute;
   left: 0;

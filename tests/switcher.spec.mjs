@@ -14,6 +14,7 @@ const NEW_THEMES = themeIds.filter((id) => id !== 'probe');          // the them
 const KINDS = [['home', 'the home page'], ['letter', 'a letter'], ['lost', 'the 404 page']];
 const FOOT = 'footer.section--footer nav.theme-switcher';          // the two rows of the classic page
 const DRAWER = 'nav.sidebar nav.theme-switcher';
+const OWN = '#theme-root nav.theme-switcher';                      // the row(s) a new theme places itself
 
 /** Open a page under classic and wait until the core has run. */
 async function openClassic(page, path) {
@@ -242,23 +243,86 @@ for (const [index, theme] of NEW_THEMES.entries()) {
         await page.goto(`${from}?theme=${theme}`);
         await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
       }
-      const own = page.locator('#theme-root nav.theme-switcher');
-      await expect(own, `"${theme}" has the switcher on ${from}`).toHaveCount(1);
+      // The row the reader has at hand: the first one that is showing. ("drift" has two: one at the
+      // foot of its river and one at the end of an open letter, because the foot of the river is a
+      // dozen screens from there and walking to it closes the letter.)
+      const own = page.locator(OWN).filter({ visible: true }).first();
+      await expect(own, `"${theme}" has the switcher on ${from}`).toBeVisible();
       await expect(own.locator('a[aria-current="true"]')).toHaveAttribute('data-theme-id', theme);
       const back = own.locator('a[data-theme-id="classic"]');
       await back.scrollIntoViewIfNeeded();
       await expect(back).toBeVisible();
       expect((await back.boundingBox()).height, 'tall enough for a finger').toBeGreaterThanOrEqual(44);
-      // The reader stays on the page the name was pressed on. That is not always the page that was
-      // opened: "drift" keeps its switcher at the foot of the river, and a letter that has been
-      // scrolled away to get there closes, so by then the address is "/".
-      await page.evaluate(() => document.addEventListener('click', () => sessionStorage.setItem('test:pressed-on', location.pathname), true));
       await back.click();
       await page.waitForFunction(() => document.documentElement.dataset.theme === 'classic' && window.__theme.up === 1);
       expect(search(page)).toBe('');
-      expect(new URL(page.url()).pathname).toBe(await page.evaluate(() => sessionStorage.getItem('test:pressed-on')));
+      expect(decodeURI(new URL(page.url()).pathname), 'the reader stays on the page they were reading, a letter included').toBe(from);
       await expect(page.locator(`${FOOT} a[aria-current="true"]`)).toHaveAttribute('data-theme-id', 'classic');
       await expect(page.locator('#theme-root')).toBeEmpty();
+    }
+  });
+}
+
+// What assets/themes/README.md asks of every theme's own row: on the home page and on a letter,
+// in sight without a search, names only, the theme being worn marked so that it can be seen.
+for (const theme of NEW_THEMES) {
+  test(`"${theme}": its own row marks the theme being worn, and a finger can press every name`, async ({ page, request }) => {
+    const pages = await samplePages(request);
+    for (const from of [pages.home, pages.letter]) {
+      await page.goto(`${from}?theme=${theme}`);
+      await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
+      // Handles, not locators: walking to the row at the foot of the river closes the letter in
+      // "drift", and the row inside that letter is then no longer showing.
+      const rows = [];
+      for (const row of await page.locator(OWN).elementHandles()) if (await row.isVisible()) rows.push(row);
+      expect(rows.length, `a row is showing on ${from}`).toBeGreaterThanOrEqual(1);
+      for (const row of rows) {
+        await row.scrollIntoViewIfNeeded();
+        const links = await row.$$eval('a[data-theme-id]', (all) => all.map((a) => {
+          const style = getComputedStyle(a), after = getComputedStyle(a, '::after'), box = a.getBoundingClientRect();
+          const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+          return {
+            id: a.dataset.themeId,
+            current: a.getAttribute('aria-current') === 'true',
+            look: [style.color, style.textDecorationLine, style.fontWeight, after.content !== 'none' && after.content !== 'normal' ? `${after.content} ${after.height}` : ''].join(' | '),
+            width: Math.round(box.width), height: Math.round(box.height),
+            covered: !(hit && (hit === a || a.contains(hit))),
+          };
+        }));
+        const worn = links.filter((l) => l.current);
+        expect(worn.map((l) => l.id), 'one name is marked for assistive technology').toEqual([theme]);
+        const others = new Set(links.filter((l) => !l.current).map((l) => l.look));
+        expect(others.size, 'the other names look alike').toBe(1);
+        expect(others.has(worn[0].look), `the theme being worn looks different from the others (${worn[0].look})`).toBe(false);
+        expect(links.filter((l) => l.height < 44).map((l) => l.id), 'every name is at least 44px high').toEqual([]);
+        expect(links.filter((l) => l.covered).map((l) => l.id), 'nothing lies on top of a name').toEqual([]);
+      }
+      await expectNoSidewaysScroll(page);
+    }
+  });
+
+  test(`"${theme}": at the end of a letter the row is in reach, and Tab arrives at it`, async ({ page, request, isMobile }) => {
+    const pages = await samplePages(request);
+    for (const letter of [pages.flip, pages.letter]) {                      // a long letter near the top of the list, and an early one
+      await page.goto(`${letter}?theme=${theme}`);
+      await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
+      // From the last line of the letter to the nearest row below it, in screens.
+      const screens = await page.evaluate((OWN) => {
+        const end = document.querySelector('#theme-root .letter-body').getBoundingClientRect().bottom;
+        const tops = [...document.querySelectorAll(OWN)].filter((nav) => nav.getClientRects().length).map((nav) => nav.getBoundingClientRect().top).filter((top) => top >= end - 1);
+        return tops.length ? (Math.min(...tops) - end) / window.innerHeight : null;
+      }, OWN);
+      expect(screens, `${letter}: a row follows the letter`).not.toBeNull();
+      expect(screens, `${letter}: within a screen and a half of its last line`).toBeLessThan(1.5);
+      expect(decodeURI(new URL(page.url()).pathname)).toBe(letter);
+
+      if (isMobile) continue;                                               // a phone has no Tab key
+      const focused = () => page.evaluate((OWN) => { const a = document.activeElement; return a && a.closest(OWN) ? a.dataset.themeId : null; }, OWN);
+      for (let i = 0; i < 60 && !(await focused()); i++) await page.keyboard.press('Tab');
+      expect(await focused(), `${letter}: Tab arrives at the row`).not.toBeNull();
+      expect(decodeURI(new URL(page.url()).pathname), 'and the letter is still the page').toBe(letter);
+      const ring = await page.evaluate(() => { const s = getComputedStyle(document.activeElement); return s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) >= 1; });
+      expect(ring, 'the focus can be seen').toBe(true);
     }
   });
 }

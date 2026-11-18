@@ -151,7 +151,7 @@ test.describe('theme "orbit", its own promises', () => {
   });
 
   test('the page for an address without a letter is one centred column, with a way back', async ({ page }) => {
-    await open(page, '/404/', THEME);
+    await open(page, '/404.html', THEME);
     const lost = page.locator('#theme-root .lost-body');
     await expect(lost).toContainText('没有信');
     await expect(lost.locator('.loc svg .sel-halo'), 'an empty ring off the orbits stands for the missing letter').toHaveCount(1);

@@ -3,7 +3,9 @@
   Used by theme-boot.html and letters-data.html. A page of type "other" (anything that is
   not the home page, a letter or the 404 page) is always shown with the classic theme,
   because the new themes only know how to draw those three.
-  (With `permalink: pretty` the file 404.html is built as /404/index.html, so its url is "/404/".)
+  (404.html sets its own permalink, "/404.html": that is the file GitHub Pages sends for an
+  address that does not exist. Left to `permalink: pretty` it would be built as /404/index.html,
+  which GitHub Pages does not look for; "/404/" is still recognised here in case that returns.)
 {%- endcomment -%}
 {%- if page.layout == 'post' -%}{%- assign page_type = 'letter' -%}
 {%- elsif page.url == '/' -%}{%- assign page_type = 'home' -%}

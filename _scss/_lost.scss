@@ -1,0 +1,30 @@
+//
+// The classic page for an address that does not exist (404.html)
+// --------------------------------------------------
+//
+// GitHub Pages sends this page for every missing address. It holds three lines: the title the
+// page has always had, 「没有信」 as the other themes say it, and the way home.
+
+@use "typography" as *;
+
+.section--lost {
+  padding: 22vh 0 2 * $leading;
+  text-align: center;
+
+  h2 {
+    margin-top: 0;
+  }
+}
+
+// The row of theme names rests on the bottom edge of the first screen (.section--footer--floor,
+// _theme-switcher.scss). On a screen too low to hold the three lines and that row apart, a phone
+// held sideways, the row follows the lines instead.
+@media (max-height: 520px) {
+  .section--lost {
+    padding-top: 3 * $leading;
+  }
+
+  .section--footer--floor {
+    position: static;
+  }
+}

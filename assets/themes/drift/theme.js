@@ -527,7 +527,9 @@ export default {
     const closeLink = (cls) => h('a', { className: cls, href: '/', 'data-back': '', onclick: closeClick }, h('span', {}, '合上'), h('i', { 'aria-hidden': 'true' }));
     S.bar = h('div', { className: 'sheet-bar' }, S.no, h('div', { className: 'sb-song' }, S.mini, S.miniName), closeLink('sb-close'));
     S.head = h('header', { className: 'sheet-head' }, h('div', { className: 'sh-main' }, S.meta, S.title, S.by), S.days, S.track);
-    S.foot = h('footer', { className: 'sheet-foot' }, S.sign, S.nav, closeLink('sheet-close2'));
+    /* The names of the themes stand at the end of the letter too: the foot of the river, where the other row is,
+       is a dozen screens further down, and walking there closes the letter. Pressed here, the reader stays on this letter. */
+    S.foot = h('footer', { className: 'sheet-foot' }, S.sign, S.nav, closeLink('sheet-close2'), ui.switcher());
     sheet.append(S.paper, S.bar, S.cover, S.head, S.body, S.foot);
 
     const season = (d) => (typeof fmt.season === 'function' ? fmt.season(d) : '');

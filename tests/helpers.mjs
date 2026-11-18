@@ -37,7 +37,7 @@ export async function samplePages(request) {
     quiet: pick((l) => l.quiet).url,                            // 世界赠予我们的
     flip: pick((l) => l.date === '2026-08-12').url,             // 木婚快乐: the flip card
     gift: pick((l) => l.standalone).url,                        // 29, 28, π: the gift box, its own scripts
-    lost: '/404/',                                              // 404.html, which `permalink: pretty` builds as /404/index.html
+    lost: '/404.html',                                          // the page GitHub Pages sends for an address that does not exist (tests/lost.spec.mjs opens it that way)
   };
 }
 

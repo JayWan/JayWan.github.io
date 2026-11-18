@@ -255,6 +255,50 @@ test.describe('夜航 (drift)', () => {
     await expect.poll(() => page.evaluate(() => document.activeElement && document.activeElement.getAttribute('href'))).toBe(url);
   });
 
+  test('the names of the themes stand at the end of an open letter, in ink; pressed there, the reader stays on the letter', async ({ page }) => {
+    // The row at the foot of the river is a dozen screens below the end of a letter, and walking
+    // there closes the letter. So an open letter carries a row of its own, after 「合上」.
+    await open(page, '/', 'drift');
+    const showing = () => page.evaluate(() => [...document.querySelectorAll('#theme-root nav.theme-switcher')].filter((nav) => nav.getClientRects().length)
+      .map((nav) => (nav.closest('.sheet') ? 'letter' : nav.closest('.foot') ? 'river' : 'elsewhere')));
+    expect(await showing(), 'no letter open: the one at the foot of the river').toEqual(['river']);
+
+    const url = await page.evaluate(() => window.__theme.ctx.letters.byNo(31).url);
+    await open(page, url, 'drift');
+    expect(await showing()).toEqual(['letter', 'river']);
+    const row = page.locator('#theme-root .sheet-foot nav.theme-switcher');
+    await row.scrollIntoViewIfNeeded();
+    const seen = await row.evaluate((nav) => {
+      const lum = (colour) => { const [r, g, b] = colour.match(/[\d.]+/g).map(Number); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+      const box = nav.getBoundingClientRect(), sheet = nav.closest('.sheet').getBoundingClientRect(), close = nav.closest('.sheet-foot').querySelector('.sheet-close2').getBoundingClientRect();
+      const names = [...nav.querySelectorAll('a')];
+      return {
+        inside: box.left >= sheet.left && box.right <= sheet.right && box.bottom <= sheet.bottom,
+        afterClose: box.top >= close.bottom,
+        oneLine: new Set(names.map((a) => Math.round(a.getBoundingClientRect().top))).size,
+        paper: lum(getComputedStyle(nav.closest('.sheet').querySelector('.sheet-body')).backgroundColor),
+        ink: names.map((a) => Math.round(lum(getComputedStyle(a).color))),
+        worn: Math.round(lum(getComputedStyle(nav.querySelector('a[aria-current="true"]')).color)),
+      };
+    });
+    expect(seen.inside, 'the row is on the sheet').toBe(true);
+    expect(seen.afterClose, 'after the word that closes the letter').toBe(true);
+    expect(seen.oneLine, 'on one line').toBe(1);
+    expect(Math.max(...seen.ink), 'dark names on light paper, not the river\'s light names').toBeLessThan(seen.paper - 100);
+    expect(seen.worn, 'the theme being worn is the darkest').toBe(Math.min(...seen.ink));
+    expect(await pathOf(page), 'the letter is still open').toBe(url);
+
+    await row.locator('a[data-theme-id="folio"]').click();
+    await page.waitForSelector('html[data-theme-ready="folio"]');
+    expect(await pathOf(page), 'the same letter, in the theme that was pressed').toBe(url);
+
+    // read on past the end: the letter closes and takes its row with it
+    await open(page, url, 'drift');
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await expect.poll(() => pathOf(page)).toBe('/');
+    expect(await showing()).toEqual(['river']);
+  });
+
   test('pictures in a letter keep their place before they load; the progress line takes a finger', async ({ page, baseURL }) => {
     await open(page, '/', 'drift');
     const url = await page.evaluate(() => window.__theme.ctx.letters.find((l) => l.date === '2016-06-08').url);   // Hang Zhou: five pictures

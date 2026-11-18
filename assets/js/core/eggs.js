@@ -121,7 +121,7 @@ export function switcher(T) {
  *
  *   letter   inside the footer the page already has, under the © line
  *   home     in a footer of its own after the last card (the classic home page never had one)
- *   404      the same footer, resting on the bottom edge of the otherwise empty page
+ *   404      the same footer, resting on the bottom edge of the first screen, under the page's three lines
  *
  * And in the drawer the hamburger opens (nav.sidebar, on every classic page), under its logo. The
  * foot of a classic page is many screens away from where a reader arrives (the home page is twelve
