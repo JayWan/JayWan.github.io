@@ -54,7 +54,8 @@ npm run preview        # http://127.0.0.1:4201
 网站现在有好几套主题，每次到访自动挑一套：旧版（classic，就是原来的样子）、夜航（drift）、笺（folio）、Side A / Side B（sides）、绕日（orbit）。
 
 - **怎么挑**：离开网站超过 30 分钟再回来算一次新的到访，重新抽；同一次到访里刷新、点链接、后退都不会换。纪念日有固定的主题（2-21 绕日，11-28 夜航，2-6 和 7-4 Side A / Side B，8-12 笺，9-15 网站生日是旧版）。夜里 11 点到早上 6 点只抽深色的。其余时候轮流来，每套轮一遍才会重复。
-- **想看某一套**：在网址后面加 `?theme=名字`，比如 `http://localhost:4301/?theme=drift`。这次到访里会一直用它。`?theme=classic` 回到旧版，`?theme=random` 重新抽一次。在页面上直接敲 `221` 也会换到下一套。
+- **想换一套**：每个页面的页脚都有一排主题的名字（旧版 / 夜航 / 笺 / Side A / Side B / 绕日，当前这套有记号），点哪个就换成哪个，这次到访里会一直用它。旧版也有这一排：首页在最后一张卡片下面，信在 © 那行下面，404 页在页面底部。网址不会变（主题不写在网址里，所以同一个链接在哪套主题下都打得开），后退键也不会把人带回上一套。
+- **不点也行**：在网址后面加 `?theme=名字`，比如 `http://localhost:4301/?theme=drift`，效果和点那一排一样。`?theme=classic` 回到旧版，`?theme=random` 重新抽一次。在页面上直接敲 `221` 也会换到下一套。
 - **想停用某一套**：打开 `_data/themes.yml`，把那一套的 `enabled: true` 改成 `false`。除了 classic 都改成 `false`，就整个回到只有旧版的网站。纪念日和夜间时段也在这个文件里。
 - **出了问题怎么办**：某个主题加载失败或者报错，页面会自动换回旧版，不会白屏。浏览器太旧或者关掉了 JavaScript，看到的也是旧版。
 
@@ -68,11 +69,13 @@ npm run preview        # http://127.0.0.1:4201
 npm test
 ```
 
-会先构建一遍网站，再用电脑上装的 Chrome 自动检查：每个主题的首页、信、404 能不能正常显示，有没有横向滚动，歌能不能放、换页时会不会断，主题坏掉时能不能回到旧版，选主题的规则对不对。大约一分钟。想连 iPhone 尺寸的 Safari 内核和 Firefox 一起测，先运行一次 `npx playwright install webkit firefox`。
+会先构建一遍网站，再用电脑上装的 Chrome 自动检查：每个主题的首页、信、404 能不能正常显示，有没有横向滚动，歌能不能放、换页时会不会断，主题坏掉时能不能回到旧版，选主题的规则对不对，从旧版能不能点到每一套主题、又能不能点回来。大约一分钟。想连 iPhone 尺寸的 Safari 内核和 Firefox 一起测，先运行一次 `npx playwright install webkit firefox`。
 
 ### 样式
 
 这一节说的是旧版（classic）的样式。入口是 `assets/css/main.scss`，各个模块在 `_scss/` 目录，由 Jekyll 自带的 Sass 编译成 `/assets/css/main.css`，仓库里不再有编译产物，也不需要单独编译 CSS。
+
+旧版的页面要和换肤之前一模一样，只多了页脚那一排主题名（`_scss/_theme-switcher.scss`）。改旧版的样式之前先看 [`assets/themes/README.md`](assets/themes/README.md) 第十节末尾，怎么确认别的地方一个像素都没动。
 
 > 以前用 gulp 时生成在 `assets/css/` 里的 `main.css`、`main.min.css` 已经不再使用，Git 和 Jekyll 都会忽略它们，看到可以直接删掉。
 
