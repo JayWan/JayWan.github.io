@@ -486,7 +486,8 @@ export default {
         ypN.textContent = `${perYear[yr] || 0} 封`;
         rulerYear.textContent = String(yr);
       }
-      yearpin.classList.toggle('on', !openL && G.wide && window.scrollY > hero.offsetTop + hero.offsetHeight - 220 && innerHeight * 0.5 - top < G.end + 40);
+      // the pinned year waits until the masthead has passed above it: at no window height do its numerals cross the strip
+      yearpin.classList.toggle('on', !openL && G.wide && hero.getBoundingClientRect().bottom < yearpin.getBoundingClientRect().top - 16 && innerHeight * 0.5 - top < G.end + 40);
     }
     const queueChrome = () => { if (!raf) raf = requestAnimationFrame(chrome); };
     addEventListener('scroll', () => { const now = performance.now(); if (now - lastScroll > 140) moveStart = now; lastScroll = now; if (pin && Math.abs(window.scrollY - pinY) > 4) pin = false; queueChrome(); }, { passive: true });
