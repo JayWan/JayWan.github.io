@@ -385,15 +385,16 @@ test.describe('theme "folio": text enlarged by the browser', () => {
     const box = (el) => el.getBoundingClientRect();
     const hit = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
     const years = [...root.querySelectorAll('.yidx a, .yidx button')].map(box);
-    const report = { notes: 0, aboveMargin: [], onYearRow: [], offPage: [], outOfColumn: [], text: '' };
+    const report = { notes: 0, aboveMargin: [], onYearRow: [], offPage: [], outOfLeaf: [], outOfColumn: [], text: '' };
     for (const note of root.querySelectorAll('.mei')) {            // every one of them: those that only show on hover as well
-      const b = box(note), cell = box(note.parentNode);
+      const b = box(note), cell = box(note.parentNode), leaf = box(note.closest('.leaf'));
       if (!b.width) continue;
       report.notes++;
       report.text += note.textContent.replace(/\s+/g, '');
       const margin = parseFloat(getComputedStyle(note.closest('.leaf')).paddingTop);   // the row above (or the year row) ends where the margin starts
       const q = note.dataset.q.slice(0, 10);
       if (cell.top - b.top > margin + 0.6) report.aboveMargin.push(`${q} (${Math.round(b.height)}px in a margin of ${Math.round(margin)}px)`);
+      if (b.left < leaf.left - 0.5 || b.right > leaf.right + 0.5) report.outOfLeaf.push(`${q} (${Math.round(b.width)}px wide, its leaf ${Math.round(leaf.width)}px)`);   // two leaves side by side: not into the other one
       if (years.some((y) => hit(b, y))) report.onYearRow.push(q);
       if (b.top + window.scrollY < 0 || b.left < 0 || b.right > window.innerWidth) report.offPage.push(q);
     }
@@ -473,6 +474,7 @@ test.describe('theme "folio": text enlarged by the browser', () => {
         expect(home.onYearRow, 'no red line touches the row of years').toEqual([]);
         expect(home.aboveMargin, 'every red line stays inside the top margin of its row').toEqual([]);
         expect(home.offPage, 'and on the page').toEqual([]);
+        expect(home.outOfLeaf, 'and inside its own leaf').toEqual([]);
         expect(home.outOfColumn, 'titles, notes, day numbers and the name of the book stay inside their columns').toEqual([]);
         expect(home.columns, 'larger type, fewer columns to a leaf').toBeLessThan(home.designed);
         await expectNoSidewaysScroll(page);
@@ -526,6 +528,25 @@ test.describe('theme "folio": text enlarged by the browser', () => {
     expect(after.onYearRow, 'none of them touches the row of years').toEqual([]);
     expect(after.text, 'and not a character is lost').toBe(before.text);
     expect(after.columns, 'the leaves themselves are left alone').toBe(before.columns);
+    await expectNoSidewaysScroll(page);
+  });
+
+  test('a red line wider than its leaf has its lines set closer, not pushed into the next leaf', async ({ page }) => {
+    // Years with few letters share a spread, each on half a leaf; at 150 % text on a phone a red line of six lines
+    // is wider than such a half leaf. Here the lines of every red line are set twelve characters apart instead, so
+    // that many are wider than their leaf, and the contents is laid out again.
+    await open(page, '/', THEME);
+    await page.evaluate(() => document.fonts.ready);
+    const before = await contents(page);
+    expect(before.outOfLeaf, 'as designed, every red line lies within its leaf').toEqual([]);
+    await page.addStyleTag({ content: '#theme-root .leaf .mei{line-height:12}' });
+    expect((await contents(page)).outOfLeaf.length, 'lines far apart: wider than their leaf').toBeGreaterThan(0);
+    await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+    await expect.poll(async () => (await contents(page)).outOfLeaf, 'the lines are set closer until each fits its leaf').toEqual([]);
+    const after = await contents(page);
+    expect(after.aboveMargin, 'and stay inside the top margin').toEqual([]);
+    expect(after.onYearRow, 'clear of the row of years').toEqual([]);
+    expect(after.text, 'with every character').toBe(before.text);
     await expectNoSidewaysScroll(page);
   });
 

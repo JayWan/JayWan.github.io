@@ -356,10 +356,16 @@ export default {
           const m = c.querySelector('.mei');
           if (!m) continue;
           m.classList.remove('mei--l');
-          m.style.marginLeft = '';
+          m.style.marginLeft = m.style.lineHeight = '';
           if (m.getBoundingClientRect().left < left - 1) {
             m.classList.add('mei--l');
-            const out = m.getBoundingClientRect().right - right;       // 行数多了（字大、一行排得少）：向右展开又伸出这一叶，往回收
+            let b = m.getBoundingClientRect();
+            if (b.width > right - left - 1) {                          // 比这一叶还宽（字大，半叶只有两行宽）：行距收紧到放得下，不伸进邻叶
+              const cs = getComputedStyle(m);                         // 不带单位：Firefox 只放大文字时 px 的行高会再被放大一次
+              m.style.lineHeight = Math.max(1.2, parseFloat(cs.lineHeight) / parseFloat(cs.fontSize) * (right - left - 1) / b.width).toFixed(3);
+              b = m.getBoundingClientRect();
+            }
+            const out = b.right - right;                               // 行数多了（字大、一行排得少）：向右展开又伸出这一叶，往回收
             if (out > 0) m.style.marginLeft = -out + 'px';
           }
         }
@@ -829,6 +835,8 @@ export default {
         layoutHome();
         markRead();                                          // 滚到哪里由核心决定：后退回原处，翻过几封就把刚读的那封带到屏幕中间
       } else {
+        root.style.removeProperty('--n');                      // 缺页照样式表的行数：目录因为字大少排的几行（回到目录时再写上）不带过来
+        root.removeAttribute('data-few');
         main.replaceChildren(lostView());
         root.dataset.view = 'lost';
         rescale();
