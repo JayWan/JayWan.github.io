@@ -112,9 +112,9 @@ nav.theme-switcher a[aria-current="true"] {
 // In the drawer: one line under the logo, in the drawer's own colours (white on $gray-darker,
 // the current theme as bright as the titles of the letters below it).
 .sidebar .theme-switcher {
-  // The drawer is 14rem wide with 20px of padding and, in some browsers, a scrollbar; the five
-  // names, each a finger wide, need a little more than what is left (268px of 251 to 268), so
-  // the row may use 14px of that padding on either side.
+  // The drawer is 14rem wide with 20px of padding and, in some browsers, a scrollbar, which
+  // leaves 251 to 268px; the five names, each a finger wide, need 268. So the row may use 14px
+  // of that padding on either side.
   margin: 0.5 * $leading -14px 0;
   padding: 0;
   font-size: 0.6rem;

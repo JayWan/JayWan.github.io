@@ -6,8 +6,8 @@
 import { test, expect } from '@playwright/test';
 import { otherSites, samplePages, watch } from './helpers.mjs';
 
-// (The one thing the classic page has gained, the row of theme names at its foot, has its own
-// file: tests/switcher.spec.mjs.)
+// (The one thing the classic page has gained, the row of theme names at its foot and in its
+// drawer, has its own file: tests/switcher.spec.mjs.)
 
 test('classic home page: the old tags, the old markup, no new theme showing', async ({ page, baseURL }) => {
   await otherSites(page);

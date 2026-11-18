@@ -25,6 +25,11 @@ async function openClassic(page, path) {
 /** What a switcher lists: [id, name, href, current?] per link, in order. */
 const listed = (nav) => nav.locator('a[data-theme-id]').evaluateAll((links) => links.map((a) => [a.dataset.themeId, a.textContent, a.getAttribute('href'), a.getAttribute('aria-current') === 'true']));
 
+/** Words a stylesheet puts around a row (generated content is not part of innerText). */
+const generated = (nav) => nav.evaluate((row) => [row, ...row.querySelectorAll('*')]
+  .flatMap((el) => ['::before', '::after'].map((pseudo) => getComputedStyle(el, pseudo).content))
+  .filter((content) => content && !['none', 'normal', '""', "''"].includes(content)));
+
 const search = (page) => new URL(page.url()).search;
 
 for (const [kind, where] of KINDS) {
@@ -44,8 +49,9 @@ for (const [kind, where] of KINDS) {
     expect(registry.map((t) => t[0])).toEqual(expect.arrayContaining(['classic', ...NEW_THEMES]));
     expect(registry.map((t) => t[0]), 'the reference theme is never offered').not.toContain('probe');
     expect(await listed(nav)).toEqual(registry.map(([id, name]) => [id, name, `?theme=${id}`, id === 'classic']));
-    // names and nothing else: no sentence explaining what the row is for
+    // names and nothing else: no sentence explaining what the row is for, in the markup or from the stylesheet
     expect((await nav.innerText()).split('\n').map((s) => s.trim()).filter(Boolean)).toEqual(registry.map((t) => t[1]));
+    expect(await generated(nav)).toEqual([]);
 
     // where: in the classic footer, the last thing on the page
     await expect(nav.locator('xpath=ancestor::footer[contains(@class, "section--footer")]')).toHaveCount(1);
@@ -128,6 +134,7 @@ for (const [index, [kind, where]] of KINDS.entries()) {
     expect(await listed(nav)).toEqual(registry.map(([id, name]) => [id, name, `?theme=${id}`, id === 'classic']));
     expect(await listed(nav)).toEqual(await listed(page.locator(FOOT)));
     expect((await nav.innerText()).split('\n').map((s) => s.trim()).filter(Boolean)).toEqual(registry.map((t) => t[1]));
+    expect(await generated(nav)).toEqual([]);
 
     // where: one line under the drawer's logo, above its first letter, inside the drawer
     const box = await page.evaluate((DRAWER) => {
