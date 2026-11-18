@@ -32,7 +32,7 @@ try {
 }
 
 eggs.greet(T, data);
-eggs.keys(T, data);
+eggs.keys(data);
 try { eggs.classicSwitcher(T); } catch (err) { console.error('[221] the switcher could not be added:', err); }
 reportLastFallback();
 

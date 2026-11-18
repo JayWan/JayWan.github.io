@@ -1,7 +1,9 @@
 // The site's voice and the hidden things (ARCHITECTURE §7, assets/js/core/eggs.js).
 
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { test, expect } from '@playwright/test';
-import { getIsland } from './helpers.mjs';
+import { expectNoSidewaysScroll, getIsland, root, themeIds, themeOf } from './helpers.mjs';
 
 const DAY = 864e5;
 const noon = (day, plus = 0) => new Date(Date.parse(`${day}T12:00:00-08:00`) + plus * DAY);
@@ -105,18 +107,196 @@ for (const theme of ['classic', 'probe']) {
     const logs = [];
     page.on('console', (msg) => { if (msg.type() === 'log') logs.push(msg.text()); });
     await page.goto(`/?theme=${theme}`);
-    await expect.poll(() => logs.join('\n')).toMatch(/221 FOREVER[\s\S]*封信[\s\S]*敲 221/);
+    await expect.poll(() => logs.join('\n')).toMatch(/221 FOREVER[\s\S]*封信[\s\S]*敲 pi/);
+    expect(logs.join('\n'), 'what 221 does is not given away').not.toMatch(/敲\s*221/);
   });
 }
 
-test('typing 221 moves on to the next theme', async ({ page }) => {
+// ------------------------------------------------------------------ 221: the hidden sheet
+
+/** Open `path` under `theme` and wait until the core is listening to the keyboard. */
+async function arrive(page, theme, path = '/') {
   await page.route(/^https:\/\//, (route) => route.abort());
-  await page.goto('/?theme=probe');
-  await page.waitForSelector('html[data-theme-ready="probe"]');
-  const expected = await page.evaluate(() => window.__theme.themes.filter((t) => t[3])[0][0]);   // probe is not in the rotation: start over
+  await page.goto(`${path}?theme=${theme}`);
+  if (theme === 'classic') await page.waitForFunction(() => window.__theme.up === 1);
+  else await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
+}
+const HOST = '#egg-221-sheet';
+const sheet = (page) => page.locator(`${HOST} dialog`);
+const paper = (page) => page.locator(`${HOST} .paper`);
+/** The sheet rises a few pixels as it appears: measure it once it has arrived. */
+const settled = (page) => paper(page).evaluate((el) => Promise.all(el.getAnimations().map((animation) => animation.finished)).then(() => true));
+/** What the owner has written so far: the template every page carries. */
+const fill = (page, html) => page.evaluate((text) => { document.getElementById('egg-221').innerHTML = text; }, html);
+
+for (const theme of ['classic', ...themeIds]) {
+  test(`${theme}: typing 221 opens a sheet of paper; Esc, a click beside it and its mark close it; the theme stays`, async ({ page }) => {
+    await arrive(page, theme);
+    const before = await page.evaluate(() => {
+      window.__sameDocument = true;
+      // somewhere for the focus to be, and to come back to
+      const button = Object.assign(document.createElement('button'), { id: 'scratch', textContent: '·' });
+      (document.documentElement.dataset.theme === 'classic' ? document.body : document.getElementById('theme-root')).append(button);
+      button.focus({ preventScroll: true });
+      return { url: location.href, overflow: [document.documentElement.style.overflow, document.body.style.overflow], y: window.scrollY };
+    });
+    await expect(page.locator(HOST), 'nothing of it exists until it is asked for').toHaveCount(0);
+
+    for (const way of ['Esc', 'a click beside it', 'its mark']) {
+      await page.keyboard.type('221');
+      await expect(sheet(page), way).toBeVisible();
+      await expect(sheet(page)).toHaveJSProperty('open', true);
+      expect(await sheet(page).evaluate((dialog) => dialog.matches(':modal')), 'opened with showModal()').toBe(true);
+
+      // a sheet in the middle of the screen, clear of its edges
+      await settled(page);
+      const view = page.viewportSize();
+      const box = await paper(page).boundingBox();
+      expect(box.x, 'left margin').toBeGreaterThanOrEqual(16);
+      expect(view.width - box.x - box.width, 'right margin').toBeGreaterThanOrEqual(16);
+      expect(box.y, 'top margin').toBeGreaterThanOrEqual(24);
+      expect(view.height - box.y - box.height, 'bottom margin').toBeGreaterThanOrEqual(24);
+      expect(Math.abs(box.x + box.width / 2 - view.width / 2), 'centred').toBeLessThanOrEqual(1);
+      expect(Math.abs(box.y + box.height / 2 - view.height / 2), 'centred').toBeLessThanOrEqual(1);
+      expect(box.width, 'no wider than a page').toBeLessThanOrEqual(36 * 17 + 1);
+      expect(box.height, 'a sheet, not a strip').toBeGreaterThan(box.width);
+
+      // the page behind is locked and out of reach
+      const during = await page.evaluate(() => ({
+        locked: [document.documentElement.style.overflow, document.body.style.overflow].includes('hidden'),
+        inside: document.activeElement.id === 'egg-221-sheet',
+        y: window.scrollY,
+      }));
+      expect(during, way).toEqual({ locked: true, inside: true, y: before.y });
+      await page.keyboard.type('221');                        // typing it again does not stack a second sheet
+      await expect(page.locator(`${HOST} dialog`)).toHaveCount(1);
+
+      if (way === 'Esc') await page.keyboard.press('Escape');
+      else if (way === 'its mark') await page.getByRole('button', { name: '关闭' }).click();
+      else await page.mouse.click(6, 6);
+      await expect(page.locator(HOST), `${way} closes it and leaves nothing behind`).toHaveCount(0);
+
+      const after = await page.evaluate(() => ({
+        overflow: [document.documentElement.style.overflow, document.body.style.overflow],
+        focus: document.activeElement.id,
+        same: window.__sameDocument,
+        url: location.href,
+        y: window.scrollY,
+      }));
+      expect(after, way).toEqual({ overflow: before.overflow, focus: 'scratch', same: true, url: before.url, y: before.y });
+      expect(await themeOf(page), 'nothing was switched').toBe(theme);
+    }
+  });
+}
+
+for (const theme of ['classic', 'probe']) {
+  test(`${theme}: an empty sheet is empty, a written one is set like a page and scrolls inside itself`, async ({ page, isMobile }) => {
+    await arrive(page, theme);
+
+    // What the owner has written so far is in _includes/egg-221.md. While that is nothing but its
+    // comment, the built page carries an empty template.
+    const written = readFileSync(path.join(root, '_includes/egg-221.md'), 'utf8').replace(/\{%-?\s*comment\s*-?%\}[\s\S]*?\{%-?\s*endcomment\s*-?%\}/g, '').trim();
+    const built = (await page.evaluate(() => document.getElementById('egg-221').innerHTML)).trim();
+    expect(built === '', 'the template is empty exactly when the file is').toBe(written === '');
+
+    await fill(page, '');
+    await page.keyboard.type('221');
+    await expect(sheet(page)).toBeVisible();
+    expect((await sheet(page).evaluate((dialog) => dialog.innerText)).trim(), 'no placeholder, no caption: a blank sheet').toBe('');
+    await expect(page.locator(`${HOST} .text > *`)).toHaveCount(0);
+    await settled(page);
+    const blank = await paper(page).boundingBox();
+    expect(blank.height, 'blank, but still a sheet').toBeGreaterThan(Math.min(400, blank.width));
+    await page.keyboard.press('Escape');
+    await expect(page.locator(HOST)).toHaveCount(0);
+
+    const picture = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1200"><rect width="2400" height="1200" fill="#888"/></svg>')}`;
+    await fill(page, `<h2 id="t">写给翻到这里的人</h2>${'<p>时间好快，快到我觉得还没来得及学会怎么去爱你，你我就已同绕日十度春秋。</p>'.repeat(40)}`
+      + `<p><img id="pic" src="${picture}" alt=""></p><p>https://221forever.us/${'a-very-long-address-'.repeat(12)}</p><pre>${'no line breaks in here '.repeat(20)}</pre>`
+      + '<blockquote><p>此去经年</p></blockquote><ul><li>一</li><li>二</li></ul><p id="end">完</p>');
+    await page.keyboard.type('221');
+    await expect(page.locator(`${HOST} h2`)).toHaveText('写给翻到这里的人');
+    await expect(page.locator(`${HOST} #pic`)).toHaveJSProperty('complete', true);
+
+    const got = await page.locator(`${HOST} .text`).evaluate((text) => {
+      const p = getComputedStyle(text.querySelector('p'));
+      const pic = text.querySelector('#pic').getBoundingClientRect();
+      const inner = text.clientWidth - parseFloat(getComputedStyle(text).paddingLeft) - parseFloat(getComputedStyle(text).paddingRight);
+      return {
+        fontSize: parseFloat(p.fontSize),
+        leading: parseFloat(p.lineHeight) / parseFloat(p.fontSize),
+        measure: inner / parseFloat(p.fontSize),                              // characters to a line
+        scrolls: text.scrollHeight > text.clientHeight + 200,
+        sideways: text.scrollWidth - text.clientWidth,
+        picture: [pic.width, pic.height, inner],
+        motion: getComputedStyle(text.parentElement).animationName,
+      };
+    });
+    expect(got.fontSize, 'its own type, whatever the page behind uses').toBe(17);
+    expect(got.leading, 'room between the lines').toBeGreaterThanOrEqual(1.7);
+    expect(got.measure, 'a line is neither a ribbon nor a banner').toBeGreaterThan(15);
+    expect(got.measure).toBeLessThan(36);
+    expect(got.scrolls, 'a long text scrolls inside the sheet').toBe(true);
+    expect(got.sideways, 'and never sideways').toBeLessThanOrEqual(0);
+    expect(Math.abs(got.picture[0] - got.picture[2]), 'a large picture is scaled down to the column').toBeLessThanOrEqual(1);
+    expect(Math.abs(got.picture[1] - got.picture[0] / 2), 'and keeps its shape').toBeLessThanOrEqual(1);
+    expect(got.motion).toBe('sheet-in');
+
+    await settled(page);
+    const view = page.viewportSize();
+    const box = await paper(page).boundingBox();
+    expect(box.y).toBeGreaterThanOrEqual(24);
+    expect(box.y + box.height, 'the sheet stays on the screen').toBeLessThanOrEqual(view.height - 24);
+    await expectNoSidewaysScroll(page);
+
+    // read to the end: the mark is still in its corner, and the page behind has not moved
+    const y = await page.evaluate(() => window.scrollY);
+    await page.locator(`${HOST} #end`).scrollIntoViewIfNeeded();
+    await expect(page.locator(`${HOST} #end`)).toBeInViewport();
+    await expect(page.getByRole('button', { name: '关闭' })).toBeInViewport();
+    if (!isMobile) {                                                          // (no mouse wheel on a phone)
+      await page.mouse.move(view.width / 2, view.height / 2);
+      await page.mouse.wheel(0, 900);
+      await page.mouse.move(6, view.height / 2);
+      await page.mouse.wheel(0, 900);
+      await page.waitForTimeout(300);
+    }
+    expect(await page.evaluate(() => window.scrollY), 'the page behind stays where it was').toBe(y);
+    await page.getByRole('button', { name: '关闭' }).click();
+    await expect(page.locator(HOST)).toHaveCount(0);
+  });
+}
+
+test('the sheet arrives without motion for a reader who asked for none', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await arrive(page, 'probe');
   await page.keyboard.type('221');
-  await page.waitForFunction((id) => document.documentElement.dataset.theme === id && window.__theme.by === 'url', expected);
-  expect(page.url()).not.toContain('theme=');
+  await expect(sheet(page)).toBeVisible();
+  expect(await paper(page).evaluate((el) => getComputedStyle(el).animationName)).toBe('none');
+  expect(await sheet(page).evaluate((el) => getComputedStyle(el, '::backdrop').animationName)).toBe('none');
+});
+
+test('while the sheet is open the page behind does not hear the keyboard', async ({ page, request }) => {
+  // The reference theme listens for Esc (back to the list) and the arrow keys (the letter before
+  // and after) on a letter. None of that may happen underneath an open sheet.
+  const { letters } = await getIsland(request);
+  const letter = letters.find((l) => !l.standalone && l.no > 3);
+  await arrive(page, 'probe', letter.url);
+  const where = () => page.evaluate(() => [window.__theme.ctx.router.current.type, decodeURI(location.pathname)]);
+  await page.keyboard.type('221');
+  await expect(sheet(page)).toBeVisible();
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.type('pi');
+  await page.waitForTimeout(300);
+  expect(await where()).toEqual(['letter', letter.url]);
+  await expect(page.locator('#egg-pi')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(page.locator(HOST)).toHaveCount(0);
+  await page.waitForTimeout(300);
+  expect(await where(), 'Esc closed the sheet and nothing else').toEqual(['letter', letter.url]);
+  await page.keyboard.press('Escape');                          // and now the keyboard is the page's again
+  await expect.poll(where).toEqual(['home', '/']);
 });
 
 test('typing 221 in a form field does nothing', async ({ page }) => {
@@ -127,6 +307,7 @@ test('typing 221 in a form field does nothing', async ({ page }) => {
   await page.waitForTimeout(400);
   expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('probe');
   await expect(page.locator('#egg-pi')).toHaveCount(0);
+  await expect(page.locator(HOST)).toHaveCount(0);
 });
 
 for (const theme of ['classic', 'probe']) {
@@ -145,19 +326,16 @@ for (const theme of ['classic', 'probe']) {
   });
 }
 
-// (The footer also holds the visible switcher, tests/switcher.spec.mjs. The egg is the © line and
-// the empty space around the row of names; a tap on a name is not counted.)
+// 221 used to change the theme, and under classic three quick taps on the big title or on the
+// footer line did the same. Both are gone: every theme has its row of names (tests/switcher.spec.mjs).
 for (const [where, path, selector] of [['the title of the home page', '/', '.textLogo--frontpage'], ['the footer line of a letter', null, '.section--footer .container > div']]) {
-  test(`classic: three taps on ${where} do what 221 does`, async ({ page, request }) => {
-    await page.route(/^https:\/\//, (route) => route.abort());
-    await page.goto(`${path || (await getIsland(request)).letters[0].url}?theme=classic`);
-    await page.waitForFunction(() => window.__theme.up === 1);
+  test(`classic: three taps on ${where} change nothing`, async ({ page, request }) => {
+    await arrive(page, 'classic', path || (await getIsland(request)).letters[0].url);
     await page.evaluate(() => { window.__sameDocument = true; });
     const target = page.locator(selector);
-    await target.click();
-    await target.click();
-    expect(await page.evaluate(() => window.__sameDocument), 'two taps: nothing').toBe(true);
-    await target.click();
-    await page.waitForFunction(() => window.__sameDocument === undefined && window.__theme && window.__theme.by === 'url');
+    for (let i = 0; i < 3; i++) await target.click();
+    await page.waitForTimeout(500);
+    expect(await page.evaluate(() => [window.__sameDocument, document.documentElement.dataset.theme])).toEqual([true, 'classic']);
+    await expect(page.locator(HOST)).toHaveCount(0);
   });
 }

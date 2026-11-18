@@ -7,12 +7,15 @@
     {% comment %}
       How a page is put together (details: assets/themes/README.md)
       - letters-data: the JSON every theme draws from
+      - egg-221: what typing 221 opens under every theme (core/eggs.js puts it on a sheet of
+        paper). Written like a letter in _includes/egg-221.md; an empty file is an empty sheet.
       - #theme-root: where a new theme renders. Under the classic theme it stays empty and hidden.
       - everything else is the classic page. Under a new theme it is hidden, and the parts that
         would download something or need jQuery are wrapped in classic-only.html, so they
         only exist when the theme is classic (or JavaScript is off).
     {% endcomment %}
     {% include letters-data.html %}
+    {% capture egg %}{% include egg-221.md %}{% endcapture %}<template id="egg-221">{{ egg | markdownify }}</template>
     <div id="theme-root"></div>
 
     {% if page.url != '/index.html' %}

@@ -39,6 +39,19 @@ test('every page carries one valid data island, the same letters everywhere', ()
   }
 });
 
+test('every page carries the hidden sheet once, rendered from _includes/egg-221.md', () => {
+  // What typing 221 opens (core/eggs.js). The owner writes it in Markdown; Jekyll renders it into
+  // an inert <template> on every page, home, letters and 404 alike.
+  for (const file of htmlFiles(site)) {
+    const html = readFileSync(file, 'utf8');
+    expect(html.split('<template id="egg-221">').length - 1, path.relative(site, file)).toBe(1);
+  }
+  const layout = readFileSync(path.join(root, '_layouts/default.html'), 'utf8');
+  expect(layout).toContain('{% capture egg %}{% include egg-221.md %}{% endcapture %}');
+  expect(layout).toContain('<template id="egg-221">{{ egg | markdownify }}</template>');
+  expect(existsSync(path.join(root, '_includes/egg-221.md'))).toBe(true);
+});
+
 test('the island template escapes "<", so no title or quote can end the <script> early', () => {
   // No letter contains "<" today, so the built pages cannot prove this: check the template itself.
   const escape = `${String.fromCharCode(92)}u003c`;                    // backslash, u003c

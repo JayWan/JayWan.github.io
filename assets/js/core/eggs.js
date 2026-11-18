@@ -81,16 +81,6 @@ export const fmt = {
 
 // ------------------------------------------------------------------ switching themes
 
-/** The themes a visitor can be given: [id, name, dark, drawable, fonts] rows from the boot script. */
-const drawable = (T) => T.themes.filter((t) => t[3]);
-
-/** The id after the current one in the registry order (wraps around). */
-export function nextTheme(T) {
-  const ids = drawable(T).map((t) => t[0]);
-  if (!ids.length) return 'classic';
-  return ids[(ids.indexOf(T.id) + 1) % ids.length];
-}
-
 /** Leave for another theme: load this page again with ?theme=<id> (the boot script takes it from
  *  there). replace(), not assign(): changing clothes should not add a step to the Back button. */
 export function switchTheme(id) {
@@ -108,7 +98,7 @@ export function switchTheme(id) {
  */
 export function switcher(T) {
   const list = el('ul');
-  for (const [id, name, , canDraw] of T.themes) {
+  for (const [id, name, , canDraw] of T.themes) {   // rows of the boot script: [id, name, dark, drawable, fonts]
     if (!canDraw && id !== T.id) continue;        // hidden or disabled themes only list themselves
     list.append(el('li', null, el('a', { href: `?theme=${encodeURIComponent(id)}`, 'data-theme-id': id, 'aria-current': id === T.id ? 'true' : null }, name)));
   }
@@ -167,7 +157,7 @@ export function greet(T, data) {
       lines.push(`我是这个网站。${born}某万把我带到这个世界上，到今天一共吃了 ${data.letters.length} 封信。`);
       lines.push(hunger(data.letters, data.site.today.date).text);
     }
-    lines.push(`今天穿的是「${name}」。在页面上敲 221 给我换一身，敲 pi 看今天的 π。`);
+    lines.push(`今天穿的是「${name}」。在页面上敲 pi 看今天的 π。`);
     console.log(`%c221 FOREVER%c\n${lines.join('\n')}`, 'font: 700 16px/2 Georgia, serif; letter-spacing: .12em', 'font: 13px/1.7 system-ui, sans-serif');
   } catch { /* a greeting must never break anything */ }
 }
@@ -175,13 +165,12 @@ export function greet(T, data) {
 // ------------------------------------------------------------------ key sequences
 
 /**
- * Typing 221 anywhere (not in a form field) → the next theme.
+ * Typing 221 anywhere (not in a form field) → the hidden sheet (below).
  * Typing pi → today's digits of π, shown discreetly for a few seconds.
- * On a touch screen there is no keyboard, so under classic three quick taps on the big title of
- * the home page, or on the footer (around the switcher, not on it: a tap on a theme's name
- * already means that theme), do what 221 does. Nothing is visible until used.
+ * Under every theme, classic included. Nothing is visible until used, and neither changes the theme:
+ * that is what the row of names is for.
  */
-export function keys(T, data) {
+export function keys(data) {
   let typed = '';
   let timer = 0;
   window.addEventListener('keydown', (event) => {
@@ -191,20 +180,142 @@ export function keys(T, data) {
     typed = (typed + event.key.toLowerCase()).slice(-3);
     clearTimeout(timer);
     timer = setTimeout(() => { typed = ''; }, 1500);
-    if (typed === '221') { typed = ''; switchTheme(nextTheme(T)); }
+    if (typed === '221') { typed = ''; openSheet(); }
     else if (typed.endsWith('pi')) { typed = ''; showPi(data); }
   });
+}
 
-  if (T.id === 'classic') {
-    let taps = 0;
-    let tapTimer = 0;
-    document.addEventListener('click', (event) => {
-      if (!event.target.closest || !event.target.closest('.textLogo--frontpage, .section--footer') || event.target.closest('.theme-switcher')) return;
-      clearTimeout(tapTimer);
-      tapTimer = setTimeout(() => { taps = 0; }, 900);
-      if (++taps >= 3) { taps = 0; switchTheme(nextTheme(T)); }
-    });
+// ------------------------------------------------------------------ the hidden sheet (221)
+
+// A sheet of paper, the same under every theme. Nothing here comes from a theme and nothing of a
+// theme gets in: these rules live in the sheet's own shadow root.
+const SHEET_CSS = `
+:host { all: initial; display: contents; }
+dialog {
+  position: fixed; inset: 0; box-sizing: border-box; width: auto; height: auto; max-width: none; max-height: none;
+  margin: 0; border: 0; overflow: hidden; background: none; color: #2c2a26; color-scheme: light;
+  padding: max(24px, 5vh, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(24px, 5vh, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  font: 17px/1.9 "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", "Source Han Serif CN", STSong, "PingFang SC", "Microsoft YaHei", serif;
+  -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
+}
+dialog[open] { display: flex; align-items: center; justify-content: center; }
+dialog::backdrop { background: rgba(22, 21, 19, .64); }
+.paper {
+  --w: min(100vw - 32px, 36em);
+  box-sizing: border-box; display: flex; flex-direction: column;
+  width: var(--w); max-width: 100%; min-height: min(100%, var(--w) * 1.414); max-height: 100%;
+  background: #fbfaf6; border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .05), 0 1px 3px rgba(0, 0, 0, .18), 0 24px 60px rgba(0, 0, 0, .34);
+}
+.close {
+  flex: none; align-self: flex-end; display: grid; place-items: center; box-sizing: border-box; width: 44px; height: 44px;
+  margin: 0; padding: 0; border: 0; border-radius: 50%; background: none; color: #857f73; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.close svg { fill: none; stroke: currentColor; stroke-width: 1.2; stroke-linecap: round; }
+.close:focus-visible { outline: 2px solid currentColor; outline-offset: -9px; color: #2c2a26; }
+@media (hover: hover) { .close:hover { color: #2c2a26; } }
+.text {
+  flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+  padding: .4em clamp(1.25em, 7vw, 3.4em) 3.2em; outline: 0; overflow-wrap: break-word; line-break: strict;
+}
+.text > :first-child { margin-top: 0; }
+.text > :last-child { margin-bottom: 0; }
+p, ul, ol, blockquote, pre, table, figure { margin: 0 0 1.15em; }
+h1, h2, h3, h4, h5, h6 { margin: 1.8em 0 .7em; font-size: 1em; font-weight: 700; line-height: 1.45; }
+h1 { font-size: 1.5em; }
+h2 { font-size: 1.3em; }
+h3 { font-size: 1.12em; }
+ul, ol { padding-left: 1.6em; }
+blockquote { padding-left: 1.1em; border-left: 2px solid #dcd7ca; color: #5d584e; }
+blockquote > :last-child { margin-bottom: 0; }
+a { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .22em; }
+img, video, iframe, .text svg { max-width: 100%; height: auto; }
+hr { height: 0; margin: 2em 0; border: 0; border-top: 1px solid #dcd7ca; }
+code, pre { font: .88em/1.6 ui-monospace, Menlo, Consolas, monospace; }
+pre { overflow-x: auto; padding: .8em 1em; background: #f2efe7; }
+table { display: block; overflow-x: auto; border-collapse: collapse; }
+th, td { padding: .3em .7em; border-bottom: 1px solid #dcd7ca; text-align: left; }
+@media (prefers-reduced-motion: no-preference) {
+  dialog[open] .paper { animation: sheet-in .32s cubic-bezier(.2, .7, .2, 1) both; }
+  dialog[open]::backdrop { animation: dim-in .32s ease-out both; }
+}
+@keyframes sheet-in { from { opacity: 0; transform: translateY(12px); } }
+@keyframes dim-in { from { opacity: 0; } }
+`;
+
+/** While the sheet is open the page behind it stays where it is. The viewport takes its overflow
+ *  from <html>, or from <body> when <html> leaves it at `visible`: the lock goes on whichever of
+ *  the two it is, so nothing else about the page's layout changes. Returns the way to undo it. */
+function lockScroll() {
+  const html = document.documentElement;
+  const style = getComputedStyle(html);
+  const holder = document.body && style.overflowX === 'visible' && style.overflowY === 'visible' ? document.body : html;
+  const before = [holder.style.overflow, html.style.scrollbarGutter];
+  if (window.innerWidth > html.clientWidth) html.style.scrollbarGutter = 'stable';   // a scrollbar that takes room: keep its room
+  holder.style.overflow = 'hidden';
+  return () => { holder.style.overflow = before[0]; html.style.scrollbarGutter = before[1]; };
+}
+
+/**
+ * What typing 221 opens: a sheet of paper in the middle of the dimmed page, holding whatever is
+ * written in _includes/egg-221.md. Jekyll renders that file into <template id="egg-221"> on every
+ * page; while the file is empty the sheet is empty.
+ *
+ * It must look the same under five themes and disturb none of them, so it keeps to itself:
+ *   - a native modal <dialog> inside a shadow root: no stylesheet of the page reaches in, and
+ *     SHEET_CSS does not leak out
+ *   - hung on <html>, beside <body>: under a new theme everything in <body> except #theme-root
+ *     is hidden, and what is inside #theme-root belongs to the theme
+ *   - made when asked for, removed when closed: a page on which nobody typed 221 has none of it
+ *
+ * Closes with Esc, a click on the dimmed page, or the mark in its corner. While it is open the
+ * page behind neither scrolls nor hears the keyboard (a theme's own Esc and arrow keys would act
+ * on the page underneath); afterwards the focus is back where it was.
+ * Returns the <dialog>, or null when it is already open or the browser cannot show one.
+ */
+export function openSheet() {
+  const source = document.getElementById('egg-221');
+  const host = el('div', { id: 'egg-221-sheet' });
+  const text = el('article', { class: 'text', tabindex: '-1' });
+  const close = el('button', {
+    class: 'close', type: 'button', 'aria-label': '关闭',
+    html: '<svg viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path d="M1 1l12 12M13 1L1 13"/></svg>',
+  });
+  const dialog = el('dialog', { lang: 'zh-Hans', 'aria-label': '221' }, el('div', { class: 'paper' }, close, text));
+  if (!source || !source.content || !host.attachShadow || typeof dialog.showModal !== 'function' || document.getElementById(host.id)) return null;
+  text.append(document.importNode(source.content, true));
+  host.attachShadow({ mode: 'open' }).append(el('style', { text: SHEET_CSS }), dialog);
+
+  const focused = document.activeElement;
+  const unlock = lockScroll();
+  const hush = (event) => event.stopPropagation();
+  window.addEventListener('keydown', hush, true);
+  const shut = () => { if (dialog.open) dialog.close(); };
+  // A click on the dimmed page lands on the <dialog> itself, which covers the screen. It has to
+  // begin there too: selecting text and letting go outside the sheet is not a click outside.
+  let pressedOutside = false;
+  dialog.addEventListener('pointerdown', (event) => { pressedOutside = event.target === dialog; });
+  dialog.addEventListener('click', (event) => { if (event.target === dialog && pressedOutside) shut(); });
+  close.addEventListener('click', shut);
+  dialog.addEventListener('close', () => {
+    window.removeEventListener('keydown', hush, true);
+    unlock();
+    host.remove();
+    if (focused && focused !== document.body && focused.isConnected && typeof focused.focus === 'function') focused.focus({ preventScroll: true });
+  });
+
+  try {
+    document.documentElement.append(host);
+    dialog.showModal();
+    text.focus({ preventScroll: true });   // the reader's arrow keys and space bar scroll the sheet; Tab goes to the mark
+  } catch (err) {                          // whatever went wrong, the page must not stay locked and deaf
+    window.removeEventListener('keydown', hush, true);
+    unlock();
+    host.remove();
+    return null;
   }
+  return dialog;
 }
 
 // ------------------------------------------------------------------ π
