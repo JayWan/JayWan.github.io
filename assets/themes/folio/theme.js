@@ -154,6 +154,8 @@ const PLAY_SVG = '<svg viewBox="0 0 44 44" aria-hidden="true" focusable="false">
 
 /* 首页每一叶默认印哪一句眉批：有这几封就用它们，否则用这一排的第一封。 */
 const PICKS = new Set(['221 FOREVER', 'One Year']);
+/* 年表的月份刻度：每个月的第一天是一年里的第几天（平年） */
+const MONTHS = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365];
 
 export default {
   mount(ctx) {
@@ -167,6 +169,7 @@ export default {
     const own = letters.filter((l) => !isGuest(l));       // 他们俩的信
     const guests = letters.filter(isGuest);               // 客人的信：放在书末的「跋」
     const newest = own[own.length - 1] || letters.latest;
+    const dToday = site.today.days.met;                   // 今天是相识的第几日
 
     /* 回目录：链接带 data-back，核心会把它当作「后退」（从目录来的话回到原处），并把刚读的那封带到眼前。
        上一封 / 下一封是普通链接：信到信由核心替换历史记录，所以「后退」总是回到目录。 */
@@ -315,13 +318,39 @@ export default {
       return cell;
     }
 
+    /* 年表：扉页上的一张小图，是下面这本书的缩样。一年一行，自上而下；一行里日子自右向左；
+       一封信一道竖线，空着的地方就是没写信的日子。横线从相识那天（第 0 日）画到今天。 */
+    function chart() {
+      if (!letters.length) return null;
+      const ok = (d) => /^\d{4}-\d\d-\d\d/.test(d || '');
+      const frac = (d) => { const y = +d.slice(0, 4), a = Date.UTC(y, 0, 1); return (Date.UTC(y, +d.slice(5, 7) - 1, +d.slice(8, 10)) - a + 432e5) / (Date.UTC(y + 1, 0, 1) - a); };
+      const at = (d) => (frac(d) * 100).toFixed(2) + '%';
+      const stroke = (l) => h('i', { class: 'nb-s', style: `--x:${at(l.date)}` });
+      const met = ok(site.met) ? site.met : null, today = ok(site.today.date) ? site.today.date : null;
+      const y0 = letters[0].year, y1 = Math.max(letters[letters.length - 1].year, today ? +today.slice(0, 4) : 0);
+      const rows = [h('div', { class: 'nb-m' }, h('span', { class: 'nb-y' }),
+        h('span', { class: 'nb-x' }, MONTHS.map((d) => h('i', { style: `right:${(d / 3.65).toFixed(2)}%` })), h('span', { class: 'nb-m1' }, '一月'), h('span', { class: 'nb-m2' }, '十二月')))];
+      for (let y = y0; y <= y1; y++) {
+        const list = own.filter((l) => l.year === y);
+        const from = met && +met.slice(0, 4) === y ? frac(met) : 0, to = today && +today.slice(0, 4) === y ? frac(today) : 1;
+        rows.push(h('div', { class: 'nb-r' + (list.length ? '' : ' is-blank') },
+          h('span', { class: 'nb-y', lang: 'en' }, String(y)),
+          h('span', { class: 'nb-x' },
+            h('i', { class: 'nb-l', style: `right:${(from * 100).toFixed(2)}%;left:${((1 - to) * 100).toFixed(2)}%` }),
+            list.map(stroke),
+            from > 0 && h('b', { class: 'nb-d', lang: 'en', style: `right:${at(met)}` }, '0'),
+            to < 1 && dToday != null && h('b', { class: 'nb-d', lang: 'en', style: `right:${at(today)}` }, String(dToday)))));
+      }
+      if (guests.length) rows.push(h('div', { class: 'nb-r nb-r--ba' }, h('span', { class: 'nb-y' }, '跋'), h('span', { class: 'nb-x' }, guests.map(stroke))));
+      return h('li', { class: 'cell cell--nb' },
+        h('div', { class: 'nb', role: 'img', style: `--k:${rows.length - 1}`, 'aria-label': `年表：${y0} 至 ${y1} 年，${own.length} 封信${guests.length ? `，跋 ${guests.length} 篇` : ''}` }, rows));
+    }
+
     function titleLeaf() {
       const count = (l) => numZh(l.length);
       const span = letters.length ? `${yearZh(letters[0].year)}—${yearZh(letters[letters.length - 1].year)}` : '';
       const pens = [];
       for (const l of own) { const a = l.author; const p = pens.find((x) => x[0] === a); if (p) p[1]++; else pens.push([a, 1]); }
-      const rule = (text) => h('div', { class: 'half' }, h('p', { class: 'v' }, vt(text)));
-      const pair = (cls, a, b) => h('li', { class: 'cell cell--fl ' + cls }, rule(a), rule(b));
       const latest = newest && h('li', { class: 'cell cell--latest' }, column(newest, '最近一封'), mei(newest));
       return h('header', { class: 'leaf leaf--title', 'aria-label': '扉页' },
         h('ol', { class: 'cols' },
@@ -330,24 +359,13 @@ export default {
             h('div', { class: 'ln' }, h('p', { class: 'sub-kind v' }, '书信集'),
               h('p', { class: 'wari v' }, h('span', {}, count(own) + '封' + (guests.length ? `，跋${count(guests)}篇` : '')), h('span', {}, span))),
             pens.length > 0 && h('p', { class: 'pens wari v' }, pens.map(([a, n]) => h('span', {}, vt(a), ' ' + numZh(n) + '封')))),
-          h('li', { class: 'cell cell--gap', 'aria-hidden': 'true' }),
-          h('li', { class: 'cell cell--flh' }, h('h2', { class: 'v' }, '凡例')),
-          pair('fl-a',
-            `一、收信${count(own)}封${guests.length ? `，另跋${count(guests)}篇` : ''}。一年一叶，自右向左读。`,
-            '一、上边空白处是从信里摘的一句。点哪一列，展哪封信。'),
-          pair('fl-b',
-            '一、目录不标页码，标的是相识以来的日数。',
-            `一、相识在${ymdZh(site.met)}，是为第〇日。`),
-          pair('fl-c',
-            '一、每信配歌一首，不自动播放。',
-            '一、空白处是没写信的日子，并非漏印。'),
+          chart(),
           latest));
     }
     function yearIndex() {
       /* 跋只有一篇时，「跋」直接打开它（最新的一封离第一屏只有一下） */
       const to = (g) => (g.guest && g.list.length === 1 ? g.list[0].url : '#' + g.id);
       const nav = h('nav', { class: 'yidx', 'aria-label': '去哪一年' },
-        h('span', { class: 'yidx-k' }, h('span', {}, '去哪'), h('span', {}, '一年')),
         groups.map((g) => h('a', { href: to(g), class: g.list.length ? '' : 'is-blank', lang: g.guest ? null : 'en', 'aria-label': g.label }, g.guest ? '跋' : String(g.year))));
       nav.addEventListener('click', (e) => { if (e.target.closest('a[href^="#"]') && !location.hash) jumpFrom = window.scrollY; });
       return nav;
@@ -607,7 +625,6 @@ export default {
 
     const main = h('main', { class: 'fo-main', tabindex: '-1' });
     const hunger = ui.hunger();
-    const dToday = site.today.days.met;
     const colophon = h('footer', { class: 'colophon' },
       dToday != null && h('p', { class: 'colophon-today' }, h('span', { class: 'd' }, ymdZh(site.today.date)), h('span', { class: 'k' }, '相识'), '第', h('span', { class: 'n', lang: 'en' }, String(dToday)), '日'),
       hunger.text && h('p', { class: 'colophon-voice', 'data-level': hunger.level }, h('span', { class: 'voice-k' }, '网站按'), h('span', { class: 'voice-t' }, hunger.text)),
