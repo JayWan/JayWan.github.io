@@ -28,6 +28,10 @@ const I_NEXT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.8 6H18v
 // 八分音符：自己画的，跟着文字颜色走（系统字体里的 ♪ 又细又歪）
 const I_NOTE = '<svg class="sd-note" viewBox="0 0 10 13" aria-hidden="true"><ellipse cx="2.9" cy="10.4" rx="2.9" ry="2.2" transform="rotate(-18 2.9 10.4)"/><path d="M4.6 0h1.2v10.4H4.6z"/><path d="M5.2 0c.5 2 1.5 2.7 2.9 3.7 1.3.9 1.9 2 1.5 3.7C9 5.9 7.6 5 5.2 4.4z"/></svg>';
 
+// 排序的记号：一支朝下的箭头（曲目表是从上往下读的），旁边叠着头尾两个曲号
+const I_SORT = '<svg viewBox="0 0 10 28" aria-hidden="true"><path d="M5 0v26M1 21.5l4 5 4-5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+const SORT = 'f221:sides:sort';     // 这次到访里选的顺序（sessionStorage：关掉标签页就忘了）
+
 const pad2 = (n) => (n < 10 ? '0' : '') + n;
 const pad3 = (n) => String(n).padStart(3, '0');
 const visualLen = (s) => { let n = 0; for (const c of s) n += c.codePointAt(0) > 0x2e7f ? 1 : 0.55; return n; };
@@ -266,6 +270,11 @@ export default {
         tab('all', '全部', tracks.length),
         tab('a', '他写的', count.a, h('i', { class: 'sd-chip sd-chip-a', 'aria-hidden': 'true' }, 'A')),
         tab('b', '她写的', count.b, h('i', { class: 'sd-chip sd-chip-b', 'aria-hidden': 'true' }, 'B')));
+      // 排序：默认最新的在最上面。记号就是这张表现在的样子：上面是第一行的曲号，下面是最后一行的
+      let asc = false;
+      try { asc = sessionStorage.getItem(SORT) === 'asc'; } catch { /* 读不了就用默认的 */ }
+      const ends = [h('b'), h('b')];
+      const sortBtn = h('button', { type: 'button', class: 'sd-sort', 'aria-label': '从第一首排起' }, h('span', { 'aria-hidden': 'true' }, ends), svg(I_SORT));
 
       // ---- 封套栏：拼版 ----
       const cells = Math.max(36, Math.ceil((tracks.length + 1) / 6) * 6);
@@ -310,22 +319,39 @@ export default {
         ? letters.years.map((y) => ({ year: y.year, all: y.letters.length, list: y.letters.filter((l) => trackNo.has(l)) }))
         : years.length ? Array.from({ length: years[years.length - 1] - years[0] + 1 }, (_, i) => years[0] + i).map((y) => ({ year: y, all: 0, list: tracks.filter((l) => l.year === y) })) : [];
       const yearRows = [];                                   // [年份行, 这一年的信, 写着「N 封」的那个元素]
+      const groups = [];                                     // 一年一组，从旧到新：[年份行, 这一年的行]
       byYear.forEach(({ year, all, list: ofYear }) => {
+        let yr = null;
         if (ofYear.length) {
           const n = h('span', {}, `${ofYear.length} 封`);
-          yearRows.push([list.appendChild(h('li', { class: 'sd-yr' }, h('span', {}, String(year)), n)), ofYear, n]);
-        } else if (!all) yearRows.push([list.appendChild(h('li', { class: 'sd-yr sd-yr--empty' }, h('span', {}, String(year)), h('span', {}, '没有信'))), ofYear, null]);     // 年份就印在旁边，不用再说「这一年」
-        ofYear.forEach((l) => list.append(row(l)));
+          yearRows.push([yr = h('li', { class: 'sd-yr' }, h('span', {}, String(year)), n), ofYear, n]);
+        } else if (!all) yearRows.push([yr = h('li', { class: 'sd-yr sd-yr--empty' }, h('span', {}, String(year)), h('span', {}, '没有信')), ofYear, null]);     // 年份就印在旁边，不用再说「这一年」
+        groups.push([yr, ofYear.map(row)]);
       });
       const extras = letters.filter((l) => !trackNo.has(l));
+      const tail = [];                                       // 附赠曲目不在他们俩的先后里：两种顺序都排在最后
       if (extras.length) {
-        yearRows.push([list.appendChild(h('li', { class: 'sd-yr sd-yr--bonus' }, h('span', {}, 'Bonus track'), h('span', {}, [...new Set(extras.map((l) => l.author))].join('、')))), [], null]);
-        extras.forEach((l) => list.append(row(l)));
+        tail.push(h('li', { class: 'sd-yr sd-yr--bonus' }, h('span', {}, 'Bonus track'), h('span', {}, [...new Set(extras.map((l) => l.author))].join('、'))), ...extras.map(row));
+        yearRows.push([tail[0], [], null]);
       }
+      // 排一遍：年份和每一年里的行一起倒过来，曲号还是原来的曲号
+      function arrange() {
+        const turn = (a) => (asc ? a : [...a].reverse());
+        list.replaceChildren(...turn(groups).flatMap(([yr, lis]) => [yr, ...turn(lis)]).filter(Boolean), ...tail);
+        const nos = turn([pad2(1), pad2(tracks.length)]);
+        ends.forEach((b, i) => { b.textContent = nos[i]; });
+        sortBtn.setAttribute('aria-pressed', String(asc));
+      }
+      arrange();
+      sortBtn.addEventListener('click', () => {
+        asc = !asc;
+        try { if (asc) sessionStorage.setItem(SORT, 'asc'); else sessionStorage.removeItem(SORT); } catch { /* 存不了：这一页里照样管用 */ }
+        arrange();
+      });
 
       const el = h('div', { class: 'sd-home', 'data-filter': 'all' },
         h('div', { class: 'sd-cat sd-l' }, h('span', {}, '221–LP'), mark(), h('span', {}, 'Stereo · 双声道')),
-        h('header', { class: 'sd-mast' }, title, info, latestLink, h('div', { class: 'sd-ctl' }, tabs)),
+        h('header', { class: 'sd-mast' }, title, info, latestLink, h('div', { class: 'sd-ctl' }, tabs, sortBtn)),
         h('aside', { class: 'sd-panel', 'aria-label': '封套' }, h('div', { class: 'sd-stick' }, sq, cap)),
         h('section', { class: 'sd-tracks', 'aria-label': '曲目表' }, list));
 
