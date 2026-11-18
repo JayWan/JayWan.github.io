@@ -57,11 +57,11 @@ body { margin: 0; }
 .sd-slv { display: block; position: relative; overflow: hidden; aspect-ratio: 1; background: var(--side-bg); isolation: isolate; }
 .sd-slv picture { display: block; width: 100%; height: 100%; mix-blend-mode: screen; }
 .sd-slv img { display: block; width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: var(--fx) var(--fy); filter: grayscale(1) brightness(.9) contrast(1.3); }
-.sd-slv[data-fit] img { object-fit: contain; object-position: 50% 50%; }      /* 裁不得的：整幅放进方框，照片四周是油墨 */
+.sd-slv[data-fit] img { object-fit: contain; object-position: 50% 50%; }   /* 裁不得的：整幅放进方框，照片四周是油墨 */
 .sd-slv[data-fit="paper"] img { background: #fff; filter: grayscale(1) contrast(1.25); }   /* 白底的插画和图表：四周是纸，外面一圈细线 */
 .sd-slv[data-fit="paper"]::after { box-shadow: inset 0 0 0 1px rgba(20, 22, 27, .3); }
 .sd-slv::after { content: ""; position: absolute; inset: 0; background: var(--paper); mix-blend-mode: multiply; pointer-events: none; }
-.sd-slv.is-orig { background: none; aspect-ratio: var(--ar, 1); }      /* 原图：按它自己的比例，不留边 */
+.sd-slv.is-orig { background: none; aspect-ratio: var(--ar, 1); }   /* 原图：按它自己的比例，不留边 */
 .sd-slv.is-orig picture { mix-blend-mode: normal; }
 .sd-slv.is-orig img { filter: none; object-fit: contain; object-position: 50% 50%; background: none; }
 .sd-slv.is-orig::after { display: none; }
@@ -186,7 +186,7 @@ body { margin: 0; }
 .sd-i-pause, .sd-i-retry { display: none; }
 .is-playing > svg .sd-i-play { display: none; }
 .is-playing > svg .sd-i-pause { display: block; }
-.is-error > svg :is(.sd-i-play, .sd-i-pause) { display: none; }      /* 放不出来：钮上换成「再来一次」 */
+.is-error > svg :is(.sd-i-play, .sd-i-pause) { display: none; }   /* 放不出来：钮上换成「再来一次」 */
 .is-error > svg .sd-i-retry { display: block; }
 .sd-more { display: none; }
 
@@ -219,7 +219,7 @@ body { margin: 0; }
 .sd-zh { font-family: var(--zh); }
 .sd-foot-row { display: flex; justify-content: space-between; align-items: baseline; gap: 4px 24px; flex-wrap: wrap; padding: 13px 0; border-top: 1px solid var(--rule); font: 500 12px/1.4 var(--zh); letter-spacing: .06em; }
 
-/* ---- 换主题：页眉最右边的一格。点开，细线下面挂出一条纸色的单子，穿着的那一套前面有个小方块 ---- */
+/* ---- 换主题：页眉最右边的一格，点开挂出一条纸色的单子（见 README） ---- */
 .sd-navr { display: flex; align-items: center; align-self: stretch; justify-self: end; }
 .sd-navr > span { padding-right: 14px; border-right: 1px solid var(--band-rule, var(--rule)); }
 .theme-switcher { position: relative; display: flex; align-self: stretch; margin-bottom: -1px; }
@@ -359,7 +359,7 @@ body { margin: 0; }
 .sd-pn-title { margin: 0; font: 700 22px/1.3 var(--zh); }
 .sd-pn-song { margin: 4px 0 0; font: 400 14px/1.4 var(--zh); color: var(--ink-2); }
 .sd-pnt--none { color: var(--ink-2); }
-.sd-pnt--none .sd-pn-lbl { margin-bottom: 62px; }      /* 和旁边那一格的标签对齐（下面空着标题和歌的两行） */
+.sd-pnt--none .sd-pn-lbl { margin-bottom: 62px; }   /* 和旁边那一格的标签对齐（下面空着标题和歌的两行） */
 /* 没有的那一首（第一首之前、还没写的下一首、404）：曲号只有轮廓，没上油墨 */
 .sd-pnt--none .sd-pn-no, .sd-lost-no { color: var(--paper); -webkit-text-stroke: 3px var(--ink-2); paint-order: stroke fill; }
 .sd-pn-back { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 0 20px; border-top: 1px solid var(--rule); font: 700 16px/1 var(--zh); text-decoration: none; }
@@ -457,10 +457,10 @@ html[data-navigating] .sd-player::after { content: ""; position: absolute; left:
   .sd-latest b { font-size: 22px; }
   .sd-latest u { border: 0; padding: 0; font-weight: 700; font-size: 16px; }
   .sd-latest i { display: block; margin-left: auto; padding-left: 8px; }
-  .sd-ctl { padding: 12px 0 0; border-top: 0; gap: 6px; }
+  .sd-ctl { padding: 12px 0 0; border-top: 0; gap: 6px; flex-wrap: wrap; }
   .sd-tabs { flex: 1; display: grid; grid-template-columns: repeat(3, auto); gap: 6px; }
   .sd-tab { padding: 0 5px; justify-content: center; }
-  .sd-sort { justify-content: flex-end; padding-right: 5px; }      /* 箭头和下面那一列播放钮对齐 */
+  .sd-sort { justify-content: flex-end; padding-right: 5px; margin-left: auto; }   /* 箭头和下面那一列播放钮对齐；字放大时另起一行 */
 
   .sd-panel { padding-top: 0; }
   .sd-stick { position: static; }

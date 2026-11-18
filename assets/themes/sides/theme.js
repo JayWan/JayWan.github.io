@@ -656,6 +656,9 @@ export default {
       } else if (route.type === 'home') {
         band = null;
         home = home || buildHome();
+        // 曲目表是留着重用的：单子开着时用后退 / 前进离开（没点到页面上），回来时它还开着，核心也不再管它。换一个收着的
+        const sw = home.el.querySelector('.theme-switcher[data-open]');
+        if (sw) sw.replaceWith(ui.switcher());
         home.clear();
         home.rows.forEach((li) => li.classList.remove('is-last'));
         main.replaceChildren(home.el);

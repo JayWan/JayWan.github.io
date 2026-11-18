@@ -232,6 +232,38 @@ test.describe('theme "sides": its own rules', () => {
     }
   });
 
+  test('the track list is kept between visits: left with the way to another theme open, it comes back closed', async ({ page, isMobile }) => {
+    const press = (locator) => (isMobile ? locator.tap() : locator.click());
+    const control = page.locator('#theme-root .theme-switcher');
+    const view = (name) => expect(page.locator('#theme-root')).toHaveAttribute('data-view', name);
+    await open(page, '/', theme);
+    await press(page.locator('#theme-root a.sd-ttl').first());
+    await view('letter');
+    await page.goBack();
+    await view('home');
+    // Back and Forward do not press anything in the page, so nothing closes the list on the way out
+    for (const step of ['nothing in between', 'a press on the letter']) {
+      await press(control.locator('button'));
+      await expect(control).toHaveAttribute('data-open', '');
+      await page.goForward();
+      await view('letter');
+      await expect(control, `${step}: one control on the letter, closed`).toHaveCount(1);
+      await expect(control).not.toHaveAttribute('data-open');
+      if (step !== 'nothing in between') await (isMobile ? page.touchscreen.tap(4, 400) : page.mouse.click(4, 400));
+      await page.goBack();
+      await view('home');
+      await expect(control, `${step}: one control on the track list`).toHaveCount(1);
+      await expect(control, `${step}: back on the track list, it is closed`).not.toHaveAttribute('data-open');
+      await expect(control.locator('button')).toHaveAttribute('aria-expanded', 'false');
+      await expect(control.locator('ul')).toBeHidden();
+    }
+    // and it still opens and closes as before
+    await press(control.locator('button'));
+    await expect(control.locator('ul')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(control.locator('ul')).toBeHidden();
+  });
+
   test('in the player, a title with an ampersand stays on one line', async ({ page, request }) => {
     const { letters } = await getIsland(request);
     const letter = letters.find((l) => l.title.includes('&'));
