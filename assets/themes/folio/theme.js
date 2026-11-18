@@ -156,6 +156,9 @@ const PLAY_SVG = '<svg viewBox="0 0 44 44" aria-hidden="true" focusable="false">
 /* 色标：图版印的是墨色还是原色（三个圈，原色时套上色） */
 const TONE_SVG = '<svg viewBox="0 0 20 18" aria-hidden="true" focusable="false"><circle cx="6.5" cy="6.5" r="5"/><circle cx="13.5" cy="6.5" r="5"/><circle cx="10" cy="12" r="5"/></svg>';
 
+/* 次序的记号：一支箭，三道线。箭朝下、线由长到短是新的在前；换成旧的在前时整个倒过来（见 theme.css 的 .sort） */
+const SORT_SVG = '<svg viewBox="0 0 44 44" aria-hidden="true" focusable="false"><path d="M15.5 13.5V31M12 27.5l3.5 3.5 3.5-3.5M23 15.5h11M23 22.5h7.5M23 29.5h4"/></svg>';
+
 /* 首页每一叶默认印哪一句眉批：有这几封就用它们，否则用这一排的第一封。 */
 const PICKS = new Set(['221 FOREVER', 'One Year']);
 /* 年表的月份刻度：每个月的第一天是一年里的第几天（平年） */
@@ -266,17 +269,27 @@ export default {
       if (guests.length) groups.push({ id: 'ba', guest: true, title: '跋', note: numZh(guests.length) + '篇', list: guests, label: `跋，客人写的 ${guests.length} 篇` });
     }
 
+    /* 次序。默认新的在前：最新的一年是第一叶，一叶之内也是新的在前，整本书从头读到尾是一条不回头的线
+       （最新的一封领头，下栏的日数一路变小）。跋不在他们俩的次序里，哪种排法都在书末。
+       读者换过的次序只记这一次到访（sessionStorage：站内跳转、后退、刷新都还在）。 */
+    const SORT = 'f221:sort';
+    let oldFirst = false;
+    try { oldFirst = sessionStorage.getItem(SORT) === 'old'; } catch { /* 存不了：就用默认的次序 */ }
+    const newFirst = [...groups.filter((g) => !g.guest).map((g) => ({ ...g, list: [...g.list].reverse() })).reverse(), ...groups.filter((g) => g.guest)];
+    const inOrder = () => (oldFirst ? groups : newFirst);
+
     const leaves = h('div', { class: 'leaves' });
     let lastN = 0;
-    function buildLeaves() {
+    function buildLeaves(force) {
       const n = parseInt(getComputedStyle(root).getPropertyValue('--n'), 10) || 12;
-      if (n === lastN) return;
+      if (n === lastN && !force) return;
       lastN = n;
+      const gs = inOrder();
       const half = n % 2 ? 0 : n / 2;
       const small = (g) => Boolean(half && g && g.list.length <= half - 1);
       const out = [];
-      for (let i = 0; i < groups.length; i++) {
-        const g = groups[i], nx = groups[i + 1];
+      for (let i = 0; i < gs.length; i++) {
+        const g = gs[i], nx = gs[i + 1];
         if (small(g) && small(nx)) { out.push(h('div', { class: 'spread spread--pair' }, leaf(g, half), leaf(nx, half))); i++; }
         else if (g.guest && small(g)) out.push(h('div', { class: 'spread spread--pair' }, leaf(g, half)));
         else out.push(h('div', { class: 'spread' }, leaf(g, n, !g.list.length)));
@@ -285,9 +298,9 @@ export default {
       markRead();
     }
     /* 眉批：分成差不多长的几行；靠左放不下时改为向右展开 */
-    function layoutHome() {
+    function layoutHome(force) {
       if (!homeEl || !homeEl.isConnected) return;
-      buildLeaves();
+      buildLeaves(force === true);
       const per = '10';                                      // 一行十个字：多数分句不用拆
       for (const m of homeEl.querySelectorAll('.mei')) {
         if (m.dataset.l === per) continue;
@@ -322,36 +335,40 @@ export default {
       return cell;
     }
 
-    /* 年表：扉页上的一张小图，是下面这本书的缩样。一年一行，自上而下；一行里日子自右向左；
+    /* 年表：扉页上的一张小图，是下面这本书的缩样。一年一行；年份的上下、一行里日子的左右都跟着目录的次序
+       （旧的在前：最早的一年在上，一月在右；新的在前则两样都对调）。
        一封信一道竖线，空着的地方就是没写信的日子。横线从相识那天（第 0 日）画到今天。 */
     function chart() {
       if (!letters.length) return null;
       const ok = (d) => /^\d{4}-\d\d-\d\d/.test(d || '');
       const frac = (d) => { const y = +d.slice(0, 4), a = Date.UTC(y, 0, 1); return (Date.UTC(y, +d.slice(5, 7) - 1, +d.slice(8, 10)) - a + 432e5) / (Date.UTC(y + 1, 0, 1) - a); };
-      const at = (d) => (frac(d) * 100).toFixed(2) + '%';
+      const rev = !oldFirst;                                 // 新的在前：新的一年在上，一行里十二月在右，仍旧是下面那本书的缩样
+      const pct = (f) => ((rev ? 1 - f : f) * 100).toFixed(2) + '%';
+      const at = (d) => pct(frac(d));
       const stroke = (l) => h('i', { class: 'nb-s', style: `--x:${at(l.date)}` });
       /* 线两头的日数。--n 是位数：靠近一年的两端时，CSS 按它把数字收在刻度之内，不压到格线和年份上 */
       const count = (d, text) => h('b', { class: 'nb-d', lang: 'en', style: `--x:${at(d)};--n:${text.length}` }, text);
       const met = ok(site.met) ? site.met : null, today = ok(site.today.date) ? site.today.date : null;
       const y0 = letters[0].year, y1 = Math.max(letters[letters.length - 1].year, today ? +today.slice(0, 4) : 0);
       const rows = [h('div', { class: 'nb-m' }, h('span', { class: 'nb-y' }),
-        h('span', { class: 'nb-x' }, MONTHS.map((d) => h('i', { style: `right:${(d / 3.65).toFixed(2)}%` })), h('span', { class: 'nb-m1' }, '一月'), h('span', { class: 'nb-m2' }, '十二月')))];
-      for (let y = y0; y <= y1; y++) {
+        h('span', { class: 'nb-x' }, MONTHS.map((d) => h('i', { style: `right:${pct(d / 365)}` })), h('span', { class: 'nb-m1' }, rev ? '十二月' : '一月'), h('span', { class: 'nb-m2' }, rev ? '一月' : '十二月')))];
+      for (const y of Array.from({ length: y1 - y0 + 1 }, (_, i) => (rev ? y1 - i : y0 + i))) {
         const list = own.filter((l) => l.year === y);
         const from = met && +met.slice(0, 4) === y ? frac(met) : 0, to = today && +today.slice(0, 4) === y ? frac(today) : 1;
         rows.push(h('div', { class: 'nb-r' + (list.length ? '' : ' is-blank') },
           h('span', { class: 'nb-y', lang: 'en' }, String(y)),
           h('span', { class: 'nb-x' },
-            h('i', { class: 'nb-l', style: `right:${(from * 100).toFixed(2)}%;left:${((1 - to) * 100).toFixed(2)}%` }),
+            h('i', { class: 'nb-l', style: `right:${pct(rev ? to : from)};left:${pct(rev ? 1 - from : 1 - to)}` }),
             list.map(stroke),
             from > 0 && count(met, '0'),
             to < 1 && dToday != null && count(today, String(dToday)))));
       }
       if (guests.length) rows.push(h('div', { class: 'nb-r nb-r--ba' }, h('span', { class: 'nb-y' }, '跋'), h('span', { class: 'nb-x' }, guests.map(stroke))));
       return h('li', { class: 'cell cell--nb' },
-        h('div', { class: 'nb', role: 'img', style: `--k:${rows.length - 1}`, 'aria-label': `年表：${y0} 至 ${y1} 年，${own.length} 封信${guests.length ? `，跋 ${guests.length} 篇` : ''}` }, rows));
+        h('div', { class: 'nb' + (rev ? ' nb--new' : ''), role: 'img', style: `--k:${rows.length - 1}`, 'aria-label': `年表：${y0} 至 ${y1} 年，${own.length} 封信${guests.length ? `，跋 ${guests.length} 篇` : ''}` }, rows));
     }
 
+    let chartEl = null;
     function titleLeaf() {
       const count = (l) => numZh(l.length);
       const span = letters.length ? `${yearZh(letters[0].year)}—${yearZh(letters[letters.length - 1].year)}` : '';
@@ -365,16 +382,28 @@ export default {
             h('div', { class: 'ln' }, h('p', { class: 'sub-kind v' }, '书信集'),
               h('p', { class: 'wari v' }, h('span', {}, count(own) + '封' + (guests.length ? `，跋${count(guests)}篇` : '')), h('span', {}, span))),
             pens.length > 0 && h('p', { class: 'pens wari v' }, pens.map(([a, n]) => h('span', {}, vt(a), ' ' + numZh(n) + '封')))),
-          chart(),
+          chartEl = chart(),
           latest));
     }
-    function yearIndex() {
+    /* 年份索引，最前面是次序的记号。年份跟着次序排；记号本身不重建，按过以后焦点还在它上面 */
+    const sortBtn = h('button', { type: 'button', class: 'sort', hidden: own.length < 2, onclick: () => setOrder(!oldFirst) });
+    sortBtn.innerHTML = SORT_SVG;
+    const yidx = h('nav', { class: 'yidx', 'aria-label': '去哪一年' }, sortBtn);
+    yidx.addEventListener('click', (e) => { if (e.target.closest('a[href^="#"]') && !location.hash) jumpFrom = window.scrollY; });
+    function fillIndex() {
       /* 跋只有一篇时，「跋」直接打开它（最新的一封离第一屏只有一下） */
       const to = (g) => (g.guest && g.list.length === 1 ? g.list[0].url : '#' + g.id);
-      const nav = h('nav', { class: 'yidx', 'aria-label': '去哪一年' },
-        groups.map((g) => h('a', { href: to(g), class: g.list.length ? '' : 'is-blank', lang: g.guest ? null : 'en', 'aria-label': g.label }, g.guest ? '跋' : String(g.year))));
-      nav.addEventListener('click', (e) => { if (e.target.closest('a[href^="#"]') && !location.hash) jumpFrom = window.scrollY; });
-      return nav;
+      for (const a of yidx.querySelectorAll('a')) a.remove();
+      yidx.append(...inOrder().map((g) => h('a', { href: to(g), class: g.list.length ? '' : 'is-blank', lang: g.guest ? null : 'en', 'aria-label': g.label }, g.guest ? '跋' : String(g.year))));
+      sortBtn.setAttribute('aria-pressed', String(oldFirst));
+      sortBtn.setAttribute('aria-label', oldFirst ? '信的次序：最早的在前' : '信的次序：最新的在前');
+    }
+    function setOrder(old) {
+      oldFirst = old;
+      try { if (old) sessionStorage.setItem(SORT, 'old'); else sessionStorage.removeItem(SORT); } catch { /* 存不了：这一页还是会换 */ }
+      fillIndex();
+      if (chartEl) { const c = chart(); chartEl.replaceWith(c); chartEl = c; }
+      layoutHome(true);
     }
     /* 跳到某一年是页内的锚点：浏览器会记一条历史，但核心关掉了浏览器自己的滚动恢复（路径没变时它也不插手），
        于是按「后退」页面纹丝不动。这里补上：后退回到出发的地方，前进回到那一叶。 */
@@ -389,7 +418,7 @@ export default {
 
     let homeEl = null;
     function homeView() {
-      if (!homeEl) homeEl = h('div', { class: 'home' }, titleLeaf(), yearIndex(), leaves);
+      if (!homeEl) { fillIndex(); homeEl = h('div', { class: 'home' }, titleLeaf(), yidx, leaves); }
       return homeEl;
     }
 

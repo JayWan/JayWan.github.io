@@ -85,6 +85,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .nb-m1{right:0;margin-right:-.5em}.nb-m2{left:0;margin-left:-.5em}
 .nb-l{top:calc(50% - .5px);height:1px;background:var(--frame)}
 .nb-s{top:calc(50% - 7px);right:var(--x);width:2px;height:15px;background:var(--ink)}
+.nb--new .nb-s{margin-right:-2px}   /* 新的在前时年表左右对调：竖线也从另一边量起，一月一日那道才不会伸出线头 */
 @supports (right:round(down,1%,1px)){ .nb-s{right:round(down,var(--x),1px)} }
 /* 日数印在线头的正上方；线头离一年的两端太近时停在刻度的尽头（--n 是位数，一位约 .56em 宽） */
 .nb-d{position:absolute;right:clamp(var(--n) * .28em,var(--x),100% - var(--n) * .28em);bottom:calc(50% + 9px);transform:translateX(50%);font-weight:400;font-size:12.5px;color:var(--red);font-variant-numeric:lining-nums}
@@ -96,6 +97,11 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .yidx a{display:flex;align-items:center;justify-content:center;min-width:48px;min-height:44px;text-decoration:none}
 .yidx a:lang(zh-Hans){font:16px/1 var(--fs)}
 .yidx a.is-blank{color:#736C61}
+/* 次序的记号，在年份索引的最前面：箭朝下、三道线由长到短是新的在前；换成旧的在前，整个倒过来 */
+.sort{flex:none;width:44px;height:44px;margin-left:-6px;padding:0;border:0;border-radius:0;background:none;color:inherit;cursor:pointer;-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent}
+.sort svg{display:block;width:44px;height:44px;margin:auto;fill:none;stroke:currentColor;stroke-width:1}
+.sort[aria-pressed="true"] svg{transform:scaleY(-1)}
+.sort:focus-visible{outline-offset:-5px}
 
 /* 年 */
 .yr{height:100%;display:flex;flex-direction:column;align-items:center;padding-top:var(--pad)}
@@ -148,7 +154,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
   .cell:hover>a.col .lt{color:var(--red)}
   .leaf:has(.cell--letter:hover) .cell--letter:not(:hover) .mei{visibility:hidden}
   .cell--letter:hover .mei{visibility:visible}
-  .yidx a:hover,.bar-back:hover,.now-home:hover,.theme-switcher a:hover{color:var(--red)}
+  .yidx a:hover,.sort:hover,.bar-back:hover,.now-home:hover,.theme-switcher a:hover{color:var(--red)}
 }
 
 /* 缺页 */
@@ -399,6 +405,7 @@ html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(-
   .nb-m1,.nb-m2{font-size:10px;letter-spacing:.06em;margin:0}
   .nb-m i{height:3px}
   .nb-s{top:calc(50% - 4.5px);width:1px;height:10px}
+  .nb--new .nb-s{margin-right:-1px}
   .nb-d{bottom:calc(50% + 6px);font-size:10.5px}
   .name{font-size:45px}
   .sub-kind{font-size:21.5px}
@@ -410,6 +417,7 @@ html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(-
   .t--two .wari--in{display:none}
   .wari--out{display:block}
   .yidx a{min-width:0}
+  .sort{width:100%;margin-left:0}
   .yr-t{font-size:27px}
   .yr-n{font-size:13.5px;margin-top:12px}
   .yr-foot,.day--k{font-size:12px}
