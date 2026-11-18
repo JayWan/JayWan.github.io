@@ -145,7 +145,9 @@ for (const theme of ['classic', 'probe']) {
   });
 }
 
-for (const [where, path, selector] of [['the title of the home page', '/', '.textLogo--frontpage'], ['the footer line of a letter', null, '.section--footer']]) {
+// (The footer also holds the visible switcher, tests/switcher.spec.mjs. The egg is the © line and
+// the empty space around the row of names; a tap on a name is not counted.)
+for (const [where, path, selector] of [['the title of the home page', '/', '.textLogo--frontpage'], ['the footer line of a letter', null, '.section--footer .container > div']]) {
   test(`classic: three taps on ${where} do what 221 does`, async ({ page, request }) => {
     await page.route(/^https:\/\//, (route) => route.abort());
     await page.goto(`${path || (await getIsland(request)).letters[0].url}?theme=classic`);

@@ -3,20 +3,13 @@
 // under classic the boot script writes exactly the old tags, and the classic markup that is
 // kept out of the way for the new themes is written back into the page.
 
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 import { test, expect } from '@playwright/test';
-import { root, samplePages, watch } from './helpers.mjs';
+import { otherSites, samplePages, watch } from './helpers.mjs';
 
-// jQuery and Google Fonts come from other sites. The tests answer for them, so they pass
-// without a network and say nothing about somebody else's server.
-const JQUERY = readFileSync(path.join(root, 'assets/javascripts/jquery-3.7.1.min.js'), 'utf8');
-async function otherSites(page, { jquery = true } = {}) {
-  await page.route('https://fonts.googleapis.com/**', (route) => route.fulfill({ contentType: 'text/css', body: '' }));
-  await page.route('https://code.jquery.com/**', (route) => (jquery ? route.fulfill({ contentType: 'text/javascript', body: JQUERY }) : route.abort()));
-}
+// (The one thing the classic page has gained, the row of theme names at its foot, has its own
+// file: tests/switcher.spec.mjs.)
 
-test('classic home page: the old tags, the old markup, nothing new showing', async ({ page, baseURL }) => {
+test('classic home page: the old tags, the old markup, no new theme showing', async ({ page, baseURL }) => {
   await otherSites(page);
   const seen = watch(page, baseURL);
   await page.goto('/?theme=classic');
