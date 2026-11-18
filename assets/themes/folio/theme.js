@@ -466,7 +466,8 @@ export default {
 
     let homeEl = null;
     function homeView() {
-      if (!homeEl) { fillIndex(); homeEl = h('div', { class: 'home' }, titleLeaf(), yidx, leaves); }
+      /* 换主题的入口在天头的右上角（扉页从右边读起，它是第一样）；目录画一次就一直留着，入口也是同一个 */
+      if (!homeEl) { fillIndex(); homeEl = h('div', { class: 'home' }, ui.switcher(), titleLeaf(), yidx, leaves); }
       return homeEl;
     }
 
@@ -611,7 +612,17 @@ export default {
       st.setProperty('--lp', Number(LP.toFixed(4)) + 'px');
       st.setProperty('--sh', px(parseFloat(cs.getPropertyValue('--shift')) * LP / lh) + 'px');
     }
+    /* 顶上一行放不下（窄手机、字放大了）：书名另起一行，排在下面。量出来的，不猜：书名已经在空格处折成两行，
+       右端的入口还是伸出了这一行，才让它下去 */
+    function fitBar() {
+      const bar = letterEl && letterEl.isConnected && letterEl.querySelector('.bar');
+      if (!bar) return;
+      bar.classList.remove('is-two');
+      const edge = bar.getBoundingClientRect().right - parseFloat(getComputedStyle(bar).paddingRight);
+      bar.classList.toggle('is-two', bar.lastChild.getBoundingClientRect().right > edge + 0.5);
+    }
     function repitch() {
+      fitBar();
       pitch();
       for (const b of root.querySelectorAll('.letter-body .fo-snap')) snap(b);
       fit();
@@ -620,6 +631,7 @@ export default {
     const watch = typeof ResizeObserver === 'function' && new ResizeObserver(() => {
       if (rescale()) layoutHome(true);
       if (gauge && gauge.isConnected && gauge.firstChild.getBoundingClientRect().height !== nat) repitch();
+      else fitBar();
     });
 
     /* 图、卡片这些不是字的东西：把它占的高度凑成整行，后面的字才落回格线上 */
@@ -672,7 +684,9 @@ export default {
         h('header', { class: 'bar' },
           homeLink('bar-back', '目录'),
           h('span', { class: 'bar-name', lang: 'en' }, site.title),
-          h('span', { class: 'bar-no', lang: 'en' }, guest ? h('b', { lang: 'zh-Hans' }, '跋') : [h('b', {}, String(l.no)), ' / ' + letters.length])),
+          h('span', { class: 'bar-r' },                         // 右端：第几封，一道界行，换主题的入口
+            h('span', { class: 'bar-no', lang: 'en' }, guest ? h('b', { lang: 'zh-Hans' }, '跋') : [h('b', {}, String(l.no)), ' / ' + letters.length]),
+            ui.switcher())),
         h('div', { class: 'sheet' },
           h('aside', { class: 'side' }, h('div', { class: 'side-in' }, plate(l), songBox(l), counts(l))),
           h('header', { class: 'tiji' }, h('div', { class: 'tiji-in' },
@@ -727,6 +741,7 @@ export default {
     /** 搬进文档之后才能量：翻转卡片按新宽度重量一次，图和卡片凑整行 */
     function settle(contentEl) {
       rescale();
+      fitBar();
       pitch();
       ctx.widgets.init(contentEl);
       /* 卡片的折角、礼物外面的剪刀线都是画出来的，没有字：给读屏的话写在这里 */
@@ -742,6 +757,7 @@ export default {
       const fill = [];
       for (let i = Math.max(0, n - 2); i > 0; i--) fill.push(blank());
       return h('div', { class: 'home home--lost' },
+        ui.switcher(),                                      // 和目录同一个位置：天头的右上角
         h('div', { class: 'spread' },
           h('section', { class: 'leaf leaf--lost', 'aria-label': '没有这一页' },
             h('ol', { class: 'cols' },
@@ -758,8 +774,7 @@ export default {
       dToday != null && h('p', { class: 'colophon-today' }, h('span', { class: 'd' }, ymdZh(site.today.date)), h('span', { class: 'k' }, '相识'), '第', h('span', { class: 'n', lang: 'en' }, String(dToday)), '日'),
       hunger.text && h('p', { class: 'colophon-voice', 'data-level': hunger.level }, h('span', { class: 'voice-k' }, '网站按'), h('span', { class: 'voice-t' }, hunger.text)),
       h('p', { class: 'colophon-name', lang: 'en' }, site.title),
-      h('p', { class: 'colophon-c', lang: 'en' }, `© 2016 – ${Math.max(2026, Number(fmt.date(site.today.date, 'year')) || 0)} Fan & Wan`),
-      ui.switcher());
+      h('p', { class: 'colophon-c', lang: 'en' }, `© 2016 – ${Math.max(2026, Number(fmt.date(site.today.date, 'year')) || 0)} Fan & Wan`));
 
     const now = {
       el: h('aside', { class: 'now', 'aria-label': '配歌' }),
@@ -823,6 +838,8 @@ export default {
     function show(route) {
       if (ro) ro.disconnect();
       settleCells();
+      /* 换页时开着的主题列表先收起来：目录是留着重用的，后退回来时它不该还开着（用它自己的按钮关，核心才知道） */
+      for (const n of main.querySelectorAll('.theme-switcher[data-open]')) n.querySelector('.theme-switcher-toggle').click();
       if (route.type === 'letter') {
         main.replaceChildren(letterView(route));
         root.dataset.view = 'letter';
@@ -849,7 +866,7 @@ export default {
     /* 栏数随宽度变；字体到了以后眉批要重排一次 */
     let rz = 0;
     window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { layoutHome(); repitch(); }, 120); });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layoutHome(); fit(); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layoutHome(); fitBar(); fit(); });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && root.dataset.view === 'letter' && !e.defaultPrevented && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '')) (router.home ? router.home() : router.back('/'));
     });

@@ -378,6 +378,98 @@ test.describe('theme "folio": a letter', () => {
 // and margins keep their size. The theme is built on pixel measures that hold a given number of
 // characters, so it measures how much larger a character really is and scales those measures
 // (assets/themes/folio/README.md, 「文字被浏览器放大」).
+/** The top line of a letter: where the ink of each piece is (the way back, the name of the book, the number, the
+ *  control that changes theme), which two come closer than `gap` on the same line, and what leaves the screen. */
+const topLine = (page, gap = 8) => page.evaluate((gap) => {
+  const bar = document.querySelector('#theme-root .bar');
+  const ink = (el) => {                                              // the text as drawn; the control is its whole button
+    if (el.matches('button')) return [el.getBoundingClientRect()];
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    return [...range.getClientRects()].filter((r) => r.width > 1 && r.height > 1);
+  };
+  const pieces = { back: '.bar-back', name: '.bar-name', no: '.bar-no', control: '.theme-switcher-toggle' };
+  const rects = Object.entries(pieces).map(([k, sel]) => [k, ink(bar.querySelector(sel))]);
+  const report = { close: [], off: [], twoRows: bar.classList.contains('is-two'), nameLines: 0, control: null };
+  const near = (a, b) => a.left - gap < b.right && b.left - gap < a.right && a.top < b.bottom && b.top < a.bottom;
+  for (let i = 0; i < rects.length; i++) {
+    for (const r of rects[i][1]) if (r.left < -0.5 || r.right > window.innerWidth + 0.5) report.off.push(rects[i][0]);
+    for (let j = i + 1; j < rects.length; j++) if (rects[i][1].some((a) => rects[j][1].some((b) => near(a, b)))) report.close.push(`${rects[i][0]} / ${rects[j][0]}`);
+  }
+  report.nameLines = new Set(rects[1][1].map((r) => Math.round(r.top))).size;
+  const c = rects[3][1][0];
+  report.control = { top: c.top, right: window.innerWidth - c.right, rightmost: rects.every(([k, rs]) => k === 'control' || rs.every((r) => r.right <= c.left + 0.5 || r.top >= c.bottom)) };
+  return report;
+}, gap);
+
+test.describe('theme "folio": the way to another theme', () => {
+  for (const width of [402, 375, 360, 320]) {
+    test(`on a phone ${width}px wide the top line of a letter keeps its four pieces apart, the control at its right end`, async ({ page, request }) => {
+      const { letters } = await getIsland(request);
+      const own = letters.filter((l) => !isGuest(l));
+      await page.setViewportSize({ width, height: 700 });
+      for (const letter of [own[own.length - 1], letters.find(isGuest)].filter(Boolean)) {   // "31 / 32", and the guest's 「跋」
+        await open(page, letter.url, THEME);
+        await page.evaluate(() => document.fonts.ready);
+        const line = await topLine(page);
+        expect(line.close, `${letter.no}: no two pieces closer than 8px`).toEqual([]);
+        expect(line.off, `${letter.no}: nothing leaves the screen`).toEqual([]);
+        expect(line.control.rightmost, `${letter.no}: the control is the last thing on its line`).toBe(true);
+        expect(line.control.right, `${letter.no}: at the right margin`).toBeLessThan(20);
+        if (width >= 400) expect([line.twoRows, line.nameLines], 'a phone like the owner\'s: one line, the name of the book unbroken').toEqual([false, 1]);
+        await expectNoSidewaysScroll(page);
+      }
+    });
+  }
+
+  test('the control stands in the same place on the contents, a letter and the missing page', async ({ page, request }) => {
+    const { letters } = await getIsland(request);
+    for (const [width, height] of [[1440, 900], [402, 874]]) {
+      await page.setViewportSize({ width, height });
+      const at = [];
+      for (const path of ['/', letters[letters.length - 1].url, '/404.html']) {
+        await open(page, path, THEME);
+        at.push(await page.locator('#theme-root .theme-switcher-toggle').evaluate((b) => { const r = b.getBoundingClientRect(); return [Math.round(r.top), Math.round(window.innerWidth - r.right)]; }));
+      }
+      expect(at[1], `${width}: a letter as the contents`).toEqual(at[0]);
+      expect(at[2], `${width}: the missing page as the contents`).toEqual(at[0]);
+    }
+  });
+
+  test('on the missing page the open list lies on the frame of the leaf: one line, not two', async ({ page }) => {
+    for (const [width, height] of [[1440, 900], [1280, 720], [402, 874]]) {
+      await page.setViewportSize({ width, height });
+      await open(page, '/404.html', THEME);
+      await page.locator('#theme-root .theme-switcher-toggle').click();
+      const tops = await page.evaluate(() => ({
+        list: document.querySelector('#theme-root .theme-switcher ul').getBoundingClientRect().top,
+        frame: document.querySelector('#theme-root .leaf--lost .cell').getBoundingClientRect().top,
+        control: document.querySelector('#theme-root .theme-switcher-toggle').getBoundingClientRect().bottom,
+      }));
+      expect(Math.abs(tops.list - tops.frame), `${width}x${height}`).toBeLessThan(0.5);
+      expect(tops.control, `${width}x${height}: the control is above the frame`).toBeLessThanOrEqual(tops.frame);
+    }
+  });
+
+  test('a list left open on the contents is closed when the reader comes back to it', async ({ page }) => {
+    // The contents is drawn once and kept: without care, Forward to a letter and Back again would bring the list back open.
+    await open(page, '/', THEME);
+    const first = page.locator('#theme-root a.col').first();
+    await first.click();
+    await expect.poll(() => view(page)).toBe('letter');
+    await page.goBack();
+    await expect.poll(() => view(page)).toBe('home');
+    await page.locator('#theme-root .theme-switcher-toggle').click();
+    await expect(page.locator('#theme-root .theme-switcher ul')).toBeVisible();
+    await page.goForward();                                          // no press outside the list: only the history moves
+    await expect.poll(() => view(page)).toBe('letter');
+    await page.goBack();
+    await expect.poll(() => view(page)).toBe('home');
+    await expect(page.locator('#theme-root .theme-switcher-toggle')).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('#theme-root .theme-switcher ul')).toBeHidden();
+  });
+});
+
 test.describe('theme "folio": text enlarged by the browser', () => {
   /** The contents: where the red lines above the columns are, and whether what a column holds stays in it. */
   const contents = (page) => page.evaluate(() => {
@@ -501,6 +593,10 @@ test.describe('theme "folio": text enlarged by the browser', () => {
             expect(sheet.card.rules, `${date}: the card is ruled like the paper`).toBe(sheet.rules);
             expect(sheet.card.off, `${date}: and its lines sit on its rules`).toBeLessThan(0.5);
           }
+          const line = await topLine(page);                           // the top line: the name of the book gives way (two lines, then a row of its own)
+          expect(line.close, `${date}: the pieces of the top line keep apart`).toEqual([]);
+          expect(line.off, `${date}: and on the screen`).toEqual([]);
+          expect(line.control.rightmost, `${date}: the control is the last thing on its line`).toBe(true);
           await expectNoSidewaysScroll(page);
         }
         expect(seen.errors).toEqual([]);
