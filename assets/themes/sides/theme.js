@@ -135,11 +135,14 @@ export default {
     // 每来一批字体就再看一遍（fonts.ready 在第一次排版之前就可能已经 resolve 了）
     if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', inkHunger);
 
+    // 页脚最后一行是封套底边的小字：版权在左，「Stereo · 双声道」在右（它原先在首页页眉的右上角，那里现在是换主题的入口）
     const foot = h('footer', { class: 'sd-foot' },
       hungerEl,
       h('div', { class: 'sd-foot-row' },
         h('span', {}, tx('© 2016 – 2026 Fan & Wan')),
-        ui.switcher()));
+        h('span', {}, 'STEREO · 双声道')));
+    /** 页眉最右边的一格：这一页自己的小字（信的曲号、404），后面跟着换主题的入口（每画一页做一个新的） */
+    const corner = (label) => h('div', { class: 'sd-navr' }, label, ui.switcher());
 
     const P = {
       el: h('div', { class: 'sd-player', role: 'region', 'aria-label': '播放器' }),
@@ -350,7 +353,7 @@ export default {
       });
 
       const el = h('div', { class: 'sd-home', 'data-filter': 'all' },
-        h('div', { class: 'sd-cat sd-l' }, h('span', {}, '221–LP'), mark(), h('span', {}, 'Stereo · 双声道')),
+        h('div', { class: 'sd-cat sd-l' }, h('span', {}, '221–LP'), mark(), ui.switcher()),
         h('header', { class: 'sd-mast' }, title, info, latestLink, h('div', { class: 'sd-ctl' }, tabs, sortBtn)),
         h('aside', { class: 'sd-panel', 'aria-label': '封套' }, h('div', { class: 'sd-stick' }, sq, cap)),
         h('section', { class: 'sd-tracks', 'aria-label': '曲目表' }, list));
@@ -560,7 +563,7 @@ export default {
         h('nav', { class: 'sd-nav sd-l', 'aria-label': '导航' },
           h('a', { href: '/', 'data-back': '' }, h('span', { 'aria-hidden': 'true' }, '←'), ' 曲目表'),
           h('a', { href: '/', class: 'sd-brand' }, site.title),
-          h('span', { class: 'sd-pos' }, guest ? `附 · ${tracks.length} + ${letters.length - tracks.length}` : `${noText(l)} / ${tracks.length}`)),
+          corner(h('span', { class: 'sd-pos' }, guest ? `附 · ${tracks.length} + ${letters.length - tracks.length}` : `${noText(l)} / ${tracks.length}`))),
         h('header', { class: 'sd-head' },
           noEl(l, 'sd-bigno', 'b'),
           h('div', { class: 'sd-lbls' },
@@ -609,7 +612,7 @@ export default {
     }
 
     const lostView = () => h('section', { class: 'sd-lost' },
-      h('div', { class: 'sd-cat sd-l' }, h('span', {}, '221–LP'), mark(), h('span', {}, '404')),
+      h('div', { class: 'sd-cat sd-l' }, h('span', {}, '221–LP'), mark(), corner(h('span', {}, '404'))),
       h('h1', { class: 'sd-lost-no', 'aria-label': '404 · 没有这一首' }, '404'),     // 没有的那一首：和「还没写」的曲号一样，只有轮廓
       h('p', { class: 'sd-lost-go' }, h('a', { href: '/' }, '← 回到曲目表'), newest && h('a', { href: newest.url }, `最新一封 · ${newest.title} →`)));
 
@@ -653,6 +656,9 @@ export default {
       } else if (route.type === 'home') {
         band = null;
         home = home || buildHome();
+        // 曲目表是留着重用的：单子开着时用后退 / 前进离开（没点到页面上），回来时它还开着，核心也不再管它。换一个收着的
+        const sw = home.el.querySelector('.theme-switcher[data-open]');
+        if (sw) sw.replaceWith(ui.switcher());
         home.clear();
         home.rows.forEach((li) => li.classList.remove('is-last'));
         main.replaceChildren(home.el);
