@@ -259,6 +259,7 @@ export function createRouter({ letters, site, page, root = document, normalise =
     const running = new Promise((resolve) => { finished = resolve; });
     showing = running;
     try {
+      document.dispatchEvent(new Event('f221:route'));                 // anything that belongs to the view being left closes (core/eggs.js: an open list of themes)
       const moved = await view.show(route);
       if (moved === false || mine !== serial) return;                  // the theme scrolls itself, or a newer navigation is about to
       const target = scrollY === 0 ? anchor(route.hash) : null;

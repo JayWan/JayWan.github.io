@@ -347,6 +347,24 @@ for (const theme of themeIds) {                                       // the ref
     }
   });
 
+  test(`"${theme}": a list left open closes when the theme draws another view, and does not come back open`, async ({ page, request, isMobile }) => {
+    // Opened, and then the page changes without a press anywhere: a key a theme uses to turn the
+    // page, or the router itself. Themes may keep a view and show it again later.
+    const pages = await samplePages(request);
+    await openTheme(page, pages.home, theme);
+    const openLists = () => page.locator(`${OWN}[data-open]`).count();
+    const toggle = (await showing(page))[0];
+    await (isMobile ? toggle.tap() : toggle.click());
+    expect(await openLists()).toBe(1);
+    await page.evaluate((url) => window.__theme.ctx.router.go(url), pages.letter);
+    await expect.poll(() => page.evaluate(() => window.__theme.ctx.page.type)).toBe('letter');
+    expect(await openLists(), 'on the letter').toBe(0);
+    await page.goBack();
+    await expect.poll(() => page.evaluate(() => window.__theme.ctx.page.type)).toBe('home');
+    expect(await openLists(), 'back on the list').toBe(0);
+    expect((await showing(page)).length, 'and its control is there, closed').toBe(1);
+  });
+
   test(`"${theme}": the control and its list work from the keyboard`, async ({ page, request, isMobile }) => {
     test.skip(isMobile, 'a phone has no Tab key');
     const pages = await samplePages(request);
@@ -371,6 +389,26 @@ for (const theme of themeIds) {                                       // the ref
     }
   });
 }
+
+test('core: a control a theme keeps aside while it draws another view is closed when it comes back', async ({ page, request, browserName }) => {
+  test.skip(browserName !== 'chromium', 'a check of the core, run once');
+  // A theme may keep a view (and the control in it) out of the page and put it back later. The
+  // router tells the core before it asks for another view; an open list closes then.
+  const pages = await samplePages(request);
+  await openTheme(page, pages.home, 'probe');
+  const result = await page.evaluate(async (url) => {
+    const { switcher } = await import('/assets/js/core/eggs.js');
+    const nav = switcher(window.__theme);
+    document.body.append(nav);
+    nav.querySelector('.theme-switcher-toggle').click();
+    const opened = nav.hasAttribute('data-open');
+    nav.remove();                                                      // kept aside, the way a theme keeps a view
+    await window.__theme.ctx.router.go(url);
+    document.body.append(nav);                                         // and shown again
+    return { opened, after: nav.hasAttribute('data-open'), expanded: nav.querySelector('.theme-switcher-toggle').getAttribute('aria-expanded'), hidden: nav.querySelector('ul').hidden };
+  }, pages.letter);
+  expect(result).toEqual({ opened: true, after: false, expanded: 'false', hidden: true });
+});
 
 // ------------------------------------------------------------------ from one theme to another
 

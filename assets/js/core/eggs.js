@@ -122,7 +122,9 @@ function setOpen(nav, open, refocus) {
 }
 function closeFromOutside(event) {
   if (!openNav) return;
-  if (!openNav.isConnected) { openNav = null; return; }
+  // The theme drew another view (the router says so before it asks), or the open control has left
+  // the page: close it, so that a view a theme keeps and shows again never comes back with its list open.
+  if (event.type === 'f221:route' || !openNav.isConnected) { setOpen(openNav, false); return; }
   if (event.type === 'keydown') {
     if (event.key !== 'Escape') return;
     // Esc closes the list and nothing else: themes give Esc a meaning of their own (close the
@@ -169,6 +171,7 @@ export function switcher(T) {
     document.addEventListener('pointerdown', closeFromOutside, true);
     document.addEventListener('focusin', closeFromOutside, true);
     window.addEventListener('keydown', closeFromOutside, true);       // on the way down, before any theme hears the key
+    document.addEventListener('f221:route', closeFromOutside);         // core/router.js, before every view it asks a theme to draw
   }
   return nav;
 }
