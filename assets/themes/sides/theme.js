@@ -22,16 +22,18 @@ function svg(markup) {
   t.innerHTML = markup;
   return t.content.firstChild;
 }
-const I_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="sd-i-play" d="M8 5.5v13l11-6.5z"/><path class="sd-i-pause" d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/></svg>';
+const I_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="sd-i-play" d="M8 5.5v13l11-6.5z"/><path class="sd-i-pause" d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/><g class="sd-i-retry" transform="matrix(1.16 0 0 1.16 -1.9 -2.3)"><path d="M18.6 13.2a6.7 6.7 0 1 1-2.2-6" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M19.9 2.9v6.6h-6.6z"/></g></svg>';
 const I_PREV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2.2v12H6zM19 6v12l-9.5-6z"/></svg>';
 const I_NEXT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.8 6H18v12h-2.2zM5 6v12l9.5-6z"/></svg>';
 // 八分音符：自己画的，跟着文字颜色走（系统字体里的 ♪ 又细又歪）
 const I_NOTE = '<svg class="sd-note" viewBox="0 0 10 13" aria-hidden="true"><ellipse cx="2.9" cy="10.4" rx="2.9" ry="2.2" transform="rotate(-18 2.9 10.4)"/><path d="M4.6 0h1.2v10.4H4.6z"/><path d="M5.2 0c.5 2 1.5 2.7 2.9 3.7 1.3.9 1.9 2 1.5 3.7C9 5.9 7.6 5 5.2 4.4z"/></svg>';
 
+// 排序的记号：一支朝下的箭头（曲目表是从上往下读的），旁边叠着头尾两个曲号
+const I_SORT = '<svg viewBox="0 0 10 28" aria-hidden="true"><path d="M5 0v26M1 21.5l4 5 4-5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+const SORT = 'f221:sides:sort';     // 这次到访里选的顺序（sessionStorage：关掉标签页就忘了）
+
 const pad2 = (n) => (n < 10 ? '0' : '') + n;
 const pad3 = (n) => String(n).padStart(3, '0');
-const ZH = '零一二三四五六七八九';
-const zhNum = (n) => (n < 10 ? ZH[n] : n < 20 ? '十' + (n % 10 ? ZH[n % 10] : '') : n < 100 ? ZH[Math.floor(n / 10)] + '十' + (n % 10 ? ZH[n % 10] : '') : String(n));
 const visualLen = (s) => { let n = 0; for (const c of s) n += c.codePointAt(0) > 0x2e7f ? 1 : 0.55; return n; };
 const latinOnly = (s) => /^[\x20-\x7e]+$/.test(s);
 
@@ -84,10 +86,13 @@ export default {
       return el;
     }
     function chip(side) {
-      if (side === 'ab') return h('i', { class: 'sd-chip sd-chip-ab', title: 'A / B 面 · 两个人写的' }, h('span', {}, 'A'), h('span', {}, 'B'));
-      if (side === 'x') return h('i', { class: 'sd-chip sd-chip-x', title: '附赠曲目 · 客人写的' }, '附');
-      return h('i', { class: `sd-chip sd-chip-${side}`, title: side === 'a' ? 'A 面 · 他写的' : 'B 面 · 她写的' }, side.toUpperCase());
+      const say = { role: 'img', 'aria-label': { a: 'A 面 · 他写的', b: 'B 面 · 她写的', ab: 'A / B 面 · 两个人写的', x: '附赠曲目 · 客人写的' }[side] };   // 只念给读屏听，不出气泡
+      if (side === 'ab') return h('i', { class: 'sd-chip sd-chip-ab', ...say }, h('span', {}, 'A'), h('span', {}, 'B'));
+      if (side === 'x') return h('i', { class: 'sd-chip sd-chip-x', ...say }, '附');
+      return h('i', { class: `sd-chip sd-chip-${side}`, ...say }, side.toUpperCase());
     }
+    /** 页眉正中的厂牌：A 空心蓝、B 实心绿，两种油墨先在这里各印一次 */
+    const mark = () => h('i', { class: 'sd-chip sd-chip-ab sd-mark', 'aria-hidden': 'true' }, h('span', {}, 'A'), h('span', {}, 'B'));
     /** 方形封套：双色调由 CSS 的混合模式做（见 theme.css「封套」） */
     function sleeve(l, opts, cls = '') {
       const fit = fits(l.cover);
@@ -134,7 +139,6 @@ export default {
       hungerEl,
       h('div', { class: 'sd-foot-row' },
         h('span', {}, tx('© 2016 – 2026 Fan & Wan')),
-        h('span', { class: 'sd-foot-mid' }, '建议按顺序听。也可以不按。'),
         ui.switcher()));
 
     const P = {
@@ -182,17 +186,19 @@ export default {
     function paint(st = player.state) {
       const cur = cued();
       const on = Boolean(st.letter && (st.playing || st.loading));
+      const bad = Boolean(st.letter && st.error);            // 放不出来：播放钮换成「再来一次」的箭头，不写字
       const side = cur ? sideOf(cur) : 'a';
       P.el.dataset.side = side;
       P.el.classList.toggle('is-playing', on);
       P.play.classList.toggle('is-playing', on);
+      P.play.classList.toggle('is-error', bad);
       P.el.classList.toggle('is-idle', !st.letter);
-      P.play.setAttribute('aria-label', on ? '暂停' : '播放');
+      P.play.setAttribute('aria-label', bad ? '放不出来，再点一次' : on ? '暂停' : '播放');
       P.play.disabled = !cur;
       if (cur) {
         P.no.replaceChildren(...noEl(cur, '').childNodes);
         P.song.replaceChildren(...tx(cur.song.title));
-        P.sub.replaceChildren(...(st.letter && st.error ? ['放不出来，再点一次试试'] : tx(cur.title)));
+        P.sub.replaceChildren(...tx(cur.title));
         P.meta.href = cur.url;
         P.meta.setAttribute('aria-label', `《${cur.song.title}》是《${cur.title}》的歌，去读这封信`);
       }
@@ -206,6 +212,12 @@ export default {
         const mine = st.letter && b.dataset.play === String(st.letter.no);
         b.classList.toggle('is-playing', Boolean(mine && on));
         b.setAttribute('aria-pressed', String(Boolean(mine && on)));
+        const broke = Boolean(mine && bad);
+        if (broke !== b.classList.contains('is-error')) {      // 读屏听得到的那一句也跟着换
+          const l = letters.byNo(Number(b.dataset.play));
+          b.classList.toggle('is-error', broke);
+          if (l && l.song) b.setAttribute('aria-label', `${broke ? '放不出来，再点一次：' : ''}播放《${l.song.title}》`);
+        }
       });
       // 曲目表里的那一行
       if (home) home.cue(st.letter, on);
@@ -224,7 +236,6 @@ export default {
         const here = st.letter === band.letter;
         band.bar.style.width = ((here && st.duration ? Math.min(1, st.time / st.duration) : 0) * 100).toFixed(2) + '%';
         band.time.textContent = `${fmt.clock(here ? st.time : 0)} / ${fmt.clock(here ? st.duration : band.letter.song.duration || 0)}`;
-        band.err.hidden = !(here && st.error);
       }
     }
     player.on('change', paint);
@@ -246,14 +257,11 @@ export default {
 
       // ---- 刊头 ----
       const title = h('h1', { class: 'sd-title', 'aria-label': site.title }, h('span', {}, '221'), ' ', h('span', {}, 'FOREVER'));
-      const info = h('div', { class: 'sd-info' },
-        h('div', {},
-          h('p', { class: 'sd-lede' }, `${zhNum(tracks.length)}封信，${zhNum(tracks.filter((l) => l.song).length)}首歌。`, h('br'), 'A 面是他写的，B 面是她写的，', h('span', { class: 'sd-nw' }, '哪面先放都行。')),
-          h('p', { class: 'sd-line sd-l', 'aria-hidden': 'true' }, `${tracks.length} 首 · ${span} · 全长 ${totalText}`)),
-        h('dl', { class: 'sd-facts' },
-          h('div', {}, h('dt', { class: 'sd-l' }, '曲目'), h('dd', {}, String(tracks.length), bonus ? h('small', {}, ` + ${bonus}`) : null)),
-          h('div', {}, h('dt', { class: 'sd-l' }, '年头'), h('dd', {}, span)),
-          h('div', {}, h('dt', { class: 'sd-l' }, '全长'), h('dd', {}, totalText))));
+      // 大字下面只有一条规格栏：三个数。两面各是谁写的，由筛选钮上的 A / B 标记和油墨颜色说
+      const info = h('dl', { class: 'sd-info' },
+        h('div', {}, h('dt', { class: 'sd-l' }, '曲目'), h('dd', {}, String(tracks.length), bonus ? h('small', {}, ` + ${bonus}`) : null)),
+        h('div', {}, h('dt', { class: 'sd-l' }, '年头'), h('dd', {}, span)),
+        h('div', {}, h('dt', { class: 'sd-l' }, '全长'), h('dd', {}, totalText)));
       const latestLink = newest && h('a', { class: 'sd-latest', href: newest.url, 'data-side': sideOf(newest) },
         h('span', {}, '最新一封'), noEl(newest, 'sd-latest-no', 'b'), h('u', {}, tx(newest.title)), h('i', { 'aria-hidden': 'true' }, '→'));
       if (latestLink) warm(latestLink);
@@ -262,6 +270,11 @@ export default {
         tab('all', '全部', tracks.length),
         tab('a', '他写的', count.a, h('i', { class: 'sd-chip sd-chip-a', 'aria-hidden': 'true' }, 'A')),
         tab('b', '她写的', count.b, h('i', { class: 'sd-chip sd-chip-b', 'aria-hidden': 'true' }, 'B')));
+      // 排序：默认最新的在最上面。记号就是这张表现在的样子：上面是第一行的曲号，下面是最后一行的
+      let asc = false;
+      try { asc = sessionStorage.getItem(SORT) === 'asc'; } catch { /* 读不了就用默认的 */ }
+      const ends = [h('b'), h('b')];
+      const sortBtn = h('button', { type: 'button', class: 'sd-sort', 'aria-label': '从第一首排起' }, h('span', { 'aria-hidden': 'true' }, ends), svg(I_SORT));
 
       // ---- 封套栏：拼版 ----
       const cells = Math.max(36, Math.ceil((tracks.length + 1) / 6) * 6);
@@ -278,15 +291,11 @@ export default {
       const sq = h('div', { class: 'sd-sq' }, mosaic, big);
       sq.style.setProperty('--mr', String(cells / 6));
       sq.style.setProperty('--mp', String(Math.ceil((tracks.length + 1) / 8)));
-      const restCap = [
-        h('p', { class: 'sd-cap-lbl sd-l' }, `封套 · ${tracks.length} / ${cells} 格`),
-        h('p', { class: 'sd-cap-big' }, '蓝的是他写的，绿的是她写的。'),
-        h('p', { class: 'sd-cap-note' }, `第 ${tracks.length + 1} 首还没写。`),
-        // 没有悬停时，右栏下半截放「今天」：他们自己的数法。（不放摘句：摘句里的字不在首屏字体切片里，要多下 90 KB）
-        today.length && h('dl', { class: 'sd-cap-now' },
-          h('dt', { class: 'sd-l' }, `今天 · ${dot(site.today.date)}`),
-          today.map(([k, n]) => h('dd', {}, h('span', {}, `${k}第`), h('b', {}, String(n)), h('span', {}, '天')))),
-      ];
+      // 拼版自己说话：两种油墨是两个人，印着曲号的空格子是还没写的。没有悬停时，下面只放「今天」：他们自己的数法。
+      //（不放摘句：摘句里的字不在首屏字体切片里，要多下 90 KB）
+      const restCap = today.length ? [h('dl', { class: 'sd-cap-now' },
+        h('dt', { class: 'sd-l' }, `今天 · ${dot(site.today.date)}`),
+        today.map(([k, n]) => h('dd', {}, h('span', {}, `${k}第`), h('b', {}, String(n)), h('span', {}, '天'))))] : [];
 
       // ---- 曲目表 ----
       const list = h('ol', { class: 'sd-list' });
@@ -310,22 +319,39 @@ export default {
         ? letters.years.map((y) => ({ year: y.year, all: y.letters.length, list: y.letters.filter((l) => trackNo.has(l)) }))
         : years.length ? Array.from({ length: years[years.length - 1] - years[0] + 1 }, (_, i) => years[0] + i).map((y) => ({ year: y, all: 0, list: tracks.filter((l) => l.year === y) })) : [];
       const yearRows = [];                                   // [年份行, 这一年的信, 写着「N 封」的那个元素]
+      const groups = [];                                     // 一年一组，从旧到新：[年份行, 这一年的行]
       byYear.forEach(({ year, all, list: ofYear }) => {
+        let yr = null;
         if (ofYear.length) {
           const n = h('span', {}, `${ofYear.length} 封`);
-          yearRows.push([list.appendChild(h('li', { class: 'sd-yr' }, h('span', {}, String(year)), n)), ofYear, n]);
-        } else if (!all) yearRows.push([list.appendChild(h('li', { class: 'sd-yr sd-yr--empty' }, h('span', {}, String(year)), h('span', {}, '这一年没有信'))), ofYear, null]);
-        ofYear.forEach((l) => list.append(row(l)));
+          yearRows.push([yr = h('li', { class: 'sd-yr' }, h('span', {}, String(year)), n), ofYear, n]);
+        } else if (!all) yearRows.push([yr = h('li', { class: 'sd-yr sd-yr--empty' }, h('span', {}, String(year)), h('span', {}, '没有信')), ofYear, null]);     // 年份就印在旁边，不用再说「这一年」
+        groups.push([yr, ofYear.map(row)]);
       });
       const extras = letters.filter((l) => !trackNo.has(l));
+      const tail = [];                                       // 附赠曲目不在他们俩的先后里：两种顺序都排在最后
       if (extras.length) {
-        yearRows.push([list.appendChild(h('li', { class: 'sd-yr sd-yr--bonus' }, h('span', {}, '附'), h('span', {}, `Bonus track · ${[...new Set(extras.map((l) => l.author))].join('、')} 写的，不排曲号`))), [], null]);
-        extras.forEach((l) => list.append(row(l)));
+        tail.push(h('li', { class: 'sd-yr sd-yr--bonus' }, h('span', {}, 'Bonus track'), h('span', {}, [...new Set(extras.map((l) => l.author))].join('、'))), ...extras.map(row));
+        yearRows.push([tail[0], [], null]);
       }
+      // 排一遍：年份和每一年里的行一起倒过来，曲号还是原来的曲号
+      function arrange() {
+        const turn = (a) => (asc ? a : [...a].reverse());
+        list.replaceChildren(...turn(groups).flatMap(([yr, lis]) => [yr, ...turn(lis)]).filter(Boolean), ...tail);
+        const nos = turn([pad2(1), pad2(tracks.length)]);
+        ends.forEach((b, i) => { b.textContent = nos[i]; });
+        sortBtn.setAttribute('aria-pressed', String(asc));
+      }
+      arrange();
+      sortBtn.addEventListener('click', () => {
+        asc = !asc;
+        try { if (asc) sessionStorage.setItem(SORT, 'asc'); else sessionStorage.removeItem(SORT); } catch { /* 存不了：这一页里照样管用 */ }
+        arrange();
+      });
 
       const el = h('div', { class: 'sd-home', 'data-filter': 'all' },
-        h('div', { class: 'sd-cat sd-l' }, h('span', {}, '221–LP'), h('span', { class: 'sd-cat-mid' }, '书信集 · 每首歌附信一封'), h('span', {}, 'Stereo · 双声道')),
-        h('header', { class: 'sd-mast' }, title, info, latestLink, h('div', { class: 'sd-ctl' }, tabs)),
+        h('div', { class: 'sd-cat sd-l' }, h('span', {}, '221–LP'), mark(), h('span', {}, 'Stereo · 双声道')),
+        h('header', { class: 'sd-mast' }, title, info, latestLink, h('div', { class: 'sd-ctl' }, tabs, sortBtn)),
         h('aside', { class: 'sd-panel', 'aria-label': '封套' }, h('div', { class: 'sd-stick' }, sq, cap)),
         h('section', { class: 'sd-tracks', 'aria-label': '曲目表' }, list));
 
@@ -334,7 +360,7 @@ export default {
       const bigs = new Map();
       function panel(l) {
         big.classList.toggle('is-show', Boolean(l));
-        if (!l) { cap.removeAttribute('data-side'); cap.replaceChildren(...restCap.filter(Boolean)); return; }
+        if (!l) { cap.removeAttribute('data-side'); cap.replaceChildren(...restCap); return; }
         if (!bigs.has(l)) bigs.set(l, sleeve(l, { sizes: '400px', widths: [480, 800], lazy: false }));
         big.replaceChildren(bigs.get(l));
         cap.dataset.side = sideOf(l);
@@ -482,8 +508,13 @@ export default {
     }
 
     function pnTile(l, label, rel) {
-      if (l === 'first') return h('div', { class: 'sd-pnt sd-pnt--none' }, h('span', { class: 'sd-pn-no' }, '00'), h('span', {}, h('p', { class: 'sd-pn-lbl sd-l' }, label), h('p', { class: 'sd-pn-title' }, '这是第一首'), h('p', { class: 'sd-pn-song' }, '前面没有了。')));
-      if (l === 'none') return h('div', { class: 'sd-pnt sd-pnt--none' }, h('span', { class: 'sd-pn-no' }, String(tracks.length + 1)), h('span', {}, h('p', { class: 'sd-pn-lbl sd-l' }, label), h('p', { class: 'sd-pn-title' }, '还没写'), h('p', { class: 'sd-pn-song' }, '不知道会是 A 面还是 B 面。')));
+      // 没有的那一首：曲号只有轮廓，没上油墨（第一首之前是 00，最后一首之后是还没写的那个曲号）。那句话只念给读屏听
+      if (l === 'first' || l === 'none') {
+        const say = l === 'first' ? '这是第一首' : `第 ${tracks.length + 1} 首还没写`;
+        return h('div', { class: 'sd-pnt sd-pnt--none' },
+          h('span', { class: 'sd-pn-no', role: 'img', 'aria-label': say }, l === 'first' ? '00' : pad2(tracks.length + 1)),
+          h('span', {}, h('p', { class: 'sd-pn-lbl sd-l' }, label)));
+      }
       const s = sideOf(l);
       const a = h('a', { class: 'sd-pnt', href: l.url, rel, 'data-side': s },
         noEl(l, 'sd-pn-no'),
@@ -501,8 +532,7 @@ export default {
       const season = fmt.season ? fmt.season(l.date) : '';
       const who = authorsOf(l);
       const credits = [
-        ['写信', s === 'ab' && who.length > 1 ? [`${who[0]} 起头`, h('span', {}, `${who.slice(1).join('、')} 写`), h('small', {}, 'A / B 面 · 两个人写的')]
-          : [l.author, h('small', {}, s === 'a' ? 'A 面 · 他写的' : s === 'b' ? 'B 面 · 她写的' : s === 'ab' ? 'A / B 面 · 两个人写的' : '附赠曲目 · 客人写的')]],
+        ['写信', s === 'ab' && who.length > 1 ? [`${who[0]} 起头`, h('span', {}, `${who.slice(1).join('、')} 写`, chip(s))] : [l.author, chip(s)]],   // 名字后面跟着这一面的标记
         ['日期', [dot(l.date), h('small', {}, [season, fmt.date(l.date, 'weekday')].filter(Boolean).join(' · '))]],
         l.place && ['地点', [l.place]],
         dayLines(l).length && [guest ? '这一天' : '天数', dayLines(l).map((t, i) => h('span', {}, guest && !i ? `他们${t}` : t))],
@@ -519,13 +549,12 @@ export default {
       if (l.song) {
         const bar = h('i');
         const time = h('span', { class: 'sd-ltime' });
-        const err = h('span', { class: 'sd-lerr', hidden: true }, ' · 放不出来，再点一次试试');
         const btn = playBtn(l, 'sd-lplay');
         btn.addEventListener('click', () => player.toggle(l));
         songBox = h('div', { class: 'sd-sbox' }, btn,
-          h('div', {}, h('p', { class: 'sd-sname' }, tx(l.song.title)), h('p', { class: 'sd-sart' }, '这封信的歌', artistOf(l) ? ` · ${artistOf(l)}` : '', err)),
+          h('div', {}, h('p', { class: 'sd-sname' }, tx(l.song.title)), artistOf(l) ? h('p', { class: 'sd-sart' }, artistOf(l)) : null),
           time, h('div', { class: 'sd-lprog' }, bar));
-        band = { letter: l, bar, time, err };
+        band = { letter: l, bar, time };
       }
       const bandEl = h('div', { class: 'sd-band' }, h('div', { class: 'sd-in' },
         h('nav', { class: 'sd-nav sd-l', 'aria-label': '导航' },
@@ -580,10 +609,8 @@ export default {
     }
 
     const lostView = () => h('section', { class: 'sd-lost' },
-      h('div', { class: 'sd-cat sd-l' }, h('span', {}, '221–LP'), h('span', {}, '404')),
-      h('b', { class: 'sd-lost-no', 'aria-hidden': 'true' }, '404'),
-      h('h1', {}, '这张唱片里没有这一首。'),
-      h('p', {}, `曲目表上一共 ${tracks.length} 首，都还在。`),
+      h('div', { class: 'sd-cat sd-l' }, h('span', {}, '221–LP'), mark(), h('span', {}, '404')),
+      h('h1', { class: 'sd-lost-no', 'aria-label': '404 · 没有这一首' }, '404'),     // 没有的那一首：和「还没写」的曲号一样，只有轮廓
       h('p', { class: 'sd-lost-go' }, h('a', { href: '/' }, '← 回到曲目表'), newest && h('a', { href: newest.url }, `最新一封 · ${newest.title} →`)));
 
     // =====================================================================================

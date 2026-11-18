@@ -2,7 +2,7 @@
 // theme shares are in themes.spec.mjs; these are the ones only this theme can break.
 
 import { test, expect } from '@playwright/test';
-import { getIsland, open, watch } from './helpers.mjs';
+import { expectNoSidewaysScroll, getIsland, open, watch } from './helpers.mjs';
 
 const theme = 'sides';
 const ctx = (page, fn, arg) => page.evaluate(fn, arg);
@@ -20,11 +20,12 @@ test.describe('theme "sides": its own rules', () => {
     expect(rows.length).toBeGreaterThan(30);
     const want = { him: ['a', 'A'], her: ['b', 'B'], both: ['ab', 'AB'], guest: ['x', '附'] };
     for (const row of rows) expect([row.side, row.chip], `${row.no} (${row.role})`).toEqual(want[row.role]);
-    // numbered tracks count up without a gap; a guest's letter does not take a number
+    // numbered tracks have no gap (the list starts at the newest and counts down); a guest's letter does not take a number
     const numbered = rows.filter((row) => row.role !== 'guest');
-    expect(numbered.map((row) => row.no)).toEqual(numbered.map((_, i) => String(i + 1).padStart(2, '0')));
+    expect(numbered.map((row) => row.no)).toEqual(numbered.map((_, i) => String(numbered.length - i).padStart(2, '0')));
     for (const row of rows.filter((r) => r.role === 'guest')) expect(row.no).toBe('+');
-    await expect(page.locator('#theme-root .sd-cap-note')).toHaveText(`第 ${numbered.length + 1} 首还没写。`);
+    // the next track is not announced in words: the first empty cell of the mosaic carries its number
+    await expect(page.locator('#theme-root .sd-mosaic .sd-slot').first()).toHaveText(String(numbered.length + 1));
   });
 
   test('the letter two people wrote is in both filters, and a year counts what is shown', async ({ page }) => {
@@ -45,7 +46,104 @@ test.describe('theme "sides": its own rules', () => {
       await expect(page.locator('#theme-root .sd-yr--empty:visible'), 'empty years are not listed while filtering').toHaveCount(0);
     }
     await page.locator('#theme-root .sd-tab[data-filter="all"]').click();
-    await expect(page.locator('#theme-root .sd-yr--empty:visible').first()).toContainText('这一年没有信');
+    // the year is printed beside it, so the row says only 「没有信」 (the contract's wording, three characters)
+    await expect(page.locator('#theme-root .sd-yr--empty:visible span').last()).toHaveText('没有信');
+  });
+
+  test('the sort mark turns the track list over; numbers, the bonus track and previous / next stay what they are', async ({ page, baseURL }) => {
+    const seen = watch(page, baseURL);
+    await open(page, '/', theme);
+    const all = await ctx(page, () => [...window.__theme.ctx.letters].map((l) => ({ url: l.url, title: l.title, year: String(l.year), guest: l.role === 'guest', hard: Boolean(l.standalone) })));
+    const couple = all.filter((l) => !l.guest);
+    const guests = all.filter((l) => l.guest);
+    const pad = (n) => String(n).padStart(2, '0');
+    /** The list as it is on screen: every row with its number and the year row it stands under. */
+    const read = (tab = page) => tab.evaluate(() => {
+      const { letters } = window.__theme.ctx;
+      let year = '';
+      const out = { rows: [], years: [], mark: [...document.querySelectorAll('#theme-root .sd-sort b')].map((b) => b.textContent), pressed: document.querySelector('#theme-root .sd-sort').getAttribute('aria-pressed') };
+      for (const li of document.querySelectorAll('#theme-root .sd-list > li')) {
+        if (li.matches('.sd-yr')) out.years.push(year = li.firstElementChild.textContent);
+        else out.rows.push({ url: letters.byUrl(li.querySelector('a.sd-ttl')).url, no: li.querySelector('.sd-no').textContent, under: year });
+      }
+      return out;
+    });
+    const expectOrder = (got, oldestFirst, why) => {
+      const turn = (list) => (oldestFirst ? list : [...list].reverse());
+      expect(got.rows.map((row) => row.url), `${why}: the couple's letters in order, the guest's letter last`).toEqual([...turn(couple), ...guests].map((l) => l.url));
+      expect(got.rows.map((row) => row.no), `${why}: a track keeps its number`).toEqual([...turn(couple.map((_, i) => pad(i + 1))), ...guests.map(() => '+')]);
+      for (const row of got.rows) expect(row.under, `${why}: ${row.url} stands under its year`).toBe(guests.some((l) => l.url === row.url) ? 'Bonus track' : all.find((l) => l.url === row.url).year);
+      const years = got.years.filter((label) => /^\d{4}$/.test(label)).map(Number);
+      expect(years, `${why}: the years run the same way, the empty ones too`).toEqual([...years].sort((a, b) => (oldestFirst ? a - b : b - a)));
+      expect(years.length).toBeGreaterThan(new Set(couple.map((l) => l.year)).size - 1);
+      if (guests.length) expect(got.years[got.years.length - 1]).toBe('Bonus track');
+      expect(got.mark, `${why}: the mark shows the first and the last number of the list as it stands`).toEqual(turn([pad(1), pad(couple.length)]));
+      expect(got.pressed).toBe(String(oldestFirst));
+    };
+    const sort = page.locator('#theme-root .sd-sort');
+
+    // newest first unless the reader says otherwise; the mark is there to tap at both sizes
+    expectOrder(await read(), false, 'first visit');
+    expect(await sort.getAttribute('aria-label')).toBeTruthy();
+    expect((await sort.innerText()).replace(/\s/g, ''), 'the mark is two numbers and an arrow, not a sentence').toMatch(/^\d+$/);
+    const size = page.viewportSize();
+    for (const view of [{ width: 402, height: 874 }, { width: 1440, height: 900 }]) {
+      await page.setViewportSize(view);
+      await sort.scrollIntoViewIfNeeded();
+      await expect(sort).toBeInViewport({ ratio: 1 });
+      const box = await sort.boundingBox();
+      expect(Math.round(box.height), `${view.width}px: tall enough to tap`).toBeGreaterThanOrEqual(44);
+      expect(Math.round(box.width), `${view.width}px: wide enough to tap`).toBeGreaterThanOrEqual(44);
+      await expectNoSidewaysScroll(page);
+    }
+    await page.setViewportSize(size);
+
+    // a letter opened from the list: previous is the earlier one, next the later one, and Back lands on the letter just read
+    const at = couple.findIndex((l, i) => i > 9 && !l.hard && couple[i + 1] && !couple[i + 1].hard && couple[i - 1]);
+    await page.locator(`#theme-root .sd-trk a.sd-ttl[href="${couple[at].url}"]`).click();
+    await expect(page.locator('#theme-root .sd-h1')).toHaveText(couple[at].title);
+    await expect(page.locator('#theme-root .sd-pn a[rel="prev"]')).toHaveAttribute('href', couple[at - 1].url);
+    await expect(page.locator('#theme-root .sd-pn a[rel="next"]')).toHaveAttribute('href', couple[at + 1].url);
+    await page.locator('#theme-root .sd-pn a[rel="next"]').click();
+    await expect(page.locator('#theme-root .sd-h1')).toHaveText(couple[at + 1].title);
+    await page.goBack();
+    const last = page.locator('#theme-root .sd-trk.is-last');
+    await expect(last.locator('a.sd-ttl')).toHaveText(couple[at + 1].title);
+    await expect(last).toBeInViewport({ ratio: 1 });
+    expectOrder(await read(), false, 'back from a letter');
+
+    // the keyboard reaches the mark, the focus shows, and Enter turns the list over
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await sort.focus();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Tab');
+    await expect(sort).toBeFocused();
+    expect(await sort.evaluate((button) => button.matches(':focus-visible') && getComputedStyle(button).outlineStyle !== 'none' && parseFloat(getComputedStyle(button).outlineWidth) >= 2), 'a visible focus ring').toBe(true);
+    await page.keyboard.press('Enter');
+    expectOrder(await read(), true, 'turned over');
+
+    // the choice lasts for the visit: a letter and Back, then a reload; a new tab is a new visit
+    await page.locator(`#theme-root .sd-trk a.sd-ttl[href="${couple[at].url}"]`).click();
+    await expect(page.locator('#theme-root .sd-pn a[rel="prev"]')).toHaveAttribute('href', couple[at - 1].url);
+    await page.locator('#theme-root .sd-pn a[rel="prev"]').click();
+    await expect(page.locator('#theme-root .sd-h1')).toHaveText(couple[at - 1].title);
+    await page.goBack();
+    await expect(last.locator('a.sd-ttl')).toHaveText(couple[at - 1].title);
+    await expect(last).toBeInViewport({ ratio: 1 });
+    expectOrder(await read(), true, 'turned over, back from a letter');
+    await page.reload();
+    await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
+    expectOrder(await read(), true, 'turned over, after a reload');
+    const tab = await page.context().newPage();
+    await open(tab, '/', theme);
+    expectOrder(await read(tab), false, 'a new tab');
+    await tab.close();
+    await sort.click();
+    expectOrder(await read(), false, 'turned back');
+    await page.reload();
+    await page.waitForSelector(`html[data-theme-ready="${theme}"]`);
+    expectOrder(await read(), false, 'turned back, after a reload');
+    expect(seen.errors).toEqual([]);
   });
 
   test('the site\'s own line never fetches a font for itself', async ({ page, baseURL }) => {
