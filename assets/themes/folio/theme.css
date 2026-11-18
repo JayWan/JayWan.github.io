@@ -188,7 +188,8 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 
 /* 换主题（ctx.ui.switcher()）：每一页的右上角。目录和缺页在天头的右上角，信在顶上那一行的右端、第几封的后面。
    收着是这套的名字和一个小折线；点开，按钮下面是一小叶竖排的名字，自右向左，和目录同一种格子；
-   身上这套是墨色，左边一道朱线（专名号）。开合由核心管。盒子都没有写死的高度：字放大了跟着长 */
+   身上这套是墨色，字下面一个朱点（信里加粗改成的着重号也是这样的点；不在字旁画一道线：只有一个字时那道线像光标）。
+   开合由核心管。盒子都没有写死的高度：字放大了跟着长 */
 .theme-switcher{position:relative;z-index:20}
 .theme-switcher-toggle{display:flex;align-items:center;justify-content:flex-end;gap:9px;min-width:44px;min-height:44px;margin:0;padding:0 1px 0 14px;
   border:0;border-radius:0;background:none;color:var(--ink-2);font:16px/1.2 var(--fs);letter-spacing:.1em;cursor:pointer;-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent}
@@ -198,8 +199,10 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .theme-switcher ul{position:absolute;top:100%;right:0;margin:0;padding:0;list-style:none;writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;
   background:var(--paper-lit);border:1px solid var(--frame);border-top-width:2px}
 .theme-switcher li+li{border-right:1px solid var(--rule)}
-.theme-switcher a{display:block;min-width:44px;min-height:44px;padding:13px 12px 12px;font:16px/1.2 var(--fs);letter-spacing:.24em;color:var(--ink-2);text-decoration:none;white-space:nowrap;outline-offset:-5px}
-.theme-switcher a[aria-current]{color:var(--ink);text-decoration:underline 1px var(--red);text-underline-offset:5px}
+.theme-switcher a{display:block;min-width:44px;min-height:44px;padding:13px 12px 12px;font:16px/1.2 var(--fs);letter-spacing:.24em;color:var(--ink-2);text-decoration:none;white-space:nowrap;outline-offset:-5px;-webkit-tap-highlight-color:transparent}
+.theme-switcher a[aria-current]{position:relative;color:var(--ink)}
+/* 点是边框画的，强制配色时也在；离字远一点：WebKit 里竖排的字比 Chrome、Firefox 画得低 0.4em 上下（Playwright 的 WebKit 量的），近了就压在字上 */
+.theme-switcher a[aria-current]::after{content:"";position:absolute;top:calc(13px + 1.9em);left:calc(50% - 2px);border:2px solid var(--red);border-radius:50%}
 .home{position:relative;--sw:12px}   /* --sw：入口离页顶多远，和信的顶上那一行同高 */
 .home>.theme-switcher{position:absolute;top:calc(var(--sw) + env(safe-area-inset-top));right:max(24px,calc((100% - var(--page)) / 2))}
 /* 缺页：版框一律在页顶下 68px，入口在它上面；点开的那一小叶上沿压在版框上，两道线合成一道 */

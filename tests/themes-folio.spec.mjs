@@ -373,11 +373,6 @@ test.describe('theme "folio": a letter', () => {
   });
 });
 
-// A reader's browser can enlarge the text and nothing else (Firefox "zoom text only", a system
-// text-size setting): every font is drawn larger, a line-height given in px grows with it, boxes
-// and margins keep their size. The theme is built on pixel measures that hold a given number of
-// characters, so it measures how much larger a character really is and scales those measures
-// (assets/themes/folio/README.md, 「文字被浏览器放大」).
 /** The top line of a letter: where the ink of each piece is (the way back, the name of the book, the number, the
  *  control that changes theme), which two come closer than `gap` on the same line, and what leaves the screen. */
 const topLine = (page, gap = 8) => page.evaluate((gap) => {
@@ -470,6 +465,11 @@ test.describe('theme "folio": the way to another theme', () => {
   });
 });
 
+// A reader's browser can enlarge the text and nothing else (Firefox "zoom text only", a system
+// text-size setting): every font is drawn larger, a line-height given in px grows with it, boxes
+// and margins keep their size. The theme is built on pixel measures that hold a given number of
+// characters, so it measures how much larger a character really is and scales those measures
+// (assets/themes/folio/README.md, 「文字被浏览器放大」).
 test.describe('theme "folio": text enlarged by the browser', () => {
   /** The contents: where the red lines above the columns are, and whether what a column holds stays in it. */
   const contents = (page) => page.evaluate(() => {
