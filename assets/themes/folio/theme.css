@@ -66,12 +66,15 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 
 /* 年表：这本书的缩样。一年一行；日子自右向左；一封信一道竖线；横线从第 0 日画到今天 */
 .leaf--title .cell--nb{grid-column:4/-2;padding:var(--pad) 40px}
-.nb{flex:1;min-width:0;display:flex;flex-direction:column;font:13.5px/1 var(--lat);letter-spacing:.04em;color:var(--ink-2);font-variant-numeric:oldstyle-nums}
+/* --nb-h：各行合起来能用的高度，即格高减去上下的空、边线（3px）和月份那一行 */
+.nb{flex:1;min-width:0;display:flex;flex-direction:column;font:13.5px/1 var(--lat);letter-spacing:.04em;color:var(--ink-2);font-variant-numeric:oldstyle-nums;
+  --nb-h:calc(var(--cell-h) - var(--pad) * 2 - 37px)}
 .nb-m,.nb-r{display:flex;flex-direction:row-reverse}
 .nb-m{height:26px;margin-bottom:8px}
 .nb-r{flex:1 1 0;min-height:0;align-items:center}
-/* 行高取成奇数个整像素，横线才落在像素上（round() 不认识的浏览器照上一行平分，线略虚一点） */
-.nb-r{flex:none;height:calc(round(down,(var(--cell-h) - var(--pad) * 2 - 35px) / var(--k) - 1px,2px) + 1px)}
+/* 行高取成奇数个整像素，横线才落在像素上。不认识 round() 的浏览器（Chrome 124 及以前）照上一行平分，线略虚一点；
+   一定要包在 @supports 里：值里有 var()，不认识的浏览器不会丢掉这一条，而是把高度算成 auto，各行就塌在一起 */
+@supports (height:round(down,1px,2px)){ .nb-r{flex:none;height:calc(round(down,var(--nb-h) / var(--k) - 1px,2px) + 1px)} }
 .nb-y{flex:none;width:44px;text-align:right}
 .nb-r--ba .nb-y{font:13px/1 var(--fs)}
 .nb-r.is-blank .nb-y{color:var(--ink-3)}
@@ -389,9 +392,8 @@ html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(-
   .home{padding:calc(8px + env(safe-area-inset-top)) 16px 0}
   .leaf{padding-bottom:18px}
   .leaf--title .cell--nb{padding:16px 7px 14px 8px}
-  .nb{font-size:11px;letter-spacing:0}
+  .nb{font-size:11px;letter-spacing:0;--nb-h:calc(var(--cell-h) - 59px)}
   .nb-m{height:20px;margin-bottom:6px}
-  .nb-r{height:calc(round(down,(var(--cell-h) - 57px) / var(--k) - 1px,2px) + 1px)}
   .nb-y{width:28px}
   .nb-r--ba .nb-y{font-size:11px}
   .nb-m1,.nb-m2{font-size:10px;letter-spacing:.06em;margin:0}
