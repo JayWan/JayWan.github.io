@@ -1,5 +1,6 @@
 // 笺 folio — 把这些信做成一本书：首页是竖排的目录，一年一叶；点开是一张横格信笺。
-// 没有动效。契约只有 ctx（见 ../README.md），这里不从核心引入任何东西。
+// 没有动效，也没有说明文字：怎么读由版面自己交代（年表、折角、色标），能点的东西都有 aria-label。
+// 契约只有 ctx（见 ../README.md），这里不从核心引入任何东西。
 // 设计说明和「改哪里」见同目录的 README.md。
 
 /* ── 小工具 ─────────────────────────────────────────── */
@@ -152,8 +153,16 @@ function quoteLines(text, L) {
 
 const PLAY_SVG = '<svg viewBox="0 0 44 44" aria-hidden="true" focusable="false"><circle class="play-ring" cx="22" cy="22" r="15.5"/><path class="ic-play" d="M19.2 16.6 L28.4 22 L19.2 27.4 Z"/><path class="ic-pause" d="M17.8 16.8h2.6v10.4h-2.6zM23.6 16.8h2.6v10.4h-2.6z"/></svg>';
 
+/* 色标：图版印的是墨色还是原色（三个圈，原色时套上色） */
+const TONE_SVG = '<svg viewBox="0 0 20 18" aria-hidden="true" focusable="false"><circle cx="6.5" cy="6.5" r="5"/><circle cx="13.5" cy="6.5" r="5"/><circle cx="10" cy="12" r="5"/></svg>';
+
+/* 次序的记号：一支箭，三道线。箭朝下、线由长到短是新的在前；换成旧的在前时整个倒过来（见 theme.css 的 .sort） */
+const SORT_SVG = '<svg viewBox="0 0 44 44" aria-hidden="true" focusable="false"><path d="M15.5 13.5V31M12 27.5l3.5 3.5 3.5-3.5M23 15.5h11M23 22.5h7.5M23 29.5h4"/></svg>';
+
 /* 首页每一叶默认印哪一句眉批：有这几封就用它们，否则用这一排的第一封。 */
 const PICKS = new Set(['221 FOREVER', 'One Year']);
+/* 年表的月份刻度：每个月的第一天是一年里的第几天（平年） */
+const MONTHS = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365];
 
 export default {
   mount(ctx) {
@@ -167,6 +176,7 @@ export default {
     const own = letters.filter((l) => !isGuest(l));       // 他们俩的信
     const guests = letters.filter(isGuest);               // 客人的信：放在书末的「跋」
     const newest = own[own.length - 1] || letters.latest;
+    const dToday = site.today.days.met;                   // 今天是相识的第几日
 
     /* 回目录：链接带 data-back，核心会把它当作「后退」（从目录来的话回到原处），并把刚读的那封带到眼前。
        上一封 / 下一封是普通链接：信到信由核心替换历史记录，所以「后退」总是回到目录。 */
@@ -259,17 +269,27 @@ export default {
       if (guests.length) groups.push({ id: 'ba', guest: true, title: '跋', note: numZh(guests.length) + '篇', list: guests, label: `跋，客人写的 ${guests.length} 篇` });
     }
 
+    /* 次序。默认新的在前：最新的一年是第一叶，一叶之内也是新的在前，整本书从头读到尾是一条不回头的线
+       （最新的一封领头，下栏的日数一路变小）。跋不在他们俩的次序里，哪种排法都在书末。
+       读者换过的次序只记这一次到访（sessionStorage：站内跳转、后退、刷新都还在）。 */
+    const SORT = 'f221:sort';
+    let oldFirst = false;
+    try { oldFirst = sessionStorage.getItem(SORT) === 'old'; } catch { /* 存不了：就用默认的次序 */ }
+    const newFirst = [...groups.filter((g) => !g.guest).map((g) => ({ ...g, list: [...g.list].reverse() })).reverse(), ...groups.filter((g) => g.guest)];
+    const inOrder = () => (oldFirst ? groups : newFirst);
+
     const leaves = h('div', { class: 'leaves' });
     let lastN = 0;
-    function buildLeaves() {
+    function buildLeaves(force) {
       const n = parseInt(getComputedStyle(root).getPropertyValue('--n'), 10) || 12;
-      if (n === lastN) return;
+      if (n === lastN && !force) return;
       lastN = n;
+      const gs = inOrder();
       const half = n % 2 ? 0 : n / 2;
       const small = (g) => Boolean(half && g && g.list.length <= half - 1);
       const out = [];
-      for (let i = 0; i < groups.length; i++) {
-        const g = groups[i], nx = groups[i + 1];
+      for (let i = 0; i < gs.length; i++) {
+        const g = gs[i], nx = gs[i + 1];
         if (small(g) && small(nx)) { out.push(h('div', { class: 'spread spread--pair' }, leaf(g, half), leaf(nx, half))); i++; }
         else if (g.guest && small(g)) out.push(h('div', { class: 'spread spread--pair' }, leaf(g, half)));
         else out.push(h('div', { class: 'spread' }, leaf(g, n, !g.list.length)));
@@ -278,9 +298,9 @@ export default {
       markRead();
     }
     /* 眉批：分成差不多长的几行；靠左放不下时改为向右展开 */
-    function layoutHome() {
+    function layoutHome(force) {
       if (!homeEl || !homeEl.isConnected) return;
-      buildLeaves();
+      buildLeaves(force === true);
       const per = '10';                                      // 一行十个字：多数分句不用拆
       for (const m of homeEl.querySelectorAll('.mei')) {
         if (m.dataset.l === per) continue;
@@ -315,13 +335,45 @@ export default {
       return cell;
     }
 
+    /* 年表：扉页上的一张小图，是下面这本书的缩样。一年一行；年份的上下、一行里日子的左右都跟着目录的次序
+       （旧的在前：最早的一年在上，一月在右；新的在前则两样都对调）。
+       一封信一道竖线，空着的地方就是没写信的日子。横线从相识那天（第 0 日）画到今天。 */
+    function chart() {
+      if (!letters.length) return null;
+      const ok = (d) => /^\d{4}-\d\d-\d\d/.test(d || '');
+      const frac = (d) => { const y = +d.slice(0, 4), a = Date.UTC(y, 0, 1); return (Date.UTC(y, +d.slice(5, 7) - 1, +d.slice(8, 10)) - a + 432e5) / (Date.UTC(y + 1, 0, 1) - a); };
+      const rev = !oldFirst;                                 // 新的在前：新的一年在上，一行里十二月在右，仍旧是下面那本书的缩样
+      const pct = (f) => ((rev ? 1 - f : f) * 100).toFixed(2) + '%';
+      const at = (d) => pct(frac(d));
+      const stroke = (l) => h('i', { class: 'nb-s', style: `--x:${at(l.date)}` });
+      /* 线两头的日数。--n 是位数：靠近一年的两端时，CSS 按它把数字收在刻度之内，不压到格线和年份上 */
+      const count = (d, text) => h('b', { class: 'nb-d', lang: 'en', style: `--x:${at(d)};--n:${text.length}` }, text);
+      const met = ok(site.met) ? site.met : null, today = ok(site.today.date) ? site.today.date : null;
+      const y0 = letters[0].year, y1 = Math.max(letters[letters.length - 1].year, today ? +today.slice(0, 4) : 0);
+      const rows = [h('div', { class: 'nb-m' }, h('span', { class: 'nb-y' }),
+        h('span', { class: 'nb-x' }, MONTHS.map((d) => h('i', { style: `right:${pct(d / 365)}` })), h('span', { class: 'nb-m1' }, rev ? '十二月' : '一月'), h('span', { class: 'nb-m2' }, rev ? '一月' : '十二月')))];
+      for (const y of Array.from({ length: y1 - y0 + 1 }, (_, i) => (rev ? y1 - i : y0 + i))) {
+        const list = own.filter((l) => l.year === y);
+        const from = met && +met.slice(0, 4) === y ? frac(met) : 0, to = today && +today.slice(0, 4) === y ? frac(today) : 1;
+        rows.push(h('div', { class: 'nb-r' + (list.length ? '' : ' is-blank') },
+          h('span', { class: 'nb-y', lang: 'en' }, String(y)),
+          h('span', { class: 'nb-x' },
+            h('i', { class: 'nb-l', style: `right:${pct(rev ? to : from)};left:${pct(rev ? 1 - from : 1 - to)}` }),
+            list.map(stroke),
+            from > 0 && count(met, '0'),
+            to < 1 && dToday != null && count(today, String(dToday)))));
+      }
+      if (guests.length) rows.push(h('div', { class: 'nb-r nb-r--ba' }, h('span', { class: 'nb-y' }, '跋'), h('span', { class: 'nb-x' }, guests.map(stroke))));
+      return h('li', { class: 'cell cell--nb' },
+        h('div', { class: 'nb' + (rev ? ' nb--new' : ''), role: 'img', style: `--k:${rows.length - 1}`, 'aria-label': `年表：${y0} 至 ${y1} 年，${own.length} 封信${guests.length ? `，跋 ${guests.length} 篇` : ''}` }, rows));
+    }
+
+    let chartEl = null;
     function titleLeaf() {
       const count = (l) => numZh(l.length);
       const span = letters.length ? `${yearZh(letters[0].year)}—${yearZh(letters[letters.length - 1].year)}` : '';
       const pens = [];
       for (const l of own) { const a = l.author; const p = pens.find((x) => x[0] === a); if (p) p[1]++; else pens.push([a, 1]); }
-      const rule = (text) => h('div', { class: 'half' }, h('p', { class: 'v' }, vt(text)));
-      const pair = (cls, a, b) => h('li', { class: 'cell cell--fl ' + cls }, rule(a), rule(b));
       const latest = newest && h('li', { class: 'cell cell--latest' }, column(newest, '最近一封'), mei(newest));
       return h('header', { class: 'leaf leaf--title', 'aria-label': '扉页' },
         h('ol', { class: 'cols' },
@@ -330,27 +382,28 @@ export default {
             h('div', { class: 'ln' }, h('p', { class: 'sub-kind v' }, '书信集'),
               h('p', { class: 'wari v' }, h('span', {}, count(own) + '封' + (guests.length ? `，跋${count(guests)}篇` : '')), h('span', {}, span))),
             pens.length > 0 && h('p', { class: 'pens wari v' }, pens.map(([a, n]) => h('span', {}, vt(a), ' ' + numZh(n) + '封')))),
-          h('li', { class: 'cell cell--gap', 'aria-hidden': 'true' }),
-          h('li', { class: 'cell cell--flh' }, h('h2', { class: 'v' }, '凡例')),
-          pair('fl-a',
-            `一、收信${count(own)}封${guests.length ? `，另跋${count(guests)}篇` : ''}。一年一叶，自右向左读。`,
-            '一、上边空白处是从信里摘的一句。点哪一列，展哪封信。'),
-          pair('fl-b',
-            '一、目录不标页码，标的是相识以来的日数。',
-            `一、相识在${ymdZh(site.met)}，是为第〇日。`),
-          pair('fl-c',
-            '一、每信配歌一首，不自动播放。',
-            '一、空白处是没写信的日子，并非漏印。'),
+          chartEl = chart(),
           latest));
     }
-    function yearIndex() {
+    /* 年份索引，最前面是次序的记号。年份跟着次序排；记号本身不重建，按过以后焦点还在它上面 */
+    const sortBtn = h('button', { type: 'button', class: 'sort', hidden: own.length < 2, onclick: () => setOrder(!oldFirst) });
+    sortBtn.innerHTML = SORT_SVG;
+    const yidx = h('nav', { class: 'yidx', 'aria-label': '去哪一年' }, sortBtn);
+    yidx.addEventListener('click', (e) => { if (e.target.closest('a[href^="#"]') && !location.hash) jumpFrom = window.scrollY; });
+    function fillIndex() {
       /* 跋只有一篇时，「跋」直接打开它（最新的一封离第一屏只有一下） */
       const to = (g) => (g.guest && g.list.length === 1 ? g.list[0].url : '#' + g.id);
-      const nav = h('nav', { class: 'yidx', 'aria-label': '去哪一年' },
-        h('span', { class: 'yidx-k' }, h('span', {}, '去哪'), h('span', {}, '一年')),
-        groups.map((g) => h('a', { href: to(g), class: g.list.length ? '' : 'is-blank', lang: g.guest ? null : 'en', 'aria-label': g.label }, g.guest ? '跋' : String(g.year))));
-      nav.addEventListener('click', (e) => { if (e.target.closest('a[href^="#"]') && !location.hash) jumpFrom = window.scrollY; });
-      return nav;
+      for (const a of yidx.querySelectorAll('a')) a.remove();
+      yidx.append(...inOrder().map((g) => h('a', { href: to(g), class: g.list.length ? '' : 'is-blank', lang: g.guest ? null : 'en', 'aria-label': g.label }, g.guest ? '跋' : String(g.year))));
+      sortBtn.setAttribute('aria-pressed', String(oldFirst));
+      sortBtn.setAttribute('aria-label', oldFirst ? '信的次序：最早的在前' : '信的次序：最新的在前');
+    }
+    function setOrder(old) {
+      oldFirst = old;
+      try { if (old) sessionStorage.setItem(SORT, 'old'); else sessionStorage.removeItem(SORT); } catch { /* 存不了：这一页还是会换 */ }
+      fillIndex();
+      if (chartEl) { const c = chart(); chartEl.replaceWith(c); chartEl = c; }
+      layoutHome(true);
     }
     /* 跳到某一年是页内的锚点：浏览器会记一条历史，但核心关掉了浏览器自己的滚动恢复（路径没变时它也不插手），
        于是按「后退」页面纹丝不动。这里补上：后退回到出发的地方，前进回到那一叶。 */
@@ -365,7 +418,7 @@ export default {
 
     let homeEl = null;
     function homeView() {
-      if (!homeEl) homeEl = h('div', { class: 'home' }, titleLeaf(), yearIndex(), leaves);
+      if (!homeEl) { fillIndex(); homeEl = h('div', { class: 'home' }, titleLeaf(), yidx, leaves); }
       return homeEl;
     }
 
@@ -383,13 +436,13 @@ export default {
       const ink = l.cover.own === false || l.cover.own === undefined;    // 网上找来的图印成墨色；自己拍的照片是原色
       const portrait = l.cover.h > l.cover.w;
       const fig = h('figure', { class: 'plate' + (ink ? '' : ' is-color') + (portrait ? ' plate--tall' : '') });
-      const hint = h('span', { class: 'plate-hint' });
+      const mark = h('span', { class: 'plate-mark', 'aria-hidden': 'true' });
+      mark.innerHTML = TONE_SVG;
       const btn = h('button', { type: 'button', class: 'plate-btn', 'aria-pressed': String(!ink), 'aria-label': '封面图，点按切换墨色与原色' },
         ctx.img(l.cover, { sizes: '(max-width: 719px) 62vw, (max-width: 1179px) 340px, 264px', widths: [480, 800], lazy: false, alt: `第 ${l.no} 封的封面` }));
-      const say = () => { hint.textContent = fig.classList.contains('is-color') ? '点图见墨色' : '点图见原色'; };
-      btn.addEventListener('click', () => { btn.setAttribute('aria-pressed', String(fig.classList.toggle('is-color'))); say(); });
-      say();
-      fig.append(btn, h('figcaption', {}, h('span', {}, '图版 ', h('span', { class: 'n', lang: 'en' }, String(l.no)), ' · 封面'), hint));
+      btn.addEventListener('click', () => btn.setAttribute('aria-pressed', String(fig.classList.toggle('is-color'))));
+      mark.addEventListener('click', () => btn.click());
+      fig.append(btn, h('figcaption', {}, h('span', {}, '图版 ', h('span', { class: 'n', lang: 'en' }, String(l.no)), ' · 封面'), mark));
       return fig;
     }
 
@@ -419,8 +472,11 @@ export default {
 
     /* 信末的一小叶：上一封 | 目录 | 下一封（书往左翻，所以上一封在右） */
     function feet(l) {
-      const side = (to, label, none) => {
-        if (!to) return h('li', { class: 'cell cell--foot' }, h('div', { class: 'col' }, h('span', { class: 'foot-none v' }, none)));
+      const side = (to, label) => {
+        /* 到头了：最前面只印「第一封」；最后面是一列空白，一道虚线接着往下（还没写） */
+        if (!to) return label === '上一封'
+          ? h('li', { class: 'cell cell--foot' }, h('div', { class: 'col' }, h('span', { class: 'foot-none v' }, '第一封')))
+          : h('li', { class: 'cell cell--foot', 'aria-label': '下一封还没写' }, h('div', { class: 'col' }, h('span', { class: 'latest-k v' }, label), h('span', { class: 'lead' }), h('span', { class: 'day' })));
         const d = to.days.met;
         return h('li', { class: 'cell cell--foot' },
           h('a', { class: 'col', href: to.url, rel: label === '上一封' ? 'prev' : 'next', 'aria-label': `${label}：${to.title}` },
@@ -428,10 +484,10 @@ export default {
             h('span', { class: 't' }, titleLines(to.title)),
             h('span', { class: 'day', lang: 'en' }, d != null ? String(d) : '')));
       };
-      const prev = side(l.prev, '上一封', '这是第一封。');
-      const next = side(l.next, '下一封', '下一封还没写。');
+      const prev = side(l.prev, '上一封');
+      const next = side(l.next, '下一封');
       const home = h('li', { class: 'cell cell--foot cell--home' },
-        homeLink('col', h('span', { class: 't' }, h('span', { class: 'ln' }, h('span', { class: 'lt v' }, '目录'), h('span', { class: 'wari v' }, h('span', {}, isGuest(l) ? '回到跋那一叶' : `回到${yearZh(l.year)}年那一叶`)))), h('span', { class: 'day day--k' }, '日数')));
+        homeLink('col', h('span', { class: 't' }, h('span', { class: 'ln' }, h('span', { class: 'lt v' }, '目录'), h('span', { class: 'wari v' }, h('span', {}, isGuest(l) ? '跋' : yearZh(l.year))))), h('span', { class: 'day day--k' }, '日数')));
       return h('nav', { class: 'feet', 'aria-label': '上一封、目录、下一封' }, h('ol', { class: 'cols', style: '--k:3' }, prev, home, next));
     }
 
@@ -545,20 +601,21 @@ export default {
           feet(l)));
       return letterEl;
     }
-    /* 读者要求少动（prefers-reduced-motion）时，信里的动图停在第一帧，点一下才动；再点一下停住。 */
+    /* 读者要求少动（prefers-reduced-motion）时，信里的动图停在第一帧，点一下才动；再点一下停住。
+       图下面印一个播放 / 暂停的记号（和歌的那个是同一个），点它和点图一样。 */
     function still(img) {
       if (img.dataset.still || !img.naturalWidth) return;
       const k = Math.min(1, 1200 / img.naturalWidth);
       const c = h('canvas', { width: Math.round(img.naturalWidth * k), height: Math.round(img.naturalHeight * k) });
-      const fig = img.closest('figure'), hint = fig && fig.querySelector('.fo-hint');
+      const fig = img.closest('figure'), mark = fig && fig.querySelector('.fo-play');
       let frame;
-      try { c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); frame = c.toDataURL('image/png'); } catch { if (hint) hint.textContent = ''; return; }
+      try { c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); frame = c.toDataURL('image/png'); } catch { if (mark) mark.replaceChildren(); return; }
       const moving = img.currentSrc || img.src;
       const set = (on) => {
         img.dataset.still = on ? 'off' : 'on';
         img.src = on ? moving : frame;
         img.setAttribute('aria-label', (img.alt ? img.alt + '。' : '') + (on ? '动图，点一下停住' : '动图，点一下让它动'));
-        if (hint) hint.textContent = on ? '点图停住' : '点图，让它动起来';
+        if (mark) mark.classList.toggle('is-on', on);
       };
       img.removeAttribute('srcset');
       img.tabIndex = 0;
@@ -573,8 +630,11 @@ export default {
       if (!ctx.env.reducedMotion) return;
       for (const img of el.querySelectorAll('img[data-gif]')) {
         if (img.dataset.still || img.closest('.flip-card, .gift-scene')) continue;
-        const fig = img.closest('figure');                     // 提示那一行先占好位置：图到了以后信不会往下跳一行
-        if (fig && !fig.querySelector('.fo-hint')) fig.appendChild(h('figcaption', { class: 'fo-hint' }, '点图，让它动起来'));
+        const fig = img.closest('figure');                     // 记号那一行先占好位置：图到了以后信不会往下跳
+        if (fig && !fig.querySelector('.fo-play')) {
+          const mark = fig.appendChild(h('figcaption', { class: 'fo-play', 'aria-hidden': 'true', onclick: () => img.click() }));
+          mark.innerHTML = PLAY_SVG;
+        }
         if (img.complete && img.naturalWidth) still(img);
         else img.addEventListener('load', () => still(img), { once: true });
       }
@@ -582,6 +642,9 @@ export default {
     /** 搬进文档之后才能量：翻转卡片按新宽度重量一次，图和卡片凑整行 */
     function settle(contentEl) {
       ctx.widgets.init(contentEl);
+      /* 卡片的折角、礼物外面的剪刀线都是画出来的，没有字：给读屏的话写在这里 */
+      for (const c of contentEl.querySelectorAll('.flip-card')) { c.setAttribute('role', 'group'); c.setAttribute('aria-label', '卡片：正面是信，背面是照片，按回车翻面'); }
+      for (const g of contentEl.querySelectorAll('#gift-container')) g.setAttribute('aria-label', '礼物，点一下拆开');
       stillAll(contentEl);
       snapAll(contentEl);
       fit();
@@ -590,14 +653,13 @@ export default {
     function lostView() {
       const n = parseInt(getComputedStyle(root).getPropertyValue('--n'), 10) || 12;
       const fill = [];
-      for (let i = Math.max(0, n - 4); i > 0; i--) fill.push(blank());
+      for (let i = Math.max(0, n - 2); i > 0; i--) fill.push(blank());
       return h('div', { class: 'home home--lost' },
         h('div', { class: 'spread' },
           h('section', { class: 'leaf leaf--lost', 'aria-label': '没有这一页' },
             h('ol', { class: 'cols' },
               h('li', { class: 'cell cell--year' }, h('div', { class: 'yr' }, h('h1', { class: 'yr-t v' }, '缺页'), h('p', { class: 'yr-n v' }, '四〇四'))),
-              h('li', { class: 'cell cell--fl' }, h('div', { class: 'half' }, h('p', { class: 'v' }, '这一页是空白的。')), h('div', { class: 'half' }, h('p', { class: 'v' }, '这回不是没写信，是地址不对。'))),
-              h('li', { class: 'cell cell--foot cell--home' }, h('a', { class: 'col', href: '/' }, h('span', { class: 't' }, h('span', { class: 'ln' }, h('span', { class: 'lt v' }, '目录'), h('span', { class: 'wari v' }, h('span', {}, '回到第一叶')))), h('span', { class: 'day day--k' }, '日数'))),
+              h('li', { class: 'cell cell--foot cell--home' }, h('a', { class: 'col', href: '/' }, h('span', { class: 't' }, h('span', { class: 'ln' }, h('span', { class: 'lt v' }, '目录'))))),
               fill))));
     }
 
@@ -605,9 +667,8 @@ export default {
 
     const main = h('main', { class: 'fo-main', tabindex: '-1' });
     const hunger = ui.hunger();
-    const dToday = site.today.days.met;
     const colophon = h('footer', { class: 'colophon' },
-      dToday != null && h('p', { class: 'colophon-today' }, '今天是相识的第', h('span', { class: 'n', lang: 'en' }, String(dToday)), '日。下一封还没写。'),
+      dToday != null && h('p', { class: 'colophon-today' }, h('span', { class: 'd' }, ymdZh(site.today.date)), h('span', { class: 'k' }, '相识'), '第', h('span', { class: 'n', lang: 'en' }, String(dToday)), '日'),
       hunger.text && h('p', { class: 'colophon-voice', 'data-level': hunger.level }, h('span', { class: 'voice-k' }, '网站按'), h('span', { class: 'voice-t' }, hunger.text)),
       h('p', { class: 'colophon-name', lang: 'en' }, site.title),
       h('p', { class: 'colophon-c', lang: 'en' }, `© 2016 – ${Math.max(2026, Number(fmt.date(site.today.date, 'year')) || 0)} Fan & Wan`),
@@ -636,7 +697,7 @@ export default {
       const box = root.querySelector('.song');
       if (box) {
         const mine = s.letter && String(s.letter.no) === box.dataset.song;
-        box.querySelector('.song-err').textContent = mine && s.error ? '没放出来，再点一下试试。' : mine && s.loading ? '正在取歌…' : '';
+        box.querySelector('.song-err').textContent = mine && s.error ? '没放出来' : mine && s.loading ? '正在取歌…' : '';
         box.classList.toggle('is-on', Boolean(mine));
       }
       /* 底边那一行：有歌载入了就在；读信时窄屏上一直在（暂停要够得着，目录也在这里） */
