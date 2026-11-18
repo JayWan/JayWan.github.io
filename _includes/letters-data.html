@@ -11,6 +11,9 @@
     computes the rest
   - `authors` is `author` plus `coauthor` when the letter has one; cover.own is false for a
     cover that is a picture found online, not a photo of their own
+  - `quotes` is every line picked from the letter: the `quotes:` list of its front matter, or its
+    single `quote:` as a list of one, or []. `quote` is the first of them (null when there is none);
+    core/data.js shows one of `quotes` at random on every page load
   - `pictures`: every picture used inside a letter, file name → [w, h] or [w, h, base, widths]
     (from `site.data.media.posts`); core/prose.js lays the letters' pictures out with them
   - `url` is the readable form ("/story/2026/08/12/木婚快乐/"); song.src and cover.orig are
@@ -51,7 +54,10 @@ the same minute keep their order), sort the keys, look the posts up again. {%- e
 {%- assign post = site.posts[at] -%}
 {%- assign cover = media.hero[post.image.feature] -%}
 {%- assign track = media.tracks[post.bgm] -%}
-{"no":{{ forloop.index }},"title":{{ post.title | jsonify }},"url":{{ post.url | replace: "+", "%2B" | url_decode | jsonify }},"date":{{ post.written_on | default: post.date | date: "%Y-%m-%d" | jsonify }},"time":{%- if post.written_on -%}null{%- else -%}{{ post.date | date: "%H:%M" | jsonify }}{%- endif -%},"days":{{ post.days | jsonify }},"author":{{ post.author | default: site.author.name | jsonify }},"authors":[{{ post.author | default: site.author.name | jsonify }}{%- if post.coauthor -%},{{ post.coauthor | jsonify }}{%- endif -%}],"quote":{{ post.quote | jsonify }},"place":{{ post.place | jsonify }},"song":
+{%- assign quotes = '' | split: '' -%}
+{%- assign picked = post.quotes | default: post.quote -%}
+{%- for line in picked -%}{%- if line and line != '' -%}{%- assign quotes = quotes | push: line -%}{%- endif -%}{%- endfor -%}
+{"no":{{ forloop.index }},"title":{{ post.title | jsonify }},"url":{{ post.url | replace: "+", "%2B" | url_decode | jsonify }},"date":{{ post.written_on | default: post.date | date: "%Y-%m-%d" | jsonify }},"time":{%- if post.written_on -%}null{%- else -%}{{ post.date | date: "%H:%M" | jsonify }}{%- endif -%},"days":{{ post.days | jsonify }},"author":{{ post.author | default: site.author.name | jsonify }},"authors":[{{ post.author | default: site.author.name | jsonify }}{%- if post.coauthor -%},{{ post.coauthor | jsonify }}{%- endif -%}],"quote":{{ quotes.first | jsonify }},"quotes":{{ quotes | jsonify }},"place":{{ post.place | jsonify }},"song":
 {%- if post.bgm -%}
 {"title":{{ post.bgm | remove: ".mp3" | jsonify }},"src":{{ post.bgm | prepend: "/assets/bgm/" | uri_escape | jsonify }},"duration":{{ track.duration | jsonify }},"artist":{{ track.artist | jsonify }}}
 {%- else -%}null{%- endif -%}

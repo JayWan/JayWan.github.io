@@ -92,6 +92,8 @@ export default {
             h('strong', {}, letter.title),
             // letter.date is the day the letter was really written; the same facts on every letter
             h('small', {}, `No. ${letter.no} · ${fmt.date(letter.date, 'dot')} · ${fmt.season(letter.date)} · ${byline(letter)}${letter.standalone ? ' · 整页打开' : ''}`),
+            // letter.quote is one of the lines picked from the letter (letter.quotes), drawn anew on
+            // every page load. Always read letter.quote: it is the same line everywhere on this page.
             letter.quote && h('q', {}, letter.quote)));
         // Warm the cache while the finger or the pointer is on its way down.
         link.addEventListener('pointerenter', () => router.prefetch(link.href));
@@ -145,6 +147,7 @@ export default {
         ctx.img(letter.cover, { sizes: '(max-width: 760px) 100vw, 720px', lazy: false, lqip: true, className: letter.cover && !letter.cover.own ? 'p-cover is-borrowed' : 'p-cover' }),
         h('h1', {}, letter.title),
         h('p', { className: 'p-facts' }, facts.join(' · ')),
+        letter.quote && h('p', { className: 'p-quote' }, h('q', {}, letter.quote)),   // the line the list showed for it
         letter.song && h('p', { className: 'p-song' }, playButton(letter), h('span', {}, `${letter.song.title}${letter.song.artist ? ' — ' + letter.song.artist : ''}（${fmt.clock(letter.song.duration)}）`)),
         body,
         // Previous / next are ordinary links: from one letter to another the core replaces the
