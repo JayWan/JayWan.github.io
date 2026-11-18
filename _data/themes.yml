@@ -43,7 +43,7 @@ themes:
     enabled: true
 
   - id: sides
-    name: Side A / Side B
+    name: 唱片
     ground: "#EFEBE2"
     dark: false
     fonts: [sans-sc, grotesk]

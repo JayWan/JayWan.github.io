@@ -1,6 +1,6 @@
 # assets/fonts：自托管的网页字体
 
-四个新主题（夜航、笺、Side A / Side B、绕日）用到的全部字体都在这个目录里，和网站同源，不向任何第三方请求。旧版主题不用这里的东西。
+四个新主题（夜航、笺、唱片、绕日）用到的全部字体都在这个目录里，和网站同源，不向任何第三方请求。旧版主题不用这里的东西。
 
 打开 [`specimen.html`](specimen.html)（本地是 `http://localhost:4301/assets/fonts/specimen.html`）可以看到每个字族、每个字重的样子，页面底部会报告有没有字漏到系统字体上。
 
@@ -9,12 +9,12 @@
 | 文件 | CSS 里的名字 | 来自 | 字重 | 用在 |
 |---|---|---|---|---|
 | `serif-sc.css` + `serif-sc/` | `"F221 Serif"` | 思源宋体 Noto Serif SC | 300–700，连续可变 | 夜航、绕日 |
-| `sans-sc.css` + `sans-sc/` | `"F221 Sans"` | 思源黑体 Noto Sans SC | 400–900，连续可变 | Side A / Side B |
+| `sans-sc.css` + `sans-sc/` | `"F221 Sans"` | 思源黑体 Noto Sans SC | 400–900，连续可变 | 唱片 |
 | `sans-sc-400.css`（文件也在 `sans-sc/`） | `"F221 Sans 400"` | 同上 | 只有 400，体积减半 | 夜航里的小标签 |
 | `fangsong.css` + `fangsong/` | `"F221 Fangsong"` | 朱雀仿宋 | 400 | 笺 |
 | `mono.css` + `mono/` | `"F221 Mono"` | IBM Plex Mono | 300、400、500 | 夜航的日期与数字 |
 | `garamond.css` + `garamond/` | `"F221 Garamond"` | EB Garamond | 400 正体与斜体 | 笺的西文与数字 |
-| `grotesk.css` + `grotesk/` | `"F221 Grotesk"` | Archivo | 400–900，宽度 62–100% | Side A / Side B 的西文与数字 |
+| `grotesk.css` + `grotesk/` | `"F221 Grotesk"` | Archivo | 400–900，宽度 62–100% | 唱片的西文与数字 |
 | `text.css` + `text/` | `"F221 Text"` | Source Serif 4 | 300–700 正体，400 斜体 | 绕日的西文与数字 |
 
 另外还有：`LICENSES.md` 与 `OFL.txt`（许可）、`manifest.json`（每个文件的大小与字数，脚本写的）、`specimen.html`（样张）。
@@ -47,7 +47,7 @@
 |---|---|---|---|
 | 夜航 | 328 KB，4 个文件 | 再加 385–506 KB | 3–73 KB |
 | 笺 | 243 KB，3 个文件 | 再加 322–354 KB | 3–35 KB |
-| Side A / Side B | 231 KB，2 个文件 | 再加 293–318 KB | 0–29 KB |
+| 唱片 | 231 KB，2 个文件 | 再加 293–318 KB | 0–29 KB |
 | 绕日 | 300 KB，3 个文件 | 再加 376–410 KB | 0–37 KB |
 
 每个中文字族的 CSS 本身约 87 KB（gzip 后约 23 KB），夜航用两个中文字族，所以是两份。整个目录 9.9 MB、六百多个文件，其中约 6 MB 是为以后的新字预备的 `c`、`t` 切片，平时没有人会下载它们。
@@ -104,7 +104,7 @@ python3 -m venv .venv-fonts        # Debian / Ubuntu 上要先装 python3-venv�
 
   ```css
   font-family: "F221 Text", "F221 Serif", "Songti SC", "Noto Serif CJK SC", serif;       /* 绕日 */
-  font-family: "F221 Grotesk", "F221 Sans", "PingFang SC", "Microsoft YaHei", sans-serif; /* Side A / Side B */
+  font-family: "F221 Grotesk", "F221 Sans", "PingFang SC", "Microsoft YaHei", sans-serif; /* 唱片 */
   ```
 
   西文字族的 `unicode-range` 故意不包含 `·` `—` `‘’` `“”` `…`，所以中文里的引号、破折号、省略号、间隔号永远由中文字体来画（宽度、位置、竖排字形才对）。

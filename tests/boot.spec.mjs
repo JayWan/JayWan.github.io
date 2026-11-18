@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 
 const REGISTRY = {
   // [id, name, dark, drawable, fonts]
-  t: [['classic', '旧版', 0, 1, []], ['drift', '夜航', 1, 1, []], ['folio', '笺', 0, 1, []], ['sides', 'Side A / Side B', 0, 1, []],
+  t: [['classic', '旧版', 0, 1, []], ['drift', '夜航', 1, 1, []], ['folio', '笺', 0, 1, []], ['sides', '唱片', 0, 1, []],
     ['orbit', '绕日', 1, 1, []], ['probe', '探针', 0, 0, []], ['resting', '停用的', 1, 0, []]],
   d: { '02-21': 'orbit', '11-28': 'drift', '02-06': 'sides', '07-04': 'sides', '08-12': 'folio', '09-15': 'classic' },
 };
