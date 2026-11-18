@@ -477,12 +477,15 @@ export default {
     const hunger = ui.hunger();
     const foot = h('footer', { class: 'colophon' },
       h('p', { class: 'hunger', 'data-level': hunger.level }, hunger.text),
-      ui.switcher(),
       h('p', { class: 'credit' }, '© 2016 – 2026 Fan & Wan'));
     root.replaceChildren(main, foot, np.el);
     root.classList.toggle('still', still);
     root.classList.toggle('in-colour', colour);
     root.dataset.np = 'off';
+    // 换一种读法：开着的列表不留到下一页。首页画好了就留着，开着走开、后退回来时它还会开着（核心那时已经不认它，点别处、按 Esc 都关不上）；
+    // 宽窄一换（1200px），开着的那个被藏起来、另一个露出来。都用它自己的按钮关上，开合照旧归核心管
+    const closeSwitcher = () => root.querySelectorAll('.theme-switcher[data-open] > button').forEach((b) => b.click());
+    matchMedia('(min-width: 1200px)').addEventListener('change', closeSwitcher);
 
     // ───────────────────────── 首页 ─────────────────────────
     let home = null;
@@ -512,6 +515,7 @@ export default {
         h('section', { class: 'chartcol', 'aria-label': '绕日图' }, h('div', { class: 'chartwrap' },
           h('header', { class: 'masthead' },
             h('h1', { lang: 'en' }, site.title),
+            ui.switcher(),          // 换一种读法：窄屏上在站名右边，桌面上在星历表的表头右端（两个里只显示一个）
             h('p', { class: 'plate-title' }, '绕日图'),
             h('p', { class: 'plate-desc' }, `${Y0} – ${Y1}`)),
           chartHost,
@@ -525,7 +529,7 @@ export default {
           legend,
           readout),
         h('section', { class: 'tablecol', 'aria-label': '星历表' },
-          h('header', { class: 'eph-head' }, h('h2', {}, '星历表'), sort),
+          h('header', { class: 'eph-head' }, h('h2', {}, '星历表'), sort, ui.switcher()),
           eph));
 
       function today() {
@@ -689,7 +693,7 @@ export default {
       ctx.widgets.init(contentEl);
 
       const el = h('div', { class: 'letter', 'data-role': roleOf(letter), 'data-quiet': letter.quiet || null },
-        h('header', { class: 'topbar' }, backLink('brand', site.title), backLink('back', icon(20, 20, TARGET), '回到绕日图')),
+        h('header', { class: 'topbar' }, backLink('brand', site.title), h('div', { class: 'tb-end' }, backLink('back', icon(20, 20, TARGET), '回到绕日图'), ui.switcher())),
         h('div', { class: 'l-grid' },
           h('div', { class: 'l-head' },
             h('p', { class: 'kicker' }, h('span', {}, `第 ${letter.no} 封`, h('span', { class: 'of' }, ` / ${letters.length}`)), h('span', { class: 'bar' }),
@@ -717,7 +721,7 @@ export default {
     function lostView() {
       const loc = h('div', { class: 'loc' });
       const el = h('div', { class: 'letter lost' },
-        h('header', { class: 'topbar' }, h('a', { class: 'brand', href: '/' }, site.title), h('a', { class: 'back', href: '/' }, icon(20, 20, TARGET), '回到绕日图')),
+        h('header', { class: 'topbar' }, h('a', { class: 'brand', href: '/' }, site.title), h('div', { class: 'tb-end' }, h('a', { class: 'back', href: '/' }, icon(20, 20, TARGET), '回到绕日图'), ui.switcher())),
         h('div', { class: 'lost-body' }, loc,
           h('p', { class: 'kicker' }, '404 · 轨道之外'),
           h('h1', { class: 'l-title' }, '没有信'),
@@ -733,6 +737,7 @@ export default {
     function show(route) {
       const view = route.type === 'letter' ? letterView(route) : route.type === 'home' ? (home ||= buildHome()) : lostView();
       if (route.type !== 'letter') strip = null;
+      closeSwitcher();
       main.replaceChildren(view.el);
       root.dataset.view = route.type;
       const handled = view.enter(route, first ? returned : true);

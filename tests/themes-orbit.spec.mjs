@@ -1,7 +1,7 @@
 // 「绕日」 orbit: what this theme promises beyond the shared contract (tests/themes.spec.mjs).
 // Each test is one of the defects the mockup was sent back for; see assets/themes/orbit/README.md.
 
-import { test, expect } from '@playwright/test';
+import { test, expect, firefox } from '@playwright/test';
 import { getIsland, open, watch, expectNoSidewaysScroll } from './helpers.mjs';
 
 const THEME = 'orbit';
@@ -222,6 +222,158 @@ test.describe('theme "orbit", its own promises', () => {
     await page.keyboard.press('Escape');
     await expect(page.locator('#theme-root .eph')).toBeVisible();
     expect(await ring()).toBe('none');
+  });
+
+  test('the control that changes theme is part of the plate: the head of the ephemeris on a desktop, beside the name on a phone, the list hanging from the rule', async ({ page }) => {
+    const TOGGLE = '#theme-root .theme-switcher-toggle';
+    const measure = () => page.evaluate((TOGGLE) => {
+      const box = (el) => el.getBoundingClientRect().toJSON();
+      const toggle = [...document.querySelectorAll(TOGGLE)].find((b) => b.getClientRects().length);
+      const nav = toggle.closest('nav'), list = nav.querySelector('ul');
+      const head = toggle.closest('.eph-head, .topbar, .masthead');
+      return {
+        home: head.className, toggle: box(toggle), name: box(toggle.querySelector('.theme-switcher-name')), list: box(list),
+        names: [...list.querySelectorAll('a')].map((a) => { const r = document.createRange(); r.selectNodeContents(a); return r.getBoundingClientRect().left; }),
+        mark: getComputedStyle(list.querySelector('a[aria-current]'), '::before').borderTopStyle,
+        sort: head.querySelector('.sort') && box(head.querySelector('.sort')),
+        title: head.querySelector('h1') && box(head.querySelector('h1')),
+        rule: head.matches('.eph-head') ? document.querySelector('#theme-root .row-h').getBoundingClientRect().top : head.matches('.topbar') ? head.getBoundingClientRect().bottom - 1 : null,
+      };
+    }, TOGGLE);
+    const hangs = (at) => {
+      expect(Math.abs(at.list.right - at.toggle.right), 'the list ends where the control ends').toBeLessThanOrEqual(1);
+      for (const left of at.names) expect(Math.abs(left - at.name.left), 'every name starts under the name on the control').toBeLessThanOrEqual(1);
+      expect(at.mark, 'the theme being worn has a dot in front of it').toBe('solid');
+      if (at.rule != null) expect(Math.abs(at.list.top - at.rule), 'the list hangs from the rule under the head').toBeLessThanOrEqual(1);
+    };
+
+    await open(page, '/', THEME);
+    await expect(page.locator(`${TOGGLE}:visible`)).toHaveCount(1);
+    await page.locator(`${TOGGLE}:visible`).click();
+    const home = await measure();
+    if (wide(page)) {
+      expect(home.home).toBe('eph-head');
+      expect(home.toggle.left, 'after the sort control, on its line').toBeGreaterThanOrEqual(home.sort.right);
+      expect(Math.abs((home.toggle.top + home.toggle.bottom) - (home.sort.top + home.sort.bottom)) / 2).toBeLessThanOrEqual(2);
+    } else {
+      expect(home.home).toBe('masthead');
+      expect(home.toggle.left, 'beside the name, not on it').toBeGreaterThan(home.title.right);
+      expect(home.title.height, 'the name stays on one line').toBeLessThan(40);
+    }
+    hangs(home);
+    await page.keyboard.press('Escape');
+
+    // the header of a letter and of the 404 view: the name, the way back and the control share one line down to the narrowest phone
+    const height = page.viewportSize().height;
+    for (const width of [402, 375, 360, 320]) {
+      await page.setViewportSize({ width, height });
+      await open(page, '/404.html', THEME);
+      const bar = await page.evaluate(() => ['.brand', '.back', '.theme-switcher-toggle'].map((s) => {
+        const el = document.querySelector(`#theme-root .topbar ${s}`), r = el.getBoundingClientRect(), text = document.createRange();
+        text.selectNodeContents(el);
+        return { left: r.left, right: r.right, middle: (r.top + r.bottom) / 2, lines: new Set([...text.getClientRects()].map((line) => Math.round(line.top))).size, cut: el.scrollWidth > el.clientWidth + 1 };
+      }));
+      const [brand, back, toggle] = bar;
+      expect(brand.right, `${width}px: the name ends before the way back`).toBeLessThanOrEqual(back.left);
+      expect(back.right, `${width}px: the way back ends before the control`).toBeLessThanOrEqual(toggle.left);
+      expect(toggle.right, `${width}px: the control is inside the screen`).toBeLessThanOrEqual(width);
+      expect(brand.lines, `${width}px: the name is on one line`).toBe(1);
+      expect(bar.filter((b) => b.cut || Math.abs(b.middle - toggle.middle) > 1).length, `${width}px: one line, nothing cut`).toBe(0);
+      await expect(page.locator('#theme-root .topbar .back')).toHaveText('回到绕日图');
+      await page.locator(`${TOGGLE}:visible`).click();
+      hangs(await measure());
+      await expectNoSidewaysScroll(page);
+    }
+  });
+
+  test('with the text half as large again, the head of a page still holds: the name folds at its space or takes a line of its own, the way back and the control stay together at the right end', async ({ browserName, baseURL }) => {
+    test.skip(browserName !== 'firefox', 'only Firefox can be told to enlarge the text alone');
+    const big = await firefox.launch({ firefoxUserPrefs: { 'ui.textScaleFactor': 150, 'browser.display.os-zoom-behavior': 2 } });
+    const page = await big.newPage({ baseURL, viewport: { width: 402, height: 800 }, locale: 'zh-CN', timezoneId: 'America/Los_Angeles' });
+    // each word of a name: on how many lines it lies (a word broken in two lies on two), and where it ends
+    const words = (selector) => page.evaluate((selector) => {
+      const el = [...document.querySelectorAll(`#theme-root ${selector}`)].find((e) => e.getClientRects().length);
+      const text = [...el.childNodes].find((n) => n.nodeType === 3);
+      let at = 0;
+      return text.data.split(' ').map((word) => {
+        const range = document.createRange();
+        range.setStart(text, at); range.setEnd(text, at + word.length); at += word.length + 1;
+        const rects = [...range.getClientRects()];
+        return { word, lines: new Set(rects.map((r) => Math.round(r.top))).size, right: Math.max(...rects.map((r) => r.right)) };
+      });
+    }, selector);
+    try {
+      for (const width of [402, 375, 360, 320]) {
+        await page.setViewportSize({ width, height: 800 });
+        await open(page, '/404.html', THEME);
+        await page.locator('#theme-root .topbar .theme-switcher-toggle').click();
+        const at = await page.evaluate(() => {
+          const box = (s) => document.querySelector(`#theme-root .topbar ${s}`).getBoundingClientRect().toJSON();
+          return { bar: box(''), brand: box('.brand'), back: box('.back'), toggle: box('.theme-switcher-toggle'), list: box('.theme-switcher ul'), screen: [window.innerWidth, window.innerHeight] };
+        });
+        const name = await words('.topbar .brand');
+        const mid = (b) => (b.top + b.bottom) / 2;
+        expect(name.filter((w) => w.lines > 1).map((w) => w.word), `${width}px: no word of the name is broken`).toEqual([]);
+        expect(at.brand.top, `${width}px: the name is inside the head`).toBeGreaterThanOrEqual(Math.max(0, at.bar.top) - 0.5);
+        expect(at.brand.bottom, `${width}px: the name is inside the head`).toBeLessThanOrEqual(at.bar.bottom + 0.5);
+        expect(at.brand.right <= at.back.left || at.brand.bottom <= at.back.top, `${width}px: the name keeps clear of the way back`).toBe(true);
+        expect(Math.abs(mid(at.back) - mid(at.toggle)), `${width}px: the way back and the control on one line`).toBeLessThanOrEqual(1);
+        expect(at.back.right, `${width}px: the way back before the control`).toBeLessThanOrEqual(at.toggle.left);
+        expect(at.toggle.right, `${width}px: the control at the right end, inside the screen`).toBeLessThanOrEqual(at.screen[0]);
+        expect(Math.abs(at.list.top - (at.bar.bottom - 1)), `${width}px: the list hangs from the rule under the head`).toBeLessThanOrEqual(1);
+        expect(Math.abs(at.list.right - at.toggle.right), `${width}px: the list ends where the control ends`).toBeLessThanOrEqual(1);
+        expect(at.list.bottom, `${width}px: the list is inside the screen`).toBeLessThanOrEqual(at.screen[1]);
+        await expect(page.locator('#theme-root .topbar .back')).toHaveText('回到绕日图');
+        await expectNoSidewaysScroll(page);
+
+        // the home page: the name beside the control folds at its space instead of running under it
+        await open(page, '/', THEME);
+        const toggle = await page.locator('#theme-root .theme-switcher-toggle:visible').evaluate((b) => b.getBoundingClientRect().left);
+        const title = await words('.masthead h1');
+        expect(title.filter((w) => w.lines > 1).map((w) => w.word), `${width}px: no word of the name is broken`).toEqual([]);
+        expect(Math.max(...title.map((w) => w.right)), `${width}px: the name ends before the control`).toBeLessThanOrEqual(toggle);
+      }
+    } finally {
+      await big.close();
+    }
+  });
+
+  test('a list of themes left open does not come back open: the home page is kept while a letter is read, and has a control for each width', async ({ page, request, isMobile }) => {
+    const letter = await urlOf(request, (l) => !l.standalone);
+    const press = (loc) => (isMobile ? loc.tap() : loc.click());
+    const toggle = page.locator('#theme-root .theme-switcher-toggle:visible');
+    const opened = page.locator('#theme-root nav.theme-switcher[data-open]');
+    const view = (type) => expect(page.locator('#theme-root')).toHaveAttribute('data-view', type);
+
+    // left open the way the browser's own Back and Forward leave a page: nothing on the page is pressed or focused
+    await open(page, '/', THEME);
+    await press(toggle);
+    await expect(opened).toHaveCount(1);
+    await page.evaluate((url) => window.__theme.ctx.router.go(url), letter);
+    await view('letter');
+    await page.evaluate(() => document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));      // a press somewhere on the letter
+    await page.goBack();
+    await view('home');
+    await expect(opened, 'back on the plate, the list is closed').toHaveCount(0);
+    await expect(page.locator('#theme-root .theme-switcher ul:visible')).toHaveCount(0);
+
+    await press(toggle);
+    await page.goForward();
+    await view('letter');
+    await page.goBack();
+    await view('home');
+    await expect(opened, 'and again after Forward and Back').toHaveCount(0);
+
+    // the width changes across 1200px: the control that was open is hidden, the one that shows is closed, and stays closed coming back
+    if (!isMobile) {
+      const { width, height } = page.viewportSize();
+      await press(toggle);
+      await page.setViewportSize({ width: wide(page) ? 900 : 1300, height });
+      await expect(opened).toHaveCount(0);
+      await page.setViewportSize({ width, height });
+      await expect(opened).toHaveCount(0);
+      await expect(toggle).toHaveCount(1);
+    }
   });
 
   test('nothing moves under prefers-reduced-motion', async ({ browser, baseURL, request }) => {
