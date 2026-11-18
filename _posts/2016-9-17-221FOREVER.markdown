@@ -15,7 +15,14 @@ bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 寂静之声.mp3
-quote: "尽管爱永远说不完，还是要用力去说吧。"
+quotes:
+  - "尽管爱永远说不完，还是要用力去说吧。"
+  - "我们才认识了295天，却感觉像是认识了一辈子。"
+  - "你在前排，不时回头看看我，我在后排，不时抬头看看你"
+  - "寒暑相易，白云苍狗，吾爱汝永爱汝，亦当直待汝之。"
+  - "经测试目前音乐的循环播放貌似还有点问题。"
+  - "我们俩的心里都住着一个调皮的小孩呢，希望小孩永远都不会跑到别处去"
+  - "刚刚你久久地亲吻我的左手，像对待一颗珍珠。"
 days: { met: 295 }          # the letter counts 295 (inclusive); themes show the letter's own number
 ---
 

@@ -15,7 +15,12 @@ bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: No One But You.mp3
-quote: "我书桌上属于你的那一角也永远是整齐的。"
+quotes:
+  - "我书桌上属于你的那一角也永远是整齐的。"
+  - "你呀，就是我养的（养我的）一只小龙猫呀。"
+  - "时间是个神奇的东西，有时多一秒都觉得艰难，可有时候三百天就这样过去"
+  - "走在路上看着地面上的砖砖路想起各种范氏叠词就觉得全身暖意洋洋"
+  - "我发现自己现在真的特别喜欢用真的这个词"
 days: { together: 300 }     # the letter counts 300 (inclusive)
 ---
 

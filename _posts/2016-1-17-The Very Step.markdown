@@ -15,7 +15,12 @@ bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: I Still Carry On.mp3
-quote: "现在我知道我永远不会后悔那时的决定，Forever."
+quotes:
+  - "现在我知道我永远不会后悔那时的决定，Forever."
+  - "未曾想过就这样草率地表白了。"
+  - "从22:37到23:37，真正质的改变，也没有那么难。"
+  - "我将本该用来复习微积分的时间拿来写这些东西，谁能说出这对不对呢"
+  - "空巢6年，心还没荒芜，感谢你。什么鬼，我的心是永远不会荒芜的好吗！"
 ---
 <blockquote class="u--startsWithDoubleQuote">“I know it’s far away.But I’ll still carry on.” <br/> - I still carry on</blockquote>
 

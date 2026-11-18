@@ -14,7 +14,12 @@ bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 开不了口.mp3
-quote: "我也不想成为你的故事，想成为你的生活"
+quotes:
+  - "我也不想成为你的故事，想成为你的生活"
+  - "你的浅笑，我的贱笑，怎么看都那么般配呢"
+  - "真希望就算天崩地裂、地磁颠倒，一钻进我的怀里，你就能安然入睡呢。"
+  - "是时候给我们的这一年总结一下啦！哎呀，莫名其妙就泪崩了，真是的，没出息啊。"
+  - "范范哄了几句，万万就又好啦！所以两个人还是得有个人主动哄对方呢。"
 written_on: 2017-02-21   # the date in `date` is a typo that became the URL; themes show this one
 ---
 
