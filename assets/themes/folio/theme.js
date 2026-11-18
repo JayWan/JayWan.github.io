@@ -419,8 +419,11 @@ export default {
 
     /* 信末的一小叶：上一封 | 目录 | 下一封（书往左翻，所以上一封在右） */
     function feet(l) {
-      const side = (to, label, none) => {
-        if (!to) return h('li', { class: 'cell cell--foot' }, h('div', { class: 'col' }, h('span', { class: 'foot-none v' }, none)));
+      const side = (to, label) => {
+        /* 到头了：最前面只印「第一封」；最后面是一列空白，一道虚线接着往下（还没写） */
+        if (!to) return label === '上一封'
+          ? h('li', { class: 'cell cell--foot' }, h('div', { class: 'col' }, h('span', { class: 'foot-none v' }, '第一封')))
+          : h('li', { class: 'cell cell--foot', 'aria-label': '下一封还没写' }, h('div', { class: 'col' }, h('span', { class: 'latest-k v' }, label), h('span', { class: 'lead' }), h('span', { class: 'day' })));
         const d = to.days.met;
         return h('li', { class: 'cell cell--foot' },
           h('a', { class: 'col', href: to.url, rel: label === '上一封' ? 'prev' : 'next', 'aria-label': `${label}：${to.title}` },
@@ -428,10 +431,10 @@ export default {
             h('span', { class: 't' }, titleLines(to.title)),
             h('span', { class: 'day', lang: 'en' }, d != null ? String(d) : '')));
       };
-      const prev = side(l.prev, '上一封', '这是第一封。');
-      const next = side(l.next, '下一封', '下一封还没写。');
+      const prev = side(l.prev, '上一封');
+      const next = side(l.next, '下一封');
       const home = h('li', { class: 'cell cell--foot cell--home' },
-        homeLink('col', h('span', { class: 't' }, h('span', { class: 'ln' }, h('span', { class: 'lt v' }, '目录'), h('span', { class: 'wari v' }, h('span', {}, isGuest(l) ? '回到跋那一叶' : `回到${yearZh(l.year)}年那一叶`)))), h('span', { class: 'day day--k' }, '日数')));
+        homeLink('col', h('span', { class: 't' }, h('span', { class: 'ln' }, h('span', { class: 'lt v' }, '目录'), h('span', { class: 'wari v' }, h('span', {}, isGuest(l) ? '跋' : yearZh(l.year))))), h('span', { class: 'day day--k' }, '日数')));
       return h('nav', { class: 'feet', 'aria-label': '上一封、目录、下一封' }, h('ol', { class: 'cols', style: '--k:3' }, prev, home, next));
     }
 
@@ -590,14 +593,13 @@ export default {
     function lostView() {
       const n = parseInt(getComputedStyle(root).getPropertyValue('--n'), 10) || 12;
       const fill = [];
-      for (let i = Math.max(0, n - 4); i > 0; i--) fill.push(blank());
+      for (let i = Math.max(0, n - 2); i > 0; i--) fill.push(blank());
       return h('div', { class: 'home home--lost' },
         h('div', { class: 'spread' },
           h('section', { class: 'leaf leaf--lost', 'aria-label': '没有这一页' },
             h('ol', { class: 'cols' },
               h('li', { class: 'cell cell--year' }, h('div', { class: 'yr' }, h('h1', { class: 'yr-t v' }, '缺页'), h('p', { class: 'yr-n v' }, '四〇四'))),
-              h('li', { class: 'cell cell--fl' }, h('div', { class: 'half' }, h('p', { class: 'v' }, '这一页是空白的。')), h('div', { class: 'half' }, h('p', { class: 'v' }, '这回不是没写信，是地址不对。'))),
-              h('li', { class: 'cell cell--foot cell--home' }, h('a', { class: 'col', href: '/' }, h('span', { class: 't' }, h('span', { class: 'ln' }, h('span', { class: 'lt v' }, '目录'), h('span', { class: 'wari v' }, h('span', {}, '回到第一叶')))), h('span', { class: 'day day--k' }, '日数'))),
+              h('li', { class: 'cell cell--foot cell--home' }, h('a', { class: 'col', href: '/' }, h('span', { class: 't' }, h('span', { class: 'ln' }, h('span', { class: 'lt v' }, '目录'))))),
               fill))));
     }
 
@@ -607,7 +609,7 @@ export default {
     const hunger = ui.hunger();
     const dToday = site.today.days.met;
     const colophon = h('footer', { class: 'colophon' },
-      dToday != null && h('p', { class: 'colophon-today' }, '今天是相识的第', h('span', { class: 'n', lang: 'en' }, String(dToday)), '日。下一封还没写。'),
+      dToday != null && h('p', { class: 'colophon-today' }, h('span', { class: 'd' }, ymdZh(site.today.date)), h('span', { class: 'k' }, '相识'), '第', h('span', { class: 'n', lang: 'en' }, String(dToday)), '日'),
       hunger.text && h('p', { class: 'colophon-voice', 'data-level': hunger.level }, h('span', { class: 'voice-k' }, '网站按'), h('span', { class: 'voice-t' }, hunger.text)),
       h('p', { class: 'colophon-name', lang: 'en' }, site.title),
       h('p', { class: 'colophon-c', lang: 'en' }, `© 2016 – ${Math.max(2026, Number(fmt.date(site.today.date, 'year')) || 0)} Fan & Wan`),
@@ -636,7 +638,7 @@ export default {
       const box = root.querySelector('.song');
       if (box) {
         const mine = s.letter && String(s.letter.no) === box.dataset.song;
-        box.querySelector('.song-err').textContent = mine && s.error ? '没放出来，再点一下试试。' : mine && s.loading ? '正在取歌…' : '';
+        box.querySelector('.song-err').textContent = mine && s.error ? '没放出来' : mine && s.loading ? '正在取歌…' : '';
         box.classList.toggle('is-on', Boolean(mine));
       }
       /* 底边那一行：有歌载入了就在；读信时窄屏上一直在（暂停要够得着，目录也在这里） */
