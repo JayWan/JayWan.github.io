@@ -11,8 +11,6 @@ const between = (a, b) => Math.round((T(b) - T(a)) / DAY);
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const rnd = (i, k) => { const x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
 const pad = (n) => String(n).padStart(2, '0');
-const CN = '零一二三四五六七八九';
-const cn = (n) => (n < 10 ? CN[n] : n < 100 ? (n < 20 ? '' : CN[Math.floor(n / 10)]) + '十' + (n % 10 ? CN[n % 10] : '') : String(n));
 
 /** h('a', { href, className, onclick, 'data-x': … }, ...children) → element. Null children are skipped. */
 function h(tag, props = {}, ...children) {
@@ -102,18 +100,32 @@ export default {
         h('a', { className: 'bar-link', href: letters.latest.url }, '最新一封'),
         driftToggle));
 
-    const lost = h('p', { className: 'lost', hidden: true }, h('b', {}, '这一页没有信。'), h('span', {}, '信都在下面这条河里。'));
+    const lost = h('p', { className: 'lost', hidden: true }, h('b', {}, '404'), h('span', {}, '没有信'));   // drawn like a year head: a number and what it holds
     const tdays = site.today.days;
-    const years = Number(today.slice(0, 4)) - Number(site.met.slice(0, 4));
+    /* The river in miniature, lying on its side under the wordmark: honest, linear time from the day they met
+       to today. One tick per letter, the line dashed over every silence, year marks below, a lamp where today is.
+       It says what the page is before anything is read: crowded years, empty years, and which end is now.
+       A drawing that carries meaning has a name for those who cannot see it; its marks are not read out one by one. */
+    const strip = h('div', { className: 'strip', role: 'img', 'aria-label': `${N} 封信，${dot(site.met)} 至 ${dot(today)}` });
+    {
+      const s0 = T(site.met), s1 = Math.max(T(today), s0 + DAY), pc = (t) => (clamp((t - s0) / (s1 - s0), 0, 1) * 100).toFixed(2) + '%';
+      const put = (e, t, t2) => { e.style.left = pc(t); if (t2) e.style.right = `calc(100% - ${pc(t2)})`; strip.append(e); };
+      order.forEach((p, i) => {
+        if (i && GAP[i] > SILENCE) put(h('i', { className: 'st-q' }), T(p.date), T(order[i - 1].date));
+        put(h('i', {}), T(p.date));
+      });
+      const y0 = Number(site.met.slice(0, 4)) + 1, y1 = Number(today.slice(0, 4));
+      for (let y = y0; y <= y1; y++) put(h('span', {}, String(y).slice(y1 - y0 > 12 ? 2 : 0)), Date.UTC(y, 0, 1));   // in time the years outgrow the line: then two digits each
+      strip.append(h('b', {}));
+    }
     const hero = h('section', { className: 'hero' },
-      lost,
       h('h1', {}, site.title),
-      h('p', { className: 'lead' }, `${cn(N)}封信，写了${cn(years)}年。`),
-      h('p', { className: 'sub' }, '最新的一封在最上面，往下是回头看。挤的地方是话多的那两年，空的地方是没写信的日子，都照实留着。点一张相片，信在原地展开；每封信有一首歌，不点不响。'),
+      lost,
       h('p', { className: 'odo-today' }, `截至今天 ${dot(today)}`),
       h('dl', { className: 'odo' }, [['认识', site.met, tdays.met], ['在一起', site.together, tdays.together], ['结婚', site.married, tdays.married]]
         .filter((row) => row[1] && row[2] != null)
-        .map(([k, d, n]) => h('div', {}, h('dt', {}, k), h('dd', {}, h('b', {}, String(n)), h('i', {}, '天'), h('span', {}, `自 ${dot(d)}`))))));
+        .map(([k, d, n]) => h('div', {}, h('dt', {}, k), h('dd', {}, h('b', {}, String(n)), h('i', {}, '天'), h('span', {}, `自 ${dot(d)}`))))),
+      strip);
 
     const axis = h('div', { className: 'axis', 'aria-hidden': 'true' });
     const list = h('ol', { className: 'prints' });
@@ -474,7 +486,8 @@ export default {
         ypN.textContent = `${perYear[yr] || 0} 封`;
         rulerYear.textContent = String(yr);
       }
-      yearpin.classList.toggle('on', !openL && G.wide && window.scrollY > hero.offsetTop + hero.offsetHeight - 220 && innerHeight * 0.5 - top < G.end + 40);
+      // the pinned year waits until the masthead has passed above it: at no window height do its numerals cross the strip
+      yearpin.classList.toggle('on', !openL && G.wide && hero.getBoundingClientRect().bottom < yearpin.getBoundingClientRect().top - 16 && innerHeight * 0.5 - top < G.end + 40);
     }
     const queueChrome = () => { if (!raf) raf = requestAnimationFrame(chrome); };
     addEventListener('scroll', () => { const now = performance.now(); if (now - lastScroll > 140) moveStart = now; lastScroll = now; if (pin && Math.abs(window.scrollY - pinY) > 4) pin = false; queueChrome(); }, { passive: true });
@@ -502,7 +515,7 @@ export default {
       days: h('dl', { className: 'sh-days' }),
       play: playButton('play', '播放或暂停这封信的歌', () => { if (openL) player.toggle(openL); }),
       song: h('span', { className: 'track-name' }),
-      time: h('span', { className: 'track-time cn' }, '点一下才响'),
+      time: h('span', { className: 'track-time' }),
       line: h('div', { className: 'track-line', role: 'slider', tabIndex: 0, 'aria-label': '播放进度', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': '0' }, h('i')),
       body: h('div', { className: 'sheet-body letter-body' }),
       sign: h('p', { className: 'sheet-sign' }),
@@ -510,11 +523,11 @@ export default {
     };
     S.mini = playButton('play play-s', '播放或暂停', miniToggle);
     S.track = h('div', { className: 'track' }, S.play, h('div', { className: 'track-txt' }, h('span', { className: 'track-k' }, '这封信的歌'), S.song), S.time, S.line);
-    S.bar = h('div', { className: 'sheet-bar' }, S.no, h('div', { className: 'sb-song' }, S.mini, S.miniName),
-      h('a', { className: 'sb-close', href: '/', 'data-back': '', onclick: closeClick }, h('span', {}, '合上'), h('i', { 'aria-hidden': 'true' })));
+    /* closing is one word and one mark, the same at the head of the sheet and at its foot */
+    const closeLink = (cls) => h('a', { className: cls, href: '/', 'data-back': '', onclick: closeClick }, h('span', {}, '合上'), h('i', { 'aria-hidden': 'true' }));
+    S.bar = h('div', { className: 'sheet-bar' }, S.no, h('div', { className: 'sb-song' }, S.mini, S.miniName), closeLink('sb-close'));
     S.head = h('header', { className: 'sheet-head' }, h('div', { className: 'sh-main' }, S.meta, S.title, S.by), S.days, S.track);
-    S.foot = h('footer', { className: 'sheet-foot' }, S.sign, S.nav,
-      h('a', { className: 'sheet-close2', href: '/', 'data-back': '', onclick: closeClick }, '合上，回到河里'));
+    S.foot = h('footer', { className: 'sheet-foot' }, S.sign, S.nav, closeLink('sheet-close2'));
     sheet.append(S.paper, S.bar, S.cover, S.head, S.body, S.foot);
 
     const season = (d) => (typeof fmt.season === 'function' ? fmt.season(d) : '');
@@ -554,7 +567,7 @@ export default {
         if (w > 0 && hh > 0) { im.style.setProperty('--w', w + 'px'); im.style.setProperty('--r', (w / hh).toFixed(4)); }
       });
       S.sign.replaceChildren(h('b', {}, names(p).join(' 和 ')), `${dot(p.date)}${p.days.met != null && p.role !== 'guest' ? ` · 认识的第 ${p.days.met} 天` : ''}`);   // the count is the couple's: a guest signs with the date alone
-      S.nav.replaceChildren(navCell(p.prev, 'sn-prev', '上一封', '没有了，这是第一封'), navCell(p.next, 'sn-next', '下一封', '还没写'));
+      S.nav.replaceChildren(navCell(p.prev, 'sn-prev', '上一封', '没有了'), navCell(p.next, 'sn-next', '下一封', '还没写'));
     }
 
     /* ───────── the song: one shared player, never started by anything but a click ───────── */
@@ -562,7 +575,7 @@ export default {
     function tickTime(st) {
       if (!openL || !st.letter || st.letter.no !== openL.no || st.error) return;
       S.time.classList.remove('cn');
-      S.time.textContent = `${fmt.clock(st.time)} / ${fmt.clock(st.duration)}`;
+      S.time.textContent = `${fmt.clock(st.time)} / ${fmt.clock(st.duration || openL.song.duration || 0)}`;
       const pr = st.duration ? clamp(st.time / st.duration, 0, 1) : 0;
       S.line.style.setProperty('--prog', pr.toFixed(4));
       S.line.setAttribute('aria-valuenow', String(Math.round(pr * 100)));
@@ -578,9 +591,11 @@ export default {
       barSong.textContent = cur ? `${cur.song.title} · ${cur.title}` : '';
       if (cur) barSong.href = cur.url;
       sheet.classList.toggle('mini-on', Boolean(openL) && (trackAway || Boolean(cur && !mine)));
+      sheet.classList.toggle('song-off', mine && Boolean(st.error));      // a song that did not start: the key goes dashed, like a silence on the river
       if (mine && !st.error) { tickTime(st); return; }
-      S.time.classList.add('cn');
-      S.time.replaceChildren(...phrases(mine ? '这首歌没放出来，再点一下试试' : '点一下才响'));
+      // at rest the slot holds the length of the song (a thing with a length and a key is a thing to play)
+      S.time.classList.toggle('cn', mine);
+      S.time.textContent = mine ? '没放出来' : openL && openL.song && openL.song.duration ? fmt.clock(openL.song.duration) : '';
       S.line.style.setProperty('--prog', '0');
     }
     player.on('change', paint);
@@ -742,6 +757,13 @@ export default {
     }
     show(landed, true);
     paint(player.state);
+    /* A print can be picked up. Once, on arriving at the top of the river, the nearest print on the first screen
+       lifts the way it does under a pointer, and settles. Not for a reader who asked for stillness. */
+    if (landed.type !== 'letter' && sheet.animate) setTimeout(() => {
+      if (openL || !motion() || root.classList.contains('paused') || window.scrollY > 60) return;
+      const it = items.filter((x) => !x.p.quiet && x.frame.getBoundingClientRect().top < innerHeight - 120).sort((x, y) => LAYER[idx(y.p)] - LAYER[idx(x.p)])[0];
+      if (it) it.frame.animate([{ transform: 'none' }, { transform: 'translateY(-10px) scale(1.025)', offset: 0.45 }, { transform: 'none' }], { duration: 1500, easing: 'ease-in-out' });
+    }, 1300);
 
     let rsz = 0, lastW = stage.clientWidth;
     addEventListener('resize', () => { clearTimeout(rsz); rsz = setTimeout(() => { if (stage.clientWidth !== lastW) { lastW = stage.clientWidth; place(); } }, 120); });

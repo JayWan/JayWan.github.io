@@ -94,8 +94,19 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
   margin: 0; font: 300 clamp(44px, 5.5vw, 80px)/1.04 var(--serif); letter-spacing: .015em; color: var(--text);
   white-space: nowrap; font-variant-numeric: lining-nums;
 }
-.lead { margin: 30px 0 0; font: 500 23px/1.6 var(--serif); letter-spacing: .06em; color: var(--text); }
-.sub { margin: 14px 0 0; font: 400 17px/1.9 var(--serif); color: var(--text-2); max-width: 29em; text-align: justify; }
+/* beside the river the wordmark keeps a fixed line: at every width it is centred on 今天, and what hangs below it stays clear of that lamp's label */
+@media (min-width: 1100px) { .hero h1 { line-height: 84px; } }
+/* the river in miniature: a tick per letter on linear time, dashed over each silence, year marks, a lamp at today */
+.strip { position: relative; height: 38px; margin: 36px 0 0; }
+.strip::before { content: ""; position: absolute; left: 0; right: 0; top: 15px; height: 1px; background: var(--line); }
+.strip i { position: absolute; top: 2px; width: 1px; height: 13px; background: var(--text-2); }
+.strip .st-q { top: 15px; width: auto; height: 1px; background: repeating-linear-gradient(90deg, #524d41 0 3px, var(--ground) 3px 7px); }
+.strip b {
+  position: absolute; left: 100%; top: 12px; width: 7px; height: 7px; margin-left: -4px; border-radius: 50%; background: var(--paper);
+  box-shadow: 0 0 0 3px rgba(var(--paper-rgb), .1), 0 0 16px 4px rgba(var(--paper-rgb), .28);
+}
+.strip > span { position: absolute; top: 27px; font: 400 11px/1 var(--mono); letter-spacing: .02em; color: var(--dim); font-variant-numeric: tabular-nums; }
+.strip > span::before { content: ""; position: absolute; left: 0; top: -11px; width: 1px; height: 5px; background: #57524a; }
 .odo-today { margin: 40px 0 0; font: 400 12.5px/1 var(--mono); letter-spacing: .12em; color: var(--dim); }
 .odo { display: flex; gap: 0; margin: 14px 0 0; padding: 0; border-top: 1px solid var(--line); }
 .odo > div { flex: 1 1 0; padding: 14px 0 0; }
@@ -134,11 +145,11 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
 .note.gap b { font: 300 var(--fs, 24px)/1 var(--mono); letter-spacing: -.02em; color: var(--text); font-variant-numeric: tabular-nums; }
 .note.gap b + i { font: 500 13px/1 var(--serif); font-style: normal; color: var(--text-2); margin-left: 6px; }
 .note.gap .n-sub { margin-top: 10px; color: var(--text-2); }
-.note.year b {
+.note.year b, .lost b {
   font: 500 62px/1 var(--serif); letter-spacing: .01em; color: var(--ground); -webkit-text-stroke: 2px #6f6a5b; paint-order: stroke fill;
   font-variant-numeric: lining-nums tabular-nums;
 }
-.note.year span { display: block; margin-top: 8px; font: 400 12.5px/1 var(--mono); letter-spacing: .14em; color: var(--dim); }
+.note.year span, .lost span { display: block; margin-top: 8px; font: 400 12.5px/1 var(--mono); letter-spacing: .14em; color: var(--dim); }
 @media (min-width: 1100px) { .note.year { display: none; } }
 
 /* ───────── prints ───────── */
@@ -310,10 +321,10 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
   margin-left: auto; display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px 0 18px; text-decoration: none;
   background: none; border: 0; cursor: pointer; font: 500 14px/1 var(--serif); letter-spacing: .3em; color: var(--ink); white-space: nowrap;
 }
-.sb-close i { position: relative; width: 13px; height: 13px; display: block; }
-.sb-close i::before, .sb-close i::after { content: ""; position: absolute; left: -2px; right: -2px; top: 6px; height: 1px; background: currentColor; }
-.sb-close i::before { transform: rotate(45deg); }
-.sb-close i::after { transform: rotate(-45deg); }
+.sb-close i, .sheet-close2 i { position: relative; width: 13px; height: 13px; display: block; }
+.sb-close i::before, .sb-close i::after, .sheet-close2 i::before, .sheet-close2 i::after { content: ""; position: absolute; left: -2px; right: -2px; top: 6px; height: 1px; background: currentColor; }
+.sb-close i::before, .sheet-close2 i::before { transform: rotate(45deg); }
+.sb-close i::after, .sheet-close2 i::after { transform: rotate(-45deg); }
 
 .sheet-cover { margin: 14px 14px 0; transform-origin: 0 0; text-align: center; line-height: 0; }
 .sheet-cover { --mh: min(42vh, 460px); }
@@ -338,15 +349,19 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
   display: grid; grid-template-columns: auto 1fr auto; align-items: center; column-gap: 18px;
   border-top: 1px solid var(--ink-line);
 }
-.track .play { color: var(--ink); }
-.track .play[aria-pressed="true"] { background: var(--ink); }
-.track .play[aria-pressed="true"] i { color: var(--paper); }
-@media (hover: hover) { .track .play:hover { background: var(--ink); } .track .play:hover i { color: var(--paper); } }
+/* the key: the one solid thing on the sheet, so it is the thing to press; it gives under the finger.
+   A song that did not start leaves it hollow and dashed, the way a silence is drawn on the river. */
+.track .play { color: var(--ink); background: var(--ink); transition: transform .2s var(--ease); }
+.track .play i { color: var(--paper); }
+@media (hover: hover) { .track .play:hover { transform: scale(1.06); } }
+.track .play:active { transform: scale(.94); }
+.song-off .track .play { background: none; border-style: dashed; }
+.song-off .track .play i { color: var(--ink); }
 .sheet.is-loading .track .play { animation: dr-wait .7s ease-in-out infinite alternate; }
 .track-k { display: block; font: 500 12.5px/1 var(--serif); letter-spacing: .28em; color: var(--ink-2); }
 .track-name { display: block; margin-top: 9px; font: 500 20px/1.25 var(--serif); letter-spacing: .02em; color: var(--ink); }
 .track-time { font: 400 12.5px/1.3 var(--mono); letter-spacing: .06em; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
-.track-time.cn { font-family: var(--serif); font-weight: 500; letter-spacing: .14em; font-size: 13px; white-space: normal; max-width: 11em; }
+.track-time.cn { font-family: var(--serif); font-weight: 500; letter-spacing: .14em; font-size: 13px; }
 .track-line { position: absolute; left: 0; right: 0; bottom: -22px; height: 44px; cursor: pointer; outline-offset: -14px; }
 .track-line::before { content: ""; position: absolute; left: 0; right: 0; top: 21px; height: 1px; background: var(--ink-line); }
 .track-line i { position: absolute; left: 0; top: 20px; height: 3px; width: calc(var(--prog, 0) * 100%); background: var(--ink); }
@@ -421,15 +436,14 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 .sn-t { display: block; margin-top: 11px; font: 500 17px/1.45 var(--serif); letter-spacing: .02em; text-wrap: balance; }
 @media (hover: hover) { a.sn:hover .sn-t { text-decoration: underline; text-underline-offset: .3em; text-decoration-thickness: 1px; } }
 .sheet-close2 {
-  display: flex; align-items: center; justify-content: center; width: fit-content; margin: 34px auto 0; min-height: 48px; padding: 0 30px; background: none; border: 1px solid var(--ink);
-  font: 500 14px/1 var(--serif); letter-spacing: .3em; text-indent: .3em; color: var(--ink); cursor: pointer; text-decoration: none;
+  display: flex; align-items: center; justify-content: center; gap: 10px; width: fit-content; margin: 34px auto 0; min-height: 48px; padding: 0 28px 0 30px; background: none; border: 1px solid var(--ink);
+  font: 500 14px/1 var(--serif); letter-spacing: .3em; color: var(--ink); cursor: pointer; text-decoration: none;
 }
 @media (hover: hover) { #theme-root .sheet-close2:hover { background: var(--ink); color: var(--paper); } }
 
 /* ───────── 404 ───────── */
-.lost { margin: 0 0 26px; padding: 0 0 22px; border-bottom: 1px solid var(--line); }
-.lost b { display: block; font: 500 23px/1.6 var(--serif); letter-spacing: .06em; }
-.lost span { display: block; margin-top: 6px; font: 400 16px/1.8 var(--serif); color: var(--text-2); }
+.lost { margin: 22px 0 -4px; display: flex; align-items: baseline; gap: 14px; line-height: 1; }
+.lost span { margin: 0; }
 
 /* ───────── footer ───────── */
 .foot { position: relative; z-index: 2; padding: 30px 24px calc(120px + env(safe-area-inset-bottom, 0px)); text-align: center; }
@@ -454,8 +468,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 
   .hero { padding: calc(64px + env(safe-area-inset-top, 0px)) 22px 0; }
   .hero h1 { font-size: 41px; letter-spacing: .01em; }
-  .lead { margin-top: 20px; font-size: 20px; letter-spacing: .04em; }
-  .sub { margin-top: 10px; font-size: 15.5px; line-height: 1.9; }
+  .strip { display: none; }      /* on a phone the dock at the bottom is this strip */
   .odo-today { margin-top: 22px; font-size: 12px; }
   .odo > div + div { padding-left: 14px; }
   .odo dt { font-size: 12.5px; }
