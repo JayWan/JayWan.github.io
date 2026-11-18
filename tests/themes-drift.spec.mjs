@@ -84,6 +84,47 @@ const touchRuler = (page, steps) => page.evaluate((list) => {
   }
 }, steps);
 
+/** The controls that change theme and can be seen right now, by the bar each one lives in. */
+const controls = (page) => page.evaluate(() => [...document.querySelectorAll('#theme-root nav.theme-switcher')]
+  .filter((nav) => nav.getClientRects().length && getComputedStyle(nav).visibility !== 'hidden')
+  .map((nav) => (nav.closest('.sheet-bar') ? 'sheet bar' : nav.closest('.bar') ? 'bar' : 'elsewhere')));
+/** A bar and the pieces it has to hold, left to right. What comes back equals HOLDS when every piece is
+ *  there, whole (its words inside its own box), inside the screen, on the same line as the others and
+ *  clear of its neighbours, and everything to press is at least a finger wide and high. */
+const HOLDS = { lines: 1, missing: [], cut: [], outside: [], overlapping: [], small: [] };
+const oneLine = (page, bar, pieces) => page.evaluate(([bar, pieces]) => {
+  const seen = { lines: 0, missing: [], cut: [], outside: [], overlapping: [], small: [] };
+  const middles = new Set();
+  let edge = -Infinity;
+  for (const piece of pieces) {
+    const el = document.querySelector(`${bar} ${piece}`);
+    if (!el || !el.getClientRects().length || getComputedStyle(el).visibility === 'hidden') { seen.missing.push(piece); continue; }
+    const box = el.getBoundingClientRect();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const words = range.getBoundingClientRect();
+    if (words.left < box.left - 1 || words.right > box.right + 1 || words.top < box.top - 4 || words.bottom > box.bottom + 4) seen.cut.push(piece);
+    if (box.left < 0 || box.right > window.innerWidth + 0.5) seen.outside.push(piece);
+    if (box.left < edge - 0.5) seen.overlapping.push(piece);
+    if (el.matches('a[href], button') && !el.matches('.brand') && (box.width < 43.5 || box.height < 43.5)) seen.small.push(piece);
+    middles.add(Math.round((box.top + box.bottom) / 4));          // (two pixels of tolerance)
+    edge = box.right;
+  }
+  seen.lines = middles.size;
+  return seen;
+}, [bar, pieces]);
+/** The list of the control that is open: inside the screen, every name a finger high, nothing on top of a name. */
+const listInside = (page) => page.evaluate(() => {
+  const ul = document.querySelector('#theme-root .theme-switcher[data-open] ul');
+  if (!ul) return null;
+  const box = ul.getBoundingClientRect(), names = [...ul.querySelectorAll('a')];
+  return {
+    inside: box.left >= 0 && box.right <= window.innerWidth + 0.5 && box.top >= 0 && box.bottom <= window.innerHeight + 0.5,
+    low: names.filter((a) => a.getBoundingClientRect().height < 43.5).map((a) => a.dataset.themeId),
+    covered: names.filter((a) => { const r = a.getBoundingClientRect(), top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !(top && a.contains(top)); }).map((a) => a.dataset.themeId),
+  };
+});
+
 test.describe('夜航 (drift)', () => {
   test.skip(!present, 'the drift theme is not in this checkout');
 
@@ -255,76 +296,175 @@ test.describe('夜航 (drift)', () => {
       await page.keyboard.press('Tab');
       expect(await where(), `Tab no. ${i + 1} stays in the letter, and the letter stays open`).toEqual({ inSheet: true, open: true });
     }
-    await page.keyboard.press('Shift+Tab');
-    expect(await where()).toEqual({ inSheet: true, open: true });
+    // back round to the control that changes theme, in the bar of the sheet: closed, it leaves Esc to the letter
+    const onControl = () => page.evaluate(() => document.activeElement.matches('#theme-root .sheet-bar .theme-switcher-toggle'));
+    for (let i = 0; i < 12 && !(await onControl()); i++) {
+      await page.keyboard.press('Shift+Tab');
+      expect(await where()).toEqual({ inSheet: true, open: true });
+    }
+    expect(await onControl(), 'Shift+Tab walks back to the control').toBe(true);
     await page.keyboard.press('Escape');
     await expect.poll(() => pathOf(page)).toBe('/');
     await expect.poll(() => page.evaluate(() => document.activeElement && document.activeElement.getAttribute('href'))).toBe(url);
   });
 
-  test('the names of the themes stand at the end of an open letter, in ink; pressed there, the reader stays on the letter', async ({ page }) => {
-    // The row at the foot of the river is a dozen screens below the end of a letter, and walking
-    // there closes the letter. So an open letter carries a row of its own, after 「合上」.
+  test('the control that changes theme is the last thing in the bar; an open letter carries it in its own bar, before 合上', async ({ page, isMobile }) => {
+    // The river's bar is put away while a letter is open, so the control cannot only live there:
+    // the sheet's own bar has one too. One of the two shows at a time, and no names are left at
+    // the foot of the river or at the end of a letter.
     await open(page, '/', 'drift');
-    const showing = () => page.evaluate(() => [...document.querySelectorAll('#theme-root nav.theme-switcher')].filter((nav) => nav.getClientRects().length)
-      .map((nav) => (nav.closest('.sheet') ? 'letter' : nav.closest('.foot') ? 'river' : 'elsewhere')));
-    expect(await showing(), 'no letter open: the one at the foot of the river').toEqual(['river']);
+    expect(await controls(page), 'on the river: one control, in the bar').toEqual(['bar']);
+    await expect(page.locator('#theme-root .foot nav.theme-switcher, #theme-root .sheet-foot nav.theme-switcher'), 'none at the foot of the river, none at the end of a letter').toHaveCount(0);
+    const river = await page.evaluate(() => {
+      const box = (sel) => document.querySelector(sel).getBoundingClientRect();
+      const toggle = box('#theme-root .bar .theme-switcher-toggle');
+      return { afterTheRest: toggle.left - box('#theme-root .bar-toggle').right, fromTheEdge: window.innerWidth - toggle.right };
+    });
+    expect(river.afterTheRest, 'after 最新一封 and 漂浮').toBeGreaterThanOrEqual(0);
+    expect(river.fromTheEdge, 'at the right end of the bar').toBeLessThan(40);
 
     const url = await page.evaluate(() => window.__theme.ctx.letters.byNo(31).url);
     await open(page, url, 'drift');
-    expect(await showing()).toEqual(['letter', 'river']);
-    const row = page.locator('#theme-root .sheet-foot nav.theme-switcher');
-    await row.scrollIntoViewIfNeeded();
-    const seen = await row.evaluate((nav) => {
-      const lum = (colour) => { const [r, g, b] = colour.match(/[\d.]+/g).map(Number); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
-      const box = nav.getBoundingClientRect(), sheet = nav.closest('.sheet').getBoundingClientRect(), close = nav.closest('.sheet-foot').querySelector('.sheet-close2').getBoundingClientRect();
-      const names = [...nav.querySelectorAll('a')];
+    expect(await controls(page), 'a letter open: one control, in the bar of the sheet').toEqual(['sheet bar']);
+    const placed = () => page.evaluate(() => {
+      const box = (sel) => document.querySelector(sel).getBoundingClientRect();
+      const toggle = box('#theme-root .sheet-bar .theme-switcher-toggle'), close = box('#theme-root .sb-close'), bar = box('#theme-root .sheet-bar');
       return {
-        inside: box.left >= sheet.left && box.right <= sheet.right && box.bottom <= sheet.bottom,
-        afterClose: box.top >= close.bottom,
-        oneLine: new Set(names.map((a) => Math.round(a.getBoundingClientRect().top))).size,
-        paper: lum(getComputedStyle(nav.closest('.sheet').querySelector('.sheet-body')).backgroundColor),
-        ink: names.map((a) => Math.round(lum(getComputedStyle(a).color))),
-        worn: Math.round(lum(getComputedStyle(nav.querySelector('a[aria-current="true"]')).color)),
+        top: Math.round(toggle.top),
+        inTheBar: toggle.top >= bar.top - 0.5 && toggle.bottom <= bar.bottom + 0.5,
+        beforeClose: close.left - toggle.right,
+        closeFromTheEnd: Math.round(bar.right - close.right),
       };
     });
-    expect(seen.inside, 'the row is on the sheet').toBe(true);
-    expect(seen.afterClose, 'after the word that closes the letter').toBe(true);
-    expect(seen.oneLine, 'on one line').toBe(1);
-    expect(Math.max(...seen.ink), 'dark names on light paper, not the river\'s light names').toBeLessThan(seen.paper - 100);
-    expect(seen.worn, 'the theme being worn is the darkest').toBe(Math.min(...seen.ink));
+    const check = async (when) => {
+      const at = await placed();
+      expect(at.top, `${when}: on screen, at the top`).toBeGreaterThanOrEqual(0);
+      expect(at.top, `${when}: on screen, at the top`).toBeLessThan(100);
+      expect(at.inTheBar, `${when}: inside the bar of the sheet`).toBe(true);
+      expect(at.beforeClose, `${when}: it does not touch 合上`).toBeGreaterThanOrEqual(8);
+      expect(at.closeFromTheEnd, `${when}: 合上 keeps the corner`).toBeLessThanOrEqual(10);
+    };
+    await check('where the reader lands');
+    await page.evaluate(() => window.scrollBy(0, 1200));          // further into the letter: the bar of the sheet stays, and the control with it
+    await page.waitForTimeout(200);
+    await check('further into the letter');
+
+    // open: a dark slip hangs from the bar, its right edge on the control's; the paper stays under it
+    const toggle = page.locator('#theme-root .sheet-bar .theme-switcher-toggle');
+    const list = page.locator('#theme-root .sheet-bar .theme-switcher ul');
+    await toggle.click();
+    await expect(list).toBeVisible();
+    const slip = await page.evaluate(() => {
+      const lum = (colour) => { const [r, g, b] = colour.match(/[\d.]+/g).map(Number); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+      const nav = document.querySelector('#theme-root .sheet-bar .theme-switcher'), ul = nav.querySelector('ul');
+      const box = ul.getBoundingClientRect(), button = nav.querySelector('button').getBoundingClientRect(), bar = nav.closest('.sheet-bar').getBoundingClientRect();
+      const lamp = getComputedStyle(ul.querySelector('a[aria-current="true"]'), '::before'), ring = getComputedStyle(ul.querySelector('a:not([aria-current])'), '::before');
+      return {
+        underTheBar: box.top - bar.bottom, rightEdges: box.right - button.right,
+        night: lum(getComputedStyle(ul).backgroundColor), paper: lum(getComputedStyle(nav.closest('.sheet').querySelector('.sheet-body')).backgroundColor),
+        lamp: parseFloat(lamp.borderTopWidth) >= 3 && lum(lamp.backgroundColor) > 200, ring: parseFloat(ring.borderTopWidth) <= 1 && lum(ring.backgroundColor) < 60,
+      };
+    });
+    expect(Math.abs(slip.underTheBar), 'it hangs from the bar').toBeLessThanOrEqual(1.5);
+    expect(Math.abs(slip.rightEdges), 'its right edge is the control\'s').toBeLessThanOrEqual(1);
+    expect(slip.night, 'the list is a piece of the night, on the paper too').toBeLessThan(slip.paper - 150);
+    expect(slip, 'a lamp (solid) on the theme being worn, a ring on the others').toMatchObject({ lamp: true, ring: true });
+
+    // Esc closes a letter in this theme. With the list open it closes the list and nothing else.
+    await page.keyboard.press('Escape');
+    await expect(list).toBeHidden();
+    await page.waitForTimeout(300);
     expect(await pathOf(page), 'the letter is still open').toBe(url);
+    await expect(page.locator('#theme-root .sheet')).toBeVisible();
 
-    await row.locator('a[data-theme-id="folio"]').click();
-    await page.waitForSelector('html[data-theme-ready="folio"]');
-    expect(await pathOf(page), 'the same letter, in the theme that was pressed').toBe(url);
+    if (!isMobile) {                                                // (a phone has no Tab key)
+      // an open letter keeps the focus inside the sheet: the control is one of its stops, and so are the names once it is open
+      const focus = () => page.evaluate(() => {
+        const el = document.activeElement;
+        return { on: el.matches('.theme-switcher-toggle') ? 'control' : el.dataset.themeId || el.className, inSheet: Boolean(el.closest('#theme-root .sheet')) };
+      });
+      await page.locator('#theme-root .sheet').focus();
+      let at = await focus();
+      for (let i = 0; i < 3 && at.on !== 'control'; i++) {          // (this far into the letter the small play key comes first)
+        await page.keyboard.press('Tab');
+        at = await focus();
+      }
+      expect(at, 'Tab reaches the control without leaving the letter').toEqual({ on: 'control', inSheet: true });
+      await page.keyboard.press('Enter');
+      await expect(list).toBeVisible();
+      const names = await list.locator('a').evaluateAll((links) => links.map((a) => a.dataset.themeId));
+      for (const id of names) {
+        await page.keyboard.press('Tab');
+        expect(await focus(), 'Tab walks the names').toEqual({ on: id, inSheet: true });
+      }
+      await page.keyboard.press('ArrowRight');                      // (← and → turn to the neighbouring letter, but not from inside the list)
+      expect(await pathOf(page)).toBe(url);
+      await page.keyboard.press('Tab');                             // past the last name: on to 合上, and the list closes behind
+      expect(await focus()).toEqual({ on: 'sb-close', inSheet: true });
+      await expect(list).toBeHidden();
+      expect(await pathOf(page), 'and the letter is still open').toBe(url);
+    }
 
-    // read on past the end: the letter closes and takes its row with it
-    await open(page, url, 'drift');
+    // read on past the end: the letter closes, and the control is the one in the river's bar again
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await expect.poll(() => pathOf(page)).toBe('/');
-    expect(await showing()).toEqual(['river']);
+    expect(await controls(page)).toEqual(['bar']);
+
+    // pressed in the bar of the sheet, a name changes theme and the reader stays on the letter
+    await open(page, url, 'drift');
+    await toggle.click();
+    await list.locator('a[data-theme-id="folio"]').click();
+    await page.waitForSelector('html[data-theme-ready="folio"]');
+    expect(await pathOf(page), 'the same letter, in the theme that was pressed').toBe(url);
   });
 
-  test('on a narrow phone both rows of names stay on one line, each name a finger wide', async ({ browser, baseURL }) => {
-    for (const width of [375, 360, 320]) {
+  for (const width of [402, 375, 360, 320]) {
+    test(`on a phone ${width}px wide the bar and the bar of the sheet each hold everything on one line, and the list of themes is inside the screen`, async ({ browser, baseURL }) => {
       const context = await browser.newContext({ baseURL, viewport: { width, height: 640 }, hasTouch: true });
       const page = await context.newPage();
       await open(page, '/', 'drift');
+      await page.evaluate(() => document.fonts.ready);
+      // the river's bar: the name of the site (it joins the bar once the masthead has scrolled away), 最新一封, 漂浮, the control
+      await page.evaluate(() => window.scrollTo(0, 900));
+      await expect.poll(() => page.evaluate(() => getComputedStyle(document.querySelector('#theme-root .brand')).opacity)).toBe('1');
+      expect(await oneLine(page, '#theme-root .bar', ['.brand', '.bar-link', '.bar-toggle', '.theme-switcher-toggle']), 'the bar of the river').toEqual(HOLDS);
+      await page.locator('#theme-root .bar .theme-switcher-toggle').tap();
+      expect(await listInside(page), 'its list').toEqual({ inside: true, low: [], covered: [] });
+      await expectNoSidewaysScroll(page);
+
+      // the bar of an open letter: its number, the control, 合上
       const url = await page.evaluate(() => window.__theme.ctx.letters.byNo(31).url);
       await open(page, url, 'drift');
-      const rows = await page.evaluate(() => [...document.querySelectorAll('#theme-root nav.theme-switcher')].filter((nav) => nav.getClientRects().length).map((nav) => {
-        const names = [...nav.querySelectorAll('a')].map((a) => a.getBoundingClientRect()), box = nav.getBoundingClientRect();
-        return {
-          lines: new Set(names.map((r) => Math.round(r.top))).size,
-          small: names.filter((r) => r.width < 43.5 || r.height < 43.5).length,
-          inside: box.left >= 0 && box.right <= window.innerWidth && names.every((r) => r.left >= box.left - 0.5 && r.right <= box.right + 0.5),
-        };
-      }));
-      expect(rows, `${width}px wide: the row in the letter, the row at the foot of the river`).toEqual([{ lines: 1, small: 0, inside: true }, { lines: 1, small: 0, inside: true }]);
+      await page.evaluate(() => document.fonts.ready);
+      expect(await oneLine(page, '#theme-root .sheet-bar', ['.sb-no', '.theme-switcher-toggle', '.sb-close']), 'the bar of the sheet').toEqual(HOLDS);
+      await page.locator('#theme-root .sheet-bar .theme-switcher-toggle').tap();
+      expect(await listInside(page), 'its list').toEqual({ inside: true, low: [], covered: [] });
       await expectNoSidewaysScroll(page);
       await context.close();
-    }
+    });
+  }
+
+  test('where the bar has no room for the name of the site, the name leaves whole and the rest holds', async ({ browser, baseURL }) => {
+    // Larger text or a screen narrower than any phone: the name is the piece that gives way. It is
+    // not cut and nothing runs into it: it wraps out of sight (the masthead and the foot still say it).
+    const context = await browser.newContext({ baseURL, viewport: { width: 300, height: 640 }, hasTouch: true });
+    const page = await context.newPage();
+    await open(page, '/', 'drift');
+    await page.evaluate(() => document.fonts.ready);
+    await page.evaluate(() => window.scrollTo(0, 900));
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.querySelector('#theme-root .brand')).opacity)).toBe('1');
+    const name = await page.evaluate(() => {
+      const brand = document.querySelector('#theme-root .brand'), box = brand.getBoundingClientRect();
+      const range = document.createRange();
+      range.selectNodeContents(brand);
+      const text = range.getBoundingClientRect();
+      const hit = document.elementFromPoint(box.left + 30, box.top + box.height / 2);
+      return { wrappedOut: (text.top + text.bottom) / 2 > box.bottom, clips: getComputedStyle(brand).overflowY, nothingInItsPlace: hit === brand };
+    });
+    expect(name, 'the name is out of sight, whole: its line lies below the box that would have shown it').toEqual({ wrappedOut: true, clips: 'hidden', nothingInItsPlace: true });
+    expect(await oneLine(page, '#theme-root .bar', ['.bar-link', '.bar-toggle', '.theme-switcher-toggle']), 'the rest of the bar').toEqual(HOLDS);
+    await expectNoSidewaysScroll(page);
+    await context.close();
   });
 
   test('with a letter open the masthead above the river is dimmed, not taken away: no empty screen above the newest letter', async ({ browser, baseURL }) => {

@@ -98,7 +98,8 @@ export default {
       h('nav', { className: 'bar-nav', 'aria-label': '导航' },
         h('span', { className: 'bar-song' }, barPlay, barSong),
         h('a', { className: 'bar-link', href: letters.latest.url }, '最新一封'),
-        driftToggle));
+        driftToggle),
+      ui.switcher());      // changing theme: the last thing in the bar, top right (an open letter has its own, in the sheet's bar)
 
     const lost = h('p', { className: 'lost', hidden: true }, h('b', {}, '404'), h('span', {}, '没有信'));   // drawn like a year head: a number and what it holds
     const tdays = site.today.days;
@@ -141,7 +142,6 @@ export default {
     const foot = h('footer', { className: 'foot' },
       h('p', { className: 'foot-name' }, site.title),
       h('p', { className: 'foot-hunger' }, ui.hunger().text),          // the site's own voice, unchanged
-      ui.switcher(),
       h('p', { className: 'foot-c' }, `© 2016 – ${today.slice(0, 4)} Fan & Wan`));
 
     /* the ruler: linear, honest time. Right edge on desktop; on a phone it is the bottom dock. */
@@ -525,11 +525,11 @@ export default {
     S.track = h('div', { className: 'track' }, S.play, h('div', { className: 'track-txt' }, h('span', { className: 'track-k' }, '这封信的歌'), S.song), S.time, S.line);
     /* closing is one word and one mark, the same at the head of the sheet and at its foot */
     const closeLink = (cls) => h('a', { className: cls, href: '/', 'data-back': '', onclick: closeClick }, h('span', {}, '合上'), h('i', { 'aria-hidden': 'true' }));
-    S.bar = h('div', { className: 'sheet-bar' }, S.no, h('div', { className: 'sb-song' }, S.mini, S.miniName), closeLink('sb-close'));
+    /* While a letter is open the river's bar is put away, so the sheet's bar carries the control that changes theme:
+       beside 合上, on the screen the reader lands on, and inside the sheet, where Tab stays. */
+    S.bar = h('div', { className: 'sheet-bar' }, S.no, h('div', { className: 'sb-song' }, S.mini, S.miniName), ui.switcher(), closeLink('sb-close'));
     S.head = h('header', { className: 'sheet-head' }, h('div', { className: 'sh-main' }, S.meta, S.title, S.by), S.days, S.track);
-    /* The names of the themes stand at the end of the letter too: the foot of the river, where the other row is,
-       is a dozen screens further down, and walking there closes the letter. Pressed here, the reader stays on this letter. */
-    S.foot = h('footer', { className: 'sheet-foot' }, S.sign, S.nav, closeLink('sheet-close2'), ui.switcher());
+    S.foot = h('footer', { className: 'sheet-foot' }, S.sign, S.nav, closeLink('sheet-close2'));
     sheet.append(S.paper, S.bar, S.cover, S.head, S.body, S.foot);
 
     const season = (d) => (typeof fmt.season === 'function' ? fmt.season(d) : '');
@@ -729,7 +729,7 @@ export default {
         if (stops.length && (at < 0 || at === (e.shiftKey ? 0 : stops.length - 1))) { e.preventDefault(); stops[to].focus(); }
         return;
       }
-      if (t && t.closest && t.closest('input, textarea, select, [contenteditable], [role="slider"]')) return;
+      if (t && t.closest && t.closest('input, textarea, select, [contenteditable], [role="slider"], .theme-switcher[data-open]')) return;   // (a reader inside the open list of themes is not turning pages)
       if (e.key === 'Escape') goHome();
       else if (e.key === 'Home' || e.key === 'End') {      // the open letter is the page: Home and End stay inside it
         e.preventDefault();
@@ -742,6 +742,7 @@ export default {
     /* ───────── one function draws any route; the theme moves the reader itself (returns false) ───────── */
     function show(route, first) {
       items.forEach((it) => it.a.classList.remove('is-pending'));
+      root.querySelectorAll('.theme-switcher[data-open] button').forEach((b) => b.click());   // a list of themes left open does not follow the reader into another view
       lost.hidden = route.type !== '404';
       root.dataset.view = route.type;
       if (route.type === 'letter') openSheet(route, first === true);
