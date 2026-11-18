@@ -14,7 +14,12 @@ bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 为你我受冷风吹.mp3
-quote: "在我的想象中，有一轮赤红日，与众不同奇妙最奇妙，只因身边这个人。"
+quotes:
+  - "在我的想象中，有一轮赤红日，与众不同奇妙最奇妙，只因身边这个人。"
+  - "站在紫金山巅，刚想发表一下自己的豪情壮志，你说，这南京的灯还没我家多"
+  - "看日出的过程就不再赘述，主观上的感觉在心里，客观上的描述在百度。"
+  - "路上我说总有种一回头你就会不见的感觉，你说被感动到"
+  - "这么多房子，没有一栋是属于我们的，这么多出租，没有一辆肯为你的美貌驻足"
 place: "南京·紫金山"
 ---
 <blockquote class="u--startsWithDoubleQuote">“A blessing from new year” <br/> - 2016.1.1日记</blockquote>

@@ -38,6 +38,21 @@ function roleOf(authors) {
   return roles.includes('him') && roles.includes('her') ? 'both' : roles[0] || 'guest';
 }
 
+/** Every line picked from the letter. The island lists them in `quotes`; a page that only has
+ *  the single `quote` (as every page had before there were several) has a list of one. */
+function quotesOf(raw) {
+  const list = Array.isArray(raw.quotes) ? raw.quotes : [raw.quote];
+  return list.filter((line) => typeof line === 'string' && line.trim() !== '');
+}
+
+/** One of `list`, chosen by `random` (a function like Math.random: a number in [0, 1)); null when
+ *  the list is empty. Anything else `random` may return counts as 0, the first line. */
+function pickOne(list, random) {
+  if (!list.length) return null;
+  const r = list.length > 1 ? Number(random()) : 0;
+  return list[r >= 0 && r < 1 ? Math.floor(r * list.length) : 0];
+}
+
 /** The island's compact picture map ({ file: [w, h] | [w, h, base, widths] }) as objects. */
 function picturesOf(map) {
   const out = {};
@@ -65,13 +80,20 @@ function picturesOf(map) {
  *             days    { met, together, married } on the day the letter was written (null = not yet).
  *                     A count the letter states about itself wins over the computed one: the couple
  *                     sometimes counts inclusively (「和小天使的三百天」 says 300, the calendar says 299).
+ *             quotes  every line picked from the letter (front matter `quotes:`), [] when there is none
+ *             quote   ONE of them, drawn here with `random` and then left alone: a page shows the
+ *                     same line everywhere until it is loaded again, and another one after that.
+ *                     null when there is none.
  *             prev / next   the neighbouring letters or null (not enumerable, so JSON.stringify stays flat)
  *           and on the array itself: byUrl(url), byNo(no), latest, years
  * page      { type, url } as written by Jekyll
  * pictures  every picture used inside a letter: { 'file.jpg': { w, h, base, widths } } (base is null
  *           and widths is [] when the picture has no derivatives)
+ *
+ * `now` is the visitor's clock and `random` their dice; both can be handed in, so a test can say
+ * what day it is and which line is drawn: enrich(island, new Date(2026, 7, 12), () => 0.5).
  */
-export function enrich(island, now = new Date()) {
+export function enrich(island, now = new Date(), random = Math.random) {
   const site = { ...island.site };
   const today = localDay(now);
   site.today = { date: today, days: daysSince(site, today) };
@@ -82,6 +104,7 @@ export function enrich(island, now = new Date()) {
     const authors = authorsOf(raw);
     const days = daysSince(site, raw.date);
     for (const key of MILESTONES) if (raw.days && Number.isFinite(raw.days[key])) days[key] = raw.days[key];
+    const quotes = quotesOf(raw);
     return {
       ...raw,
       no: index + 1,
@@ -91,6 +114,8 @@ export function enrich(island, now = new Date()) {
       authors,
       role: roleOf(authors),
       days,
+      quotes,
+      quote: pickOne(quotes, random),
       cover: raw.cover ? { ...raw.cover, own: raw.cover.own !== false } : null,
     };
   });

@@ -3,7 +3,9 @@
 // The inline boot script (_includes/theme-boot.html) has already chosen the theme and loaded its
 // stylesheet before this runs. What is left to do here:
 //
-//   classic theme   nothing that shows. Only the eggs that are invisible until used.
+//   classic theme   the page is already there. Only the row of theme names is added, at its
+//                   foot and in its drawer (eggs.classicSwitcher), and the eggs that are
+//                   invisible until used.
 //   any other       build ctx, import /assets/themes/<id>/theme.js, call its mount(ctx),
 //                   then hand the returned view to the router.
 //
@@ -30,7 +32,8 @@ try {
 }
 
 eggs.greet(T, data);
-eggs.keys(T, data);
+eggs.keys(data);
+try { eggs.classicSwitcher(T); } catch (err) { console.error('[221] the switcher could not be added:', err); }
 reportLastFallback();
 
 if (T.id !== 'classic') start().catch(fail);

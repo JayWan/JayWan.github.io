@@ -14,7 +14,13 @@ bgContrast: dark
 bgGradientOpacity: darker
 syntaxHighlighter: no
 bgm: 胆小鬼.mp3
-quote: "u supposed to be out of my list, but life makes a miracle."
+quotes:
+  - "u supposed to be out of my list, but life makes a miracle."
+  - "再偷偷告诉你一个小秘密叭 还有一个你以为的巧合是我的小心机呀"
+  - "记第一次！！！小天使！！！221forever上！！！发字儿！！！"
+  - "宝贝儿呀 我知道我超笨喔 可我也是超爱你呀"
+  - "寄己总是有一个在身边无条件帮助寄己的人实在是太幸胡"
+  - "幸胡到想要生好多小猪 小范范小万万"
 coauthor: Pikachi           # most of the body is hers, written 2017-04-12: her first words on the site
 ---
 

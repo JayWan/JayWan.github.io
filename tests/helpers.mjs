@@ -41,6 +41,14 @@ export async function samplePages(request) {
   };
 }
 
+// The classic theme takes jQuery and its fonts from other sites. The tests answer for them, so
+// they pass without a network and say nothing about somebody else's server.
+const JQUERY = readFileSync(path.join(root, 'assets/javascripts/jquery-3.7.1.min.js'), 'utf8');
+export async function otherSites(page, { jquery = true } = {}) {
+  await page.route('https://fonts.googleapis.com/**', (route) => route.fulfill({ contentType: 'text/css', body: '' }));
+  await page.route('https://code.jquery.com/**', (route) => (jquery ? route.fulfill({ contentType: 'text/javascript', body: JQUERY }) : route.abort()));
+}
+
 /** Collect what must stay empty: uncaught errors, console errors, requests that leave the site. */
 export function watch(page, baseURL) {
   const seen = { errors: [], requests: [] };

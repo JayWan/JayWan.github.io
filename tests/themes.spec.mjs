@@ -289,7 +289,7 @@ for (const theme of themeIds) {
       await rewriteIsland(page, baseURL, (data) => {
         for (const letter of data.letters) {
           if (letter.no === guest.no) letter.author = 'Claude';
-          if (letter.no === bare.no) Object.assign(letter, { song: null, cover: null, quote: null, place: null });
+          if (letter.no === bare.no) Object.assign(letter, { song: null, cover: null, quote: null, quotes: [], place: null });
         }
       });
       const seen = watch(page, baseURL);

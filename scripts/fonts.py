@@ -30,7 +30,7 @@ How the Chinese families are cut (unicode-range slices; a page downloads only th
              song titles and artists, the interface strings, ASCII, punctuation, the marks a browser
              draws by itself (list bullets, emphasis dots), a margin of the 200 characters the
              letters use most
-    q        the pull-quotes (front matter `quote:`) that are not already in a
+    q        the pull-quotes (front matter `quotes:`, or a single `quote:`) that are not already in a
     b01-b03  every other character that two or more letters use, the most shared first
     l01...   the characters only one letter uses, one slice per letter (l07 = the 7th letter,
              oldest first): reading a letter needs b01-b03 and its own l slice
@@ -263,13 +263,22 @@ def strip_comments(text, ext):
 
 
 def front_matter(raw):
+    """{key: value} of the top-level lines of a letter's front matter, values as written. A list with
+    one item per line (`quotes:` followed by `  - "..."` lines) is its items joined by newlines."""
     m = re.match(r'---\r?\n(.*?)\r?\n---\r?\n', raw, flags=re.S)
     out = {}
+    key = None
     if m:
         for line in m.group(1).split('\n'):
             mm = re.match(r'^(\w+):\s*(.*)$', line)
+            item = re.match(r'^\s+-\s+(.*)$', line)
             if mm:
-                out[mm.group(1)] = mm.group(2).strip()
+                key = mm.group(1)
+                out[key] = mm.group(2).strip()
+            elif item and key:
+                out[key] = (out[key] + '\n' + item.group(1).strip()).strip()
+            elif line.strip():
+                key = None      # a nested line (`image:` / `  feature: 6.jpg`): not a list of this key
     return out
 
 
@@ -316,7 +325,7 @@ def collect():
         raw = read(os.path.join(posts_dir, name))
         fm = front_matter(raw)
         home.update(fm.get('title', '') + fm.get('author', '') + fm.get('place', '') + re.sub(r'\.mp3\b', '', fm.get('bgm', '')))
-        quotes.update(fm.get('quote', ''))
+        quotes.update(fm.get('quote', '') + fm.get('quotes', ''))     # one line, or several
         body.update(raw)
         pairs |= marked(raw)
         freq.update(c for c in raw if is_han(ord(c)))
