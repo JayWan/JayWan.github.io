@@ -35,7 +35,7 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
 #theme-root a { color: inherit; }
 #theme-root button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent; }
 #theme-root :focus-visible { outline: 2px solid var(--paper); outline-offset: 3px; }
-#theme-root .sheet :focus-visible { outline-color: var(--ink); }
+#theme-root .sheet :focus-visible:not([data-theme-id]) { outline-color: var(--ink); }
 #theme-root [hidden] { display: none !important; }
 
 /* ───────── top bar ───────── */
@@ -57,18 +57,30 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
 }
 .at-top .brand { opacity: 0; pointer-events: none; }
 .at-top .brand:focus-visible { opacity: 1; }
-.bar-nav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
-.bar-link, .bar-toggle {
-  font: 500 13px/1 var(--serif); letter-spacing: .12em; color: var(--text-2);
-  min-height: 44px; padding: 0 14px; display: inline-flex; align-items: center; gap: .5em;
+.bar-nav { display: flex; align-items: center; gap: 4px; margin-left: auto; min-width: 0; }   /* (a song's name gives way) */
+.bar-nav, .theme-switcher { font: 500 13px/1 var(--serif); }   /* (its buttons inherit it) */
+.bar-link, .bar-toggle, .theme-switcher-toggle {
+  letter-spacing: .12em; min-height: 44px; padding: 0 14px; display: inline-flex; align-items: center; gap: .5em;
   background: none; border: 0; text-decoration: none; cursor: pointer; white-space: nowrap;
 }
 .bar-toggle b { font-weight: 400; color: var(--paper); }
 .bar-toggle[aria-pressed="false"] b { color: var(--dim); }
-@media (hover: hover) { .bar-link:hover, .bar-toggle:hover { color: var(--text); } }
 .bar-song { display: none; align-items: center; min-width: 0; max-width: 300px; margin-right: 10px; }
 .has-song .bar-song { display: flex; }
 .bar-song a { font: 500 13px/1.3 var(--serif); letter-spacing: .06em; color: var(--text-2); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 14px 0; }
+/* changing theme: its list is the river in small, a ring per theme, a lamp on the one worn */
+.theme-switcher { position: relative; display: flex; align-items: center; align-self: stretch; margin-left: 4px; }
+.theme-switcher i { width: .46em; height: .46em; margin: -.23em 1px 0; border: solid; border-width: 0 1px 1px 0; rotate: 45deg; transition: .3s var(--ease); }
+[data-open] i { margin-top: .3em; rotate: 225deg; }
+.theme-switcher ul {
+  position: absolute; z-index: 2; right: 0; top: 100%; margin: 0; padding: 6px 0; list-style: none; letter-spacing: .12em; color: var(--text-2);
+  background: #1f1d18; border: 1px solid var(--line); box-shadow: 0 16px 30px -10px rgba(0, 0, 0, .85);
+}
+.theme-switcher ul::before { content: ""; position: absolute; z-index: -1; left: 21px; top: 28px; bottom: 28px; border-left: 1px solid var(--line); }
+#theme-root .theme-switcher a { display: flex; align-items: center; min-height: 44px; padding: 0 24px 0 18px; text-decoration: none; white-space: nowrap; outline-offset: -4px; }
+.theme-switcher a::before { content: ""; width: 7px; height: 7px; margin-right: 17px; border: 1px solid var(--dim); border-radius: 50%; background: #1f1d18; }
+#theme-root a[aria-current], #theme-root .theme-switcher a:hover { color: var(--text); }
+a[aria-current]::before { border: 3.5px solid var(--paper); background: var(--paper); }   /* (forced colours keep the border) */
 /* while a letter is open the bar shrinks to a clean dark margin above the sheet */
 .has-open .bar { height: 24px; padding: 0; pointer-events: none; }
 .has-open .bar > * { visibility: hidden; pointer-events: none; }
@@ -103,8 +115,8 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
 .strip .st-q { top: 15px; width: auto; height: 1px; background: repeating-linear-gradient(90deg, #524d41 0 3px, var(--ground) 3px 7px); }
 .strip b {
   position: absolute; left: 100%; top: 12px; width: 7px; height: 7px; margin-left: -4px; border-radius: 50%; background: var(--paper);
-  box-shadow: 0 0 0 3px rgba(var(--paper-rgb), .1), 0 0 16px 4px rgba(var(--paper-rgb), .28);
 }
+.strip b, a[aria-current]::before { box-shadow: 0 0 0 3px rgba(var(--paper-rgb), .1), 0 0 16px 4px rgba(var(--paper-rgb), .28); }
 .strip > span { position: absolute; top: 27px; font: 400 11px/1 var(--mono); letter-spacing: .02em; color: var(--dim); font-variant-numeric: tabular-nums; }
 .strip > span::before { content: ""; position: absolute; left: 0; top: -11px; width: 1px; height: 5px; background: #57524a; }
 .odo-today { margin: 40px 0 0; font: 400 12.5px/1 var(--mono); letter-spacing: .12em; color: var(--dim); }
@@ -325,9 +337,11 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 .sb-song { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1 1 auto; opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; }
 .sheet.mini-on .sb-song { opacity: 1; visibility: visible; }
 .sb-song-name { font: 500 15px/1.2 var(--serif); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sheet-bar .theme-switcher { margin-left: auto; color: var(--ink-2); }
+.walked .sheet-bar nav { visibility: hidden; }   /* (the river's bar is back, with its own) */
 .sb-close {
-  margin-left: auto; display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px 0 18px; text-decoration: none;
-  background: none; border: 0; cursor: pointer; font: 500 14px/1 var(--serif); letter-spacing: .3em; color: var(--ink); white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px 0 18px; text-decoration: none;
+  font: 500 14px/1 var(--serif); letter-spacing: .3em; color: var(--ink); white-space: nowrap;
 }
 .sb-close i, .sheet-close2 i { position: relative; width: 13px; height: 13px; display: block; }
 .sb-close i::before, .sb-close i::after, .sheet-close2 i::before, .sheet-close2 i::after { content: ""; position: absolute; left: -2px; right: -2px; top: 6px; height: 1px; background: currentColor; }
@@ -444,8 +458,8 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 .sn-t { display: block; margin-top: 11px; font: 500 17px/1.45 var(--serif); letter-spacing: .02em; text-wrap: balance; }
 @media (hover: hover) { a.sn:hover .sn-t { text-decoration: underline; text-underline-offset: .3em; text-decoration-thickness: 1px; } }
 .sheet-close2 {
-  display: flex; align-items: center; justify-content: center; gap: 10px; width: fit-content; margin: 34px auto 0; min-height: 48px; padding: 0 28px 0 30px; background: none; border: 1px solid var(--ink);
-  font: 500 14px/1 var(--serif); letter-spacing: .3em; color: var(--ink); cursor: pointer; text-decoration: none;
+  display: flex; align-items: center; justify-content: center; gap: 10px; width: fit-content; margin: 34px auto 0; min-height: 48px; padding: 0 28px 0 30px; border: 1px solid var(--ink);
+  font: 500 14px/1 var(--serif); letter-spacing: .3em; color: var(--ink); text-decoration: none;
 }
 @media (hover: hover) { #theme-root .sheet-close2:hover { background: var(--ink); color: var(--paper); } }
 
@@ -457,31 +471,18 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 .foot { position: relative; z-index: 2; padding: 30px 24px calc(120px + env(safe-area-inset-bottom, 0px)); text-align: center; }
 .foot-name { margin: 0; font: 500 14px/1 var(--serif); letter-spacing: .34em; text-indent: .34em; color: var(--text-2); }
 .foot-hunger { margin: 22px auto 0; max-width: 30em; font: 400 16px/1.9 var(--serif); color: var(--text); text-wrap: balance; }
-/* The row of theme names. It is in two places: here at the foot of the river, and at the foot of an open
-   letter (.sheet-foot), because from the end of a letter the foot of the river is a dozen screens away.
-   The selectors start at #theme-root so that these colours win over "#theme-root a { color: inherit }". */
-.foot .theme-switcher { margin: 26px 0 0; }
-.sheet-foot .theme-switcher { margin: 20px 0 0; }
-#theme-root .theme-switcher ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 6px; }
-#theme-root .theme-switcher a {
-  position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 12px; text-decoration: none;
-  font: 500 13px/1 var(--serif); letter-spacing: .12em; text-indent: .12em; color: var(--dim);
-}
-/* the theme being worn: full strength, and a hairline under its name (the mark does not rest on colour alone) */
-#theme-root .theme-switcher a[aria-current="true"] { color: var(--text); }
-#theme-root .theme-switcher a[aria-current="true"]::after { content: ""; position: absolute; left: calc(12px + .12em); right: calc(12px + .12em); top: calc(50% + 13px); height: 0; border-top: 1px solid currentColor; }   /* a border, not a background: it survives forced colours */
-@media (hover: hover) { #theme-root .theme-switcher a:hover { color: var(--text); } }
-#theme-root .sheet-foot .theme-switcher a { color: var(--ink-2); }
-#theme-root .sheet-foot .theme-switcher a[aria-current="true"] { color: var(--ink); }
-@media (hover: hover) { #theme-root .sheet-foot .theme-switcher a:hover { color: var(--ink); } }
 .foot-c { margin: 14px 0 0; font: 400 12.5px/1 var(--mono); letter-spacing: .1em; color: var(--dim); }
 
 /* ═════════ phone ═════════ */
 @media (max-width: 759px) {
-  .bar { height: calc(52px + env(safe-area-inset-top, 0px)); padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(6px, env(safe-area-inset-right, 0px)); }
-  .brand { font-size: 13px; letter-spacing: .3em; }
-  .bar-link, .bar-toggle { font-size: 13px; padding: 0 10px; letter-spacing: .08em; }
+  .bar { height: calc(52px + env(safe-area-inset-top, 0px)); padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
+  /* a name with no room wraps out of sight, whole */
+  .brand { font-size: 13px; letter-spacing: clamp(.09em, 4vw - .92em, .3em); padding-right: 12px; }
+  .brand, .sb-no { display: flex; align-items: center; min-width: 0; height: 44px; overflow: hidden; flex-wrap: wrap; }
+  .brand::before, .sb-no::before { content: ""; height: 44px; }
+  .bar-link, .bar-toggle, .theme-switcher-toggle { padding: 0 8px; letter-spacing: .08em; }
   #theme-root .bar-song { display: none; }
+  .bar-nav { flex: none; }
 
   .hero { padding: calc(64px + env(safe-area-inset-top, 0px)) 22px 0; }
   .hero h1 { font-size: 41px; letter-spacing: .01em; }
@@ -567,7 +568,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
   .letter-body { font-size: 17px; line-height: 1.95; --letter-leading: 1.35rem; --flip-front-pad: 1.6rem 1.2rem; }
   .letter-body blockquote { padding-left: 1.1em; }
   .letter-body .flip-card-front::after { right: 1.2rem; bottom: 1.6rem; line-height: 1.95; }
-  .sheet-foot { padding: 24px 22px calc(72px + env(safe-area-inset-bottom, 0px)); }   /* the row of names at its end clears the dock (56px + the home indicator) */
+  .sheet-foot { padding: 24px 22px 48px; }
   .sheet-nav { margin-top: 40px; }
   .sn-k { font-size: 12px; letter-spacing: 0; white-space: nowrap; }
   .sn-t { font-size: 15.5px; }
@@ -575,8 +576,11 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 
   .foot { padding: 20px 22px calc(96px + env(safe-area-inset-bottom, 0px)); }
 }
+@media (max-width: 369px) {      /* the bar closes up, down to 320px */
+  .bar-nav { gap: 0; margin-right: -4px; }
+  .bar-link, .bar-toggle, .theme-switcher-toggle { padding: 0 6px; letter-spacing: 0; }
+}
 @media (max-width: 359px) { .sn-k { white-space: normal; line-height: 1.5; } }
-@media (max-width: 339px) { #theme-root .theme-switcher ul { gap: 0; } }   /* five names, each a finger wide, on one line down to 320px */
 
 /* ═════════ reduced motion: everything is still ═════════ */
 @media (prefers-reduced-motion: reduce) {
