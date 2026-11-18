@@ -482,6 +482,10 @@ export default {
     root.classList.toggle('still', still);
     root.classList.toggle('in-colour', colour);
     root.dataset.np = 'off';
+    // 换一种读法：开着的列表不留到下一页。首页画好了就留着，开着走开、后退回来时它还会开着（核心那时已经不认它，点别处、按 Esc 都关不上）；
+    // 宽窄一换（1200px），开着的那个被藏起来、另一个露出来。都用它自己的按钮关上，开合照旧归核心管
+    const closeSwitcher = () => root.querySelectorAll('.theme-switcher[data-open] > button').forEach((b) => b.click());
+    matchMedia('(min-width: 1200px)').addEventListener('change', closeSwitcher);
 
     // ───────────────────────── 首页 ─────────────────────────
     let home = null;
@@ -733,6 +737,7 @@ export default {
     function show(route) {
       const view = route.type === 'letter' ? letterView(route) : route.type === 'home' ? (home ||= buildHome()) : lostView();
       if (route.type !== 'letter') strip = null;
+      closeSwitcher();
       main.replaceChildren(view.el);
       root.dataset.view = route.type;
       const handled = view.enter(route, first ? returned : true);

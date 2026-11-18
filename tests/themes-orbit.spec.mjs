@@ -338,6 +338,44 @@ test.describe('theme "orbit", its own promises', () => {
     }
   });
 
+  test('a list of themes left open does not come back open: the home page is kept while a letter is read, and has a control for each width', async ({ page, request, isMobile }) => {
+    const letter = await urlOf(request, (l) => !l.standalone);
+    const press = (loc) => (isMobile ? loc.tap() : loc.click());
+    const toggle = page.locator('#theme-root .theme-switcher-toggle:visible');
+    const opened = page.locator('#theme-root nav.theme-switcher[data-open]');
+    const view = (type) => expect(page.locator('#theme-root')).toHaveAttribute('data-view', type);
+
+    // left open the way the browser's own Back and Forward leave a page: nothing on the page is pressed or focused
+    await open(page, '/', THEME);
+    await press(toggle);
+    await expect(opened).toHaveCount(1);
+    await page.evaluate((url) => window.__theme.ctx.router.go(url), letter);
+    await view('letter');
+    await page.evaluate(() => document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));      // a press somewhere on the letter
+    await page.goBack();
+    await view('home');
+    await expect(opened, 'back on the plate, the list is closed').toHaveCount(0);
+    await expect(page.locator('#theme-root .theme-switcher ul:visible')).toHaveCount(0);
+
+    await press(toggle);
+    await page.goForward();
+    await view('letter');
+    await page.goBack();
+    await view('home');
+    await expect(opened, 'and again after Forward and Back').toHaveCount(0);
+
+    // the width changes across 1200px: the control that was open is hidden, the one that shows is closed, and stays closed coming back
+    if (!isMobile) {
+      const { width, height } = page.viewportSize();
+      await press(toggle);
+      await page.setViewportSize({ width: wide(page) ? 900 : 1300, height });
+      await expect(opened).toHaveCount(0);
+      await page.setViewportSize({ width, height });
+      await expect(opened).toHaveCount(0);
+      await expect(toggle).toHaveCount(1);
+    }
+  });
+
   test('nothing moves under prefers-reduced-motion', async ({ browser, baseURL, request }) => {
     const context = await browser.newContext({ baseURL, reducedMotion: 'reduce', viewport: { width: 402, height: 874 } });
     const page = await context.newPage();

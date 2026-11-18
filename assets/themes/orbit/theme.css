@@ -531,7 +531,7 @@ html[data-navigating] #theme-root::after { content: ""; position: fixed; z-index
   .pn { margin-top: 48px; }
   .pn > :nth-child(2) { border-top: 1px solid var(--line-2); }
 }
-@media (max-width: 22.49em) { .topbar { column-gap: 12px; } .brand { line-height: 1.3334; } .back svg { display: none; } }      /* 不到 360px，或字被放大：顶栏挤，不画小图标；再挤，站名折成两行 */
+@media (max-width: 22.49em) { .topbar { column-gap: 12px; } .brand { line-height: 1.3334; padding: 6px 0; } .back svg { display: none; } }      /* 不到 360px，或字被放大：顶栏挤，不画小图标；再挤，站名折成两行，上下留一点空 */
 @media (max-width: 380px) { .l-grid { grid-template-columns: minmax(0, 1fr) 120px; } .loc { width: 120px; height: 120px; } .strip :not(.ro-new) > dd { font-size: 21px; } }
 
 /* ───────────── 静止 ───────────── */
