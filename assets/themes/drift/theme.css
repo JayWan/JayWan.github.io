@@ -116,7 +116,12 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
 .odo dd b { font: 300 38px/1 var(--mono); letter-spacing: -.02em; color: var(--text); font-variant-numeric: tabular-nums; }
 .odo dd i { font: 500 13px/1 var(--serif); color: var(--dim); margin-left: 6px; font-style: normal; }
 .odo dd span { display: block; margin-top: 10px; font: 400 12px/1 var(--mono); letter-spacing: .04em; color: var(--dim); }
+/* a letter is open: beside the river the sheet lies across the masthead, so it goes; above the river it only dims (gone, it left an empty screen above the newest letter) */
 .has-open .hero { opacity: 0; visibility: hidden; }
+@media (max-width: 1099px) {
+  .hero { transition: opacity .5s var(--ease); }
+  .has-open .hero { opacity: .3; visibility: visible; }
+}
 
 /* ───────── river ───────── */
 .river { position: relative; }

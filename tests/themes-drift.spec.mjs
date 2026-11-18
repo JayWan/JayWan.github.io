@@ -327,6 +327,40 @@ test.describe('夜航 (drift)', () => {
     }
   });
 
+  test('with a letter open the masthead above the river is dimmed, not taken away: no empty screen above the newest letter', async ({ browser, baseURL }) => {
+    // The newest letter is the first print under the masthead. Scrolling back up from it used to
+    // show a screen of nothing where the masthead had been hidden. Beside the river (1100px and
+    // wider) the sheet lies across the masthead, and there it still makes room.
+    for (const [width, height, beside] of [[402, 874, false], [1024, 768, false], [1440, 900, true]]) {
+      const context = await browser.newContext({ baseURL, viewport: { width, height }, hasTouch: width < 760 });
+      const page = await context.newPage();
+      await open(page, '/', 'drift');
+      const url = await page.evaluate(() => window.__theme.ctx.letters.latest.url);
+      await open(page, url, 'drift');
+      const seen = () => page.evaluate(() => {
+        const hero = document.querySelector('#theme-root .hero'), sheet = document.querySelector('#theme-root .sheet');
+        const style = getComputedStyle(hero), h = hero.getBoundingClientRect(), s = sheet.getBoundingClientRect();
+        return {
+          open: !sheet.hidden,
+          shown: style.visibility === 'visible' && h.height > 100 && hero.innerText.trim().length > 10,
+          opacity: Number(style.opacity),
+          apart: h.bottom <= s.top || h.right <= s.left || h.left >= s.right,
+        };
+      });
+      expect((await seen()).open, `${width}px: the letter is open`).toBe(true);
+      if (beside) expect((await seen()).shown, `${width}px: beside the river the masthead makes room for the sheet`).toBe(false);
+      else {
+        // (it fades over half a second, like the prints: wait for where it comes to rest)
+        await expect.poll(async () => (await seen()).opacity, `${width}px: dimmed like the river behind an open letter`).toBeLessThanOrEqual(0.5);
+        const now = await seen();
+        expect(now.opacity, `${width}px: dimmed, not gone`).toBeGreaterThanOrEqual(0.2);
+        expect(now.shown, `${width}px: the masthead is still there`).toBe(true);
+        expect(now.apart, `${width}px: and the sheet does not lie across it`).toBe(true);
+      }
+      await context.close();
+    }
+  });
+
   test('pictures in a letter keep their place before they load; the progress line takes a finger', async ({ page, baseURL }) => {
     await open(page, '/', 'drift');
     const url = await page.evaluate(() => window.__theme.ctx.letters.find((l) => l.date === '2016-06-08').url);   // Hang Zhou: five pictures
