@@ -152,6 +152,9 @@ function quoteLines(text, L) {
 
 const PLAY_SVG = '<svg viewBox="0 0 44 44" aria-hidden="true" focusable="false"><circle class="play-ring" cx="22" cy="22" r="15.5"/><path class="ic-play" d="M19.2 16.6 L28.4 22 L19.2 27.4 Z"/><path class="ic-pause" d="M17.8 16.8h2.6v10.4h-2.6zM23.6 16.8h2.6v10.4h-2.6z"/></svg>';
 
+/* 色标：图版印的是墨色还是原色（三个圈，原色时套上色） */
+const TONE_SVG = '<svg viewBox="0 0 20 18" aria-hidden="true" focusable="false"><circle cx="6.5" cy="6.5" r="5"/><circle cx="13.5" cy="6.5" r="5"/><circle cx="10" cy="12" r="5"/></svg>';
+
 /* 首页每一叶默认印哪一句眉批：有这几封就用它们，否则用这一排的第一封。 */
 const PICKS = new Set(['221 FOREVER', 'One Year']);
 /* 年表的月份刻度：每个月的第一天是一年里的第几天（平年） */
@@ -401,13 +404,13 @@ export default {
       const ink = l.cover.own === false || l.cover.own === undefined;    // 网上找来的图印成墨色；自己拍的照片是原色
       const portrait = l.cover.h > l.cover.w;
       const fig = h('figure', { class: 'plate' + (ink ? '' : ' is-color') + (portrait ? ' plate--tall' : '') });
-      const hint = h('span', { class: 'plate-hint' });
+      const mark = h('span', { class: 'plate-mark', 'aria-hidden': 'true' });
+      mark.innerHTML = TONE_SVG;
       const btn = h('button', { type: 'button', class: 'plate-btn', 'aria-pressed': String(!ink), 'aria-label': '封面图，点按切换墨色与原色' },
         ctx.img(l.cover, { sizes: '(max-width: 719px) 62vw, (max-width: 1179px) 340px, 264px', widths: [480, 800], lazy: false, alt: `第 ${l.no} 封的封面` }));
-      const say = () => { hint.textContent = fig.classList.contains('is-color') ? '点图见墨色' : '点图见原色'; };
-      btn.addEventListener('click', () => { btn.setAttribute('aria-pressed', String(fig.classList.toggle('is-color'))); say(); });
-      say();
-      fig.append(btn, h('figcaption', {}, h('span', {}, '图版 ', h('span', { class: 'n', lang: 'en' }, String(l.no)), ' · 封面'), hint));
+      btn.addEventListener('click', () => btn.setAttribute('aria-pressed', String(fig.classList.toggle('is-color'))));
+      mark.addEventListener('click', () => btn.click());
+      fig.append(btn, h('figcaption', {}, h('span', {}, '图版 ', h('span', { class: 'n', lang: 'en' }, String(l.no)), ' · 封面'), mark));
       return fig;
     }
 
@@ -566,20 +569,21 @@ export default {
           feet(l)));
       return letterEl;
     }
-    /* 读者要求少动（prefers-reduced-motion）时，信里的动图停在第一帧，点一下才动；再点一下停住。 */
+    /* 读者要求少动（prefers-reduced-motion）时，信里的动图停在第一帧，点一下才动；再点一下停住。
+       图下面印一个播放 / 暂停的记号（和歌的那个是同一个），点它和点图一样。 */
     function still(img) {
       if (img.dataset.still || !img.naturalWidth) return;
       const k = Math.min(1, 1200 / img.naturalWidth);
       const c = h('canvas', { width: Math.round(img.naturalWidth * k), height: Math.round(img.naturalHeight * k) });
-      const fig = img.closest('figure'), hint = fig && fig.querySelector('.fo-hint');
+      const fig = img.closest('figure'), mark = fig && fig.querySelector('.fo-play');
       let frame;
-      try { c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); frame = c.toDataURL('image/png'); } catch { if (hint) hint.textContent = ''; return; }
+      try { c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); frame = c.toDataURL('image/png'); } catch { if (mark) mark.replaceChildren(); return; }
       const moving = img.currentSrc || img.src;
       const set = (on) => {
         img.dataset.still = on ? 'off' : 'on';
         img.src = on ? moving : frame;
         img.setAttribute('aria-label', (img.alt ? img.alt + '。' : '') + (on ? '动图，点一下停住' : '动图，点一下让它动'));
-        if (hint) hint.textContent = on ? '点图停住' : '点图，让它动起来';
+        if (mark) mark.classList.toggle('is-on', on);
       };
       img.removeAttribute('srcset');
       img.tabIndex = 0;
@@ -594,8 +598,11 @@ export default {
       if (!ctx.env.reducedMotion) return;
       for (const img of el.querySelectorAll('img[data-gif]')) {
         if (img.dataset.still || img.closest('.flip-card, .gift-scene')) continue;
-        const fig = img.closest('figure');                     // 提示那一行先占好位置：图到了以后信不会往下跳一行
-        if (fig && !fig.querySelector('.fo-hint')) fig.appendChild(h('figcaption', { class: 'fo-hint' }, '点图，让它动起来'));
+        const fig = img.closest('figure');                     // 记号那一行先占好位置：图到了以后信不会往下跳
+        if (fig && !fig.querySelector('.fo-play')) {
+          const mark = fig.appendChild(h('figcaption', { class: 'fo-play', 'aria-hidden': 'true', onclick: () => img.click() }));
+          mark.innerHTML = PLAY_SVG;
+        }
         if (img.complete && img.naturalWidth) still(img);
         else img.addEventListener('load', () => still(img), { once: true });
       }
@@ -603,6 +610,9 @@ export default {
     /** 搬进文档之后才能量：翻转卡片按新宽度重量一次，图和卡片凑整行 */
     function settle(contentEl) {
       ctx.widgets.init(contentEl);
+      /* 卡片的折角、礼物外面的剪刀线都是画出来的，没有字：给读屏的话写在这里 */
+      for (const c of contentEl.querySelectorAll('.flip-card')) { c.setAttribute('role', 'group'); c.setAttribute('aria-label', '卡片：正面是信，背面是照片，按回车翻面'); }
+      for (const g of contentEl.querySelectorAll('#gift-container')) g.setAttribute('aria-label', '礼物，点一下拆开');
       stillAll(contentEl);
       snapAll(contentEl);
       fit();
