@@ -475,6 +475,36 @@ test.describe('夜航 (drift)', () => {
     await context.close();
   });
 
+  test('with a song playing, the narrowest desktop bar keeps the control on screen when the text is enlarged: the name of the song gives way', async ({ browser, baseURL }) => {
+    // A reader who enlarges text only (120%, 150%) gets larger words in boxes of the same size. With a song
+    // playing, the desktop bar also carries the song's name (up to 300px); that name is what shortens.
+    const context = await browser.newContext({ baseURL, viewport: { width: 768, height: 900 } });
+    const page = await context.newPage();
+    await open(page, '/', 'drift');
+    await page.evaluate(() => document.fonts.ready);
+    await page.evaluate(() => {
+      window.scrollTo(0, 900);
+      const root = document.getElementById('theme-root');
+      root.classList.add('has-song');                                        // (the bar as it is while a song plays; no song is played in tests)
+      root.querySelector('.bar-song a').textContent = '一首名字很长很长很长的歌 · A Song With A Rather Long Name';
+      const larger = document.createElement('style');                      // the words of the bar at 150%, the boxes as they were
+      larger.textContent = '#theme-root .bar .brand { font-size: 21px } #theme-root .bar-nav, #theme-root .bar .theme-switcher, #theme-root .bar-song a { font-size: 19.5px }';
+      document.head.append(larger);
+    });
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.querySelector('#theme-root .brand')).opacity)).toBe('1');
+    expect(await oneLine(page, '#theme-root .bar', ['.brand', '.bar-link', '.bar-toggle', '.theme-switcher-toggle']), 'the bar').toEqual(HOLDS);
+    const song = await page.evaluate(() => {
+      const box = (sel) => document.querySelector(`#theme-root ${sel}`).getBoundingClientRect();
+      const s = box('.bar-song');
+      return { width: Math.round(s.width), afterTheName: s.left >= box('.brand').right - 0.5, beforeTheLink: s.right <= box('.bar-link').left + 0.5 };
+    });
+    expect(song, 'the song\'s name is shorter, between the name of the site and 最新一封').toMatchObject({ afterTheName: true, beforeTheLink: true });
+    expect(song.width).toBeLessThan(300);
+    expect(song.width, 'and still there').toBeGreaterThan(80);
+    await expectNoSidewaysScroll(page);
+    await context.close();
+  });
+
   test('with a letter open the masthead above the river is dimmed, not taken away: no empty screen above the newest letter', async ({ browser, baseURL }) => {
     // The newest letter is the first print under the masthead. Scrolling back up from it used to
     // show a screen of nothing where the masthead had been hidden. Beside the river (1100px and

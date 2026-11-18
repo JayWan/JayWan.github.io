@@ -57,7 +57,7 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
 }
 .at-top .brand { opacity: 0; pointer-events: none; }
 .at-top .brand:focus-visible { opacity: 1; }
-.bar-nav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+.bar-nav { display: flex; align-items: center; gap: 4px; margin-left: auto; min-width: 0; }   /* (a song's name gives way) */
 .bar-nav, .theme-switcher { font: 500 13px/1 var(--serif); }   /* (its buttons inherit it) */
 .bar-link, .bar-toggle, .theme-switcher-toggle {
   letter-spacing: .12em; min-height: 44px; padding: 0 14px; display: inline-flex; align-items: center; gap: .5em;
@@ -476,12 +476,13 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 /* ═════════ phone ═════════ */
 @media (max-width: 759px) {
   .bar { height: calc(52px + env(safe-area-inset-top, 0px)); padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
-  /* a name with no room beside the rest (larger text) wraps out of sight, whole */
-  .brand { font-size: 13px; letter-spacing: clamp(.09em, 4vw - 12px, .3em); padding-right: 12px; }
+  /* a name with no room wraps out of sight, whole */
+  .brand { font-size: 13px; letter-spacing: clamp(.09em, 4vw - .92em, .3em); padding-right: 12px; }
   .brand, .sb-no { display: flex; align-items: center; min-width: 0; height: 44px; overflow: hidden; flex-wrap: wrap; }
   .brand::before, .sb-no::before { content: ""; height: 44px; }
   .bar-link, .bar-toggle, .theme-switcher-toggle { padding: 0 8px; letter-spacing: .08em; }
   #theme-root .bar-song { display: none; }
+  .bar-nav { flex: none; }
 
   .hero { padding: calc(64px + env(safe-area-inset-top, 0px)) 22px 0; }
   .hero h1 { font-size: 41px; letter-spacing: .01em; }
@@ -575,7 +576,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 
   .foot { padding: 20px 22px calc(96px + env(safe-area-inset-bottom, 0px)); }
 }
-@media (max-width: 369px) {      /* the bar closes up: all four on its line down to 320px */
+@media (max-width: 369px) {      /* the bar closes up, down to 320px */
   .bar-nav { gap: 0; margin-right: -4px; }
   .bar-link, .bar-toggle, .theme-switcher-toggle { padding: 0 6px; letter-spacing: 0; }
 }
