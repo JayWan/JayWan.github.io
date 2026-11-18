@@ -109,6 +109,137 @@ test.describe('theme "folio": from the contents to a letter and back', () => {
   });
 });
 
+test.describe('theme "folio": the order of the contents', () => {
+  /** What the contents shows, in reading order (which is document order), and what the mark says. */
+  const shown = (page) => page.evaluate(() => {
+    const root = document.getElementById('theme-root');
+    const mark = root.querySelector('.yidx button.sort');
+    const text = (el) => el.textContent.trim();
+    return {
+      leaves: [...root.querySelectorAll('.leaves .leaf')].map((leaf) => leaf.id),
+      columns: [...root.querySelectorAll('.leaves .cell--letter')].map((cell) => Number(cell.dataset.no)),
+      index: [...root.querySelectorAll('.yidx a')].map(text),
+      chart: [...root.querySelectorAll('.nb .nb-r .nb-y')].map(text),
+      months: [...root.querySelectorAll('.nb .nb-m1, .nb .nb-m2')].map(text),
+      pressed: mark.getAttribute('aria-pressed'),
+      label: mark.getAttribute('aria-label'),
+      stored: sessionStorage.getItem('f221:sort'),
+    };
+  });
+  /** What both orders look like for this archive: the couple's letters one way or the other, the afterword last. */
+  function expected(letters) {
+    const own = letters.filter((l) => !isGuest(l)).map((l) => l.no);
+    const guests = letters.filter(isGuest).map((l) => l.no);
+    const years = [];
+    for (let y = letters[0].year; y <= Math.max(...letters.filter((l) => !isGuest(l)).map((l) => l.year)); y++) years.push(y);
+    const tail = guests.length ? ['跋'] : [];
+    const side = (ys, list, step) => ({
+      leaves: [...ys.map((y) => `y${y}`), ...(guests.length ? ['ba'] : [])],
+      columns: [...list, ...guests],
+      index: [...ys.map(String), ...tail],
+      step,
+    });
+    return { newest: side([...years].reverse(), [...own].reverse(), -1), oldest: side(years, own, 1) };
+  }
+  const expectOrder = async (page, want, why) => {
+    const now = await shown(page);
+    for (const part of ['columns', 'leaves', 'index']) expect(now[part], `${why}: ${part}`).toEqual(want[part]);
+    // the chart also has a row for this year when nothing has been written in it yet, so its rows are counted, not listed
+    const rows = now.chart.filter((row) => row !== '跋').map(Number);
+    expect(rows.length, `${why}: the chart has a row for every leaf`).toBeGreaterThanOrEqual(want.index.filter((y) => y !== '跋').length);
+    expect(rows, `${why}: the chart's years run the same way`).toEqual(rows.map((_, i) => rows[0] + want.step * i));
+    if (want.index.includes('跋')) expect(now.chart.at(-1), `${why}: the afterword is the chart's last row`).toBe('跋');
+    return now;
+  };
+
+  test('the newest letter leads; one mark turns the book round, the afterword staying last', async ({ page }) => {
+    await open(page, '/', THEME);
+    const letters = await lettersOf(page);
+    const { newest, oldest } = expected(letters);
+    const first = await expectOrder(page, newest, 'a new visit');
+    expect(first.pressed).toBe('false');
+    expect(first.label, 'the mark has a name for readers who cannot see it').toMatch(/最新/);
+    expect(first.months, 'the chart is drawn the way the leaves run: the end of the year on the right').toEqual(['十二月', '一月']);
+
+    const mark = page.locator('#theme-root .yidx button.sort');
+    await expect(mark, 'the mark is on the first screen').toBeInViewport({ ratio: 1 });
+    const box = await mark.boundingBox();
+    expect(Math.min(box.width, box.height), 'and big enough for a finger').toBeGreaterThanOrEqual(44);
+    expect((await mark.innerText()).trim(), 'it is a drawing, not a word').toBe('');
+
+    // by keyboard: the mark keeps the focus, and shows it
+    await mark.focus();
+    await page.keyboard.press('Enter');
+    const turned = await expectOrder(page, oldest, 'after the mark is pressed');
+    expect(turned.pressed).toBe('true');
+    expect(turned.label).toMatch(/最早/);
+    expect(turned.months).toEqual(['一月', '十二月']);
+    expect(turned.stored, 'the choice is kept for the visit').toBe('old');
+    const focus = await mark.evaluate((el) => ({ on: document.activeElement === el, ring: el.matches(':focus-visible') && getComputedStyle(el).outlineStyle !== 'none' && parseFloat(getComputedStyle(el).outlineWidth) > 0 }));
+    expect(focus, 'the mark still has the focus, with a ring').toEqual({ on: true, ring: true });
+    const glyph = (el) => getComputedStyle(el.querySelector('svg')).transform;
+    expect(await mark.evaluate(glyph), 'the drawing itself is turned over').not.toBe('none');
+
+    await mark.click();
+    const again = await expectOrder(page, newest, 'pressed once more');
+    expect(again.pressed).toBe('false');
+    expect(again.stored).toBeNull();
+    expect(await mark.evaluate(glyph)).toBe('none');
+    await expectNoSidewaysScroll(page);
+  });
+
+  test('the chosen order lasts the visit; previous and next stay in the order the letters were written', async ({ page, browser, baseURL }) => {
+    const seen = watch(page, 'x');
+    await open(page, '/', THEME);
+    const letters = await lettersOf(page);
+    const { newest, oldest } = expected(letters);
+    const start = letters.find((l) => l.date === '2024-11-19') || letters[Math.max(1, letters.length - 8)];   // 万天万岁！
+    const before = letters[start.no - 2], after = letters[start.no];
+    test.skip(!before || !after || [before, start, after].some((l) => l.standalone || isGuest(l)), 'needs three ordinary letters in a row');
+    const path = (href) => decodeURI(new URL(href, 'http://x').pathname);
+
+    for (const [name, want, press] of [['newest first', newest, false], ['oldest first', oldest, true]]) {
+      if (press) await page.locator('#theme-root .yidx button.sort').click();
+      await expectOrder(page, want, name);
+      const column = page.locator(`#theme-root .leaves .cell[data-no="${start.no}"] a.col`);
+      await column.scrollIntoViewIfNeeded();
+      await column.click();
+      await expect.poll(() => view(page)).toBe('letter');
+      const feet = page.locator('#theme-root .feet');
+      expect(path(await feet.locator('a[rel="prev"]').getAttribute('href')), `${name}: previous is the letter written before`).toBe(decodeURI(before.url));
+      expect(path(await feet.locator('a[rel="next"]').getAttribute('href')), `${name}: next is the letter written after`).toBe(decodeURI(after.url));
+      await expect(page.locator('#theme-root .bar-no b')).toHaveText(String(start.no));
+
+      await feet.locator('a[rel="next"]').click();
+      await expect(page.locator('#theme-root .tiji-title')).toHaveAttribute('aria-label', after.title);
+      const home = page.locator('#theme-root .feet .cell--home a');
+      await home.scrollIntoViewIfNeeded();
+      await home.click();
+      await expect.poll(() => view(page)).toBe('home');
+      await expectOrder(page, want, `${name}, back from a letter`);
+      const read = page.locator('#theme-root .leaves .cell.is-read');
+      await expect(read, `${name}: the letter just read is marked`).toHaveAttribute('data-no', String(after.no));
+      await expect.poll(() => read.evaluate((cell) => {
+        const box = cell.getBoundingClientRect();
+        return box.top < window.innerHeight && box.bottom > 0;
+      }), `${name}: and it is on screen`).toBe(true);
+    }
+
+    await page.reload();
+    await page.waitForSelector(`html[data-theme-ready="${THEME}"]`);
+    const kept = await expectOrder(page, oldest, 'after a reload in the same tab');
+    expect(kept.pressed).toBe('true');
+    expect(seen.errors).toEqual([]);
+
+    const context = await browser.newContext({ baseURL });
+    const visit = await context.newPage();
+    await open(visit, '/', THEME);
+    const fresh = await expectOrder(visit, newest, 'a new visit starts from the newest letter again');
+    expect(fresh.pressed).toBe('false');
+    await context.close();
+  });
+});
+
 test.describe('theme "folio": the year index', () => {
   test('a year brings its leaf to the top; Back returns to where the reader was, Forward to the leaf', async ({ page }) => {
     await open(page, '/', THEME);
