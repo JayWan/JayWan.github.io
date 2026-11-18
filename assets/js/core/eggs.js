@@ -122,6 +122,31 @@ export function switcher(T) {
   return nav;
 }
 
+/**
+ * The classic page is plain HTML with no theme code of its own, so the core hangs the switcher on
+ * it: the same <nav class="theme-switcher"> the other themes place themselves, at the foot of the
+ * page, where a reader ends up. Styled by _scss/_theme-switcher.scss.
+ *
+ *   letter   inside the footer the page already has, under the © line
+ *   home     in a footer of its own after the last card (the classic home page never had one)
+ *   404      the same footer, resting on the bottom edge of the otherwise empty page
+ *
+ * Nothing is added where there is nothing to switch to: a browser too old for the new themes
+ * (by 'old'), a page they cannot draw (by 'page'), a registry in which classic is the only theme.
+ */
+export function classicSwitcher(T) {
+  if (T.id !== 'classic' || T.by === 'old' || T.by === 'page' || document.querySelector('.theme-switcher')) return null;
+  const nav = switcher(T);
+  if (nav.querySelectorAll('a').length < 2) return null;
+  let foot = document.querySelector('footer.section--footer .container');
+  if (!foot) {
+    foot = el('div', { class: 'container container--content' });
+    document.body.append(el('footer', { class: `section--footer section--footer--switcher${T.page === '404' ? ' section--footer--floor' : ''}` }, foot));
+  }
+  foot.append(nav);
+  return nav;
+}
+
 // ------------------------------------------------------------------ console greeting
 
 /** A few lines for whoever opens DevTools. Runs under every theme, classic included. */
@@ -144,9 +169,9 @@ export function greet(T, data) {
 /**
  * Typing 221 anywhere (not in a form field) → the next theme.
  * Typing pi → today's digits of π, shown discreetly for a few seconds.
- * On a touch screen there is no keyboard, and the classic theme has no switcher, so under
- * classic three quick taps on the big title of the home page, or on the footer line of a
- * letter, do what 221 does. Nothing is visible until used.
+ * On a touch screen there is no keyboard, so under classic three quick taps on the big title of
+ * the home page, or on the footer (around the switcher, not on it: a tap on a theme's name
+ * already means that theme), do what 221 does. Nothing is visible until used.
  */
 export function keys(T, data) {
   let typed = '';
@@ -166,7 +191,7 @@ export function keys(T, data) {
     let taps = 0;
     let tapTimer = 0;
     document.addEventListener('click', (event) => {
-      if (!event.target.closest || !event.target.closest('.textLogo--frontpage, .section--footer')) return;
+      if (!event.target.closest || !event.target.closest('.textLogo--frontpage, .section--footer') || event.target.closest('.theme-switcher')) return;
       clearTimeout(tapTimer);
       tapTimer = setTimeout(() => { taps = 0; }, 900);
       if (++taps >= 3) { taps = 0; switchTheme(nextTheme(T)); }

@@ -1,0 +1,91 @@
+//
+// Theme switcher
+// --------------------------------------------------
+//
+// The row of theme names at the foot of the page: 旧版 / 夜航 / 笺 / Side A / Side B / 绕日.
+// The markup is the <nav class="theme-switcher"> every theme gets from the core; under this
+// theme the core also places it (assets/js/core/eggs.js, classicSwitcher):
+//
+//   letter   inside the footer the page already has, under the © line
+//   home     in a footer of its own after the last card (.section--footer--switcher)
+//   404      the same footer, resting on the bottom edge of the otherwise empty page
+//
+// It is written by a script, so without JavaScript none of this applies, and nothing here
+// touches an element the old pages already had.
+
+@use "colors" as *;
+@use "typography" as *;
+
+// The other themes' names are quieter than the © line above them (4.6 : 1 on white).
+$switcher-quiet: rgba(0, 0, 0, 0.54);
+
+.theme-switcher {
+  // The half line under the row keeps it clear of the heart button of a letter page (fixed,
+  // 30px + 44px from the bottom) when a phone is scrolled to the very end: the footer's own
+  // padding below is 2 × $leading.
+  margin: 0 0 0.5 * $leading;
+  padding: 0 0 env(safe-area-inset-bottom, 0px);
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+  }
+
+  a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px; // a finger's worth, also for a name of one character
+    min-height: 44px;
+    padding: 0 0.5rem;
+    white-space: nowrap;
+    color: $switcher-quiet;
+    background-image: none;
+
+    &:hover {
+      color: $text-color;
+    }
+
+    &:focus-visible {
+      color: $text-color;
+      outline: 2px solid $text-color;
+      outline-offset: -5px;
+      border-radius: 3px;
+    }
+  }
+}
+
+// The theme being shown: the colour of the text around it and the hairline every link of this
+// theme has (see `a` in _typography.scss), set under the name. (nav. so that it outranks
+// `.section--footer a`, wherever this partial is listed.)
+nav.theme-switcher a[aria-current="true"] {
+  color: $text-color;
+  background-image: linear-gradient(to bottom, rgba($link-color, 0) 75%, rgba($link-color, 0.8) 75%);
+  background-position: 0 calc(50% + 0.62em);
+  background-size: 2px 2px;
+  background-clip: content-box; // as wide as the name, not as the tap target
+}
+
+// A footer that holds nothing but the row (home, 404): the cards above already end with a
+// line of space, so it needs none of its own on top.
+.section--footer--switcher {
+  padding-top: 0;
+}
+
+// The 404 page has no content to follow: there the footer rests on the bottom edge of the
+// first screen (nothing on that page is positioned, so this is the page itself).
+.section--footer--floor {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
