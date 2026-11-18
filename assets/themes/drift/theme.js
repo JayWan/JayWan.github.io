@@ -174,7 +174,7 @@ export default {
         h('span', { className: 'cap-meta' }, h('span', {}, dot(p.date)), p.days.met != null && h('span', {}, '第', h('i', {}, String(p.days.met)), '天'), h('span', {}, capWho(p))),
         c && h('span', { className: 'cap-title' }, phrases(p.title)),
         p.song && h('span', { className: 'cap-song' }, `歌 · ${p.song.title}`),
-        z === 2 && p.quote && h('span', { className: 'cap-quote' }, phrases(p.quote)));
+        c && p.quote && h('span', { className: 'cap-quote' }, phrases(p.quote)));   // every letter carries its line (a print without a picture has it on the paper itself)
       a.append(h('span', { className: 'par' }, h('span', { className: 'bob' }, frame, cap)));
       a.addEventListener('pointerenter', () => router.prefetch(a.href));
       a.addEventListener('touchstart', () => router.prefetch(a.href), { passive: true });

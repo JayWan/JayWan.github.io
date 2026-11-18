@@ -28,6 +28,8 @@ const river = (page) => page.evaluate(() => {
       top: a.offsetTop,
       bottom: a.offsetTop + a.offsetHeight,
       caption: a.querySelector('.cap').textContent,
+      line: (a.querySelector('.cap-quote, .blank-q') || {}).textContent || null,
+      lines: letter.quotes || [],
     };
   });
   const silences = [];
@@ -97,6 +99,11 @@ test.describe('夜航 (drift)', () => {
 
       // authorship is stated on every print, the same way for everyone
       for (const row of rows) for (const name of row.names) expect(row.caption, `no. ${row.no} names ${name}`).toContain(name);
+      // and every print carries one line of its letter, near or far (not only the prints in front)
+      const bare = (text) => text.replace(/\s+/g, '');
+      for (const row of rows.filter((r) => r.lines.length)) expect(row.lines.map(bare), `no. ${row.no} shows one of its lines`).toContain(bare(row.line || ''));
+      expect(rows.filter((r) => r.line).length, 'on all three layers').toBe(rows.filter((r) => r.lines.length).length);
+      for (const layer of [0, 1, 2]) expect(rows.filter((r) => r.layer === layer && r.line).length, `layer ${layer} has prints with a line`).toBeGreaterThan(0);
       // pictures found online are never framed as the couple's prints: far layer, no paper border
       for (const row of rows.filter((r) => r.found)) {
         expect(row.layer, `no. ${row.no}: a found picture stays on the far layer`).toBe(0);

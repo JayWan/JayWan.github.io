@@ -513,7 +513,6 @@ export default {
           h('header', { class: 'masthead' },
             h('h1', { lang: 'en' }, site.title),
             h('p', { class: 'plate-title' }, '绕日图'),
-            h('p', { class: 'plate-no' }, '图版 I'),
             h('p', { class: 'plate-desc' }, `${Y0} – ${Y1}`)),
           chartHost,
           // 公转：逆时针，一圈 360°，365.24 天。和右边的自转倾角是一对小图

@@ -99,7 +99,6 @@ body { margin: 0; }
 /* ───────────── 首页 ───────────── */
 .masthead h1 { font-size: 26px; font-weight: 600; letter-spacing: .14em; line-height: 1.25; white-space: nowrap; }
 .masthead .plate-title { font-size: 14px; letter-spacing: .34em; white-space: nowrap; }
-.masthead .plate-no { font-size: var(--ann); letter-spacing: .32em; color: var(--ink-3); }
 .masthead .plate-desc { font-size: var(--ann); letter-spacing: .04em; color: var(--ink-2); white-space: nowrap; }
 .chart { position: relative; }
 
@@ -344,8 +343,7 @@ html[data-navigating] #theme-root::after { content: ""; position: fixed; z-index
   .masthead > *, .tilt { position: absolute; z-index: 2; }
   .masthead h1 { top: 28px; left: 36px; }
   .masthead .plate-title { top: 68px; left: 37px; }
-  .masthead .plate-no { top: 34px; right: 34px; }
-  .masthead .plate-desc { top: 58px; right: 34px; }
+  .masthead .plate-desc { top: 34px; right: 34px; }
   .tilt { right: 32px; bottom: 8px; }
   .orb { right: auto; left: 34px; }
   .legend { margin: 0 34px; padding: 4px 0 12px; gap: 3px 20px; }
@@ -423,7 +421,7 @@ html[data-navigating] #theme-root::after { content: ""; position: fixed; z-index
   .chartwrap { display: grid; grid-template: auto minmax(0, 1fr) auto / minmax(0, 1fr) auto; column-gap: 24px; padding: 0 34px; }
   .masthead { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 16px; padding-top: 24px; }
   .masthead > *, .tilt { position: static; }
-  .masthead .plate-no { margin-left: auto; }
+  .masthead .plate-desc { margin-left: auto; }
   .chart { position: relative; inset: auto; grid-column: 1 / -1; }
   .ro-thumb { display: none; }
   .ro-letter { grid-template-columns: minmax(0, 1fr) 236px; }
@@ -437,8 +435,7 @@ html[data-navigating] #theme-root::after { content: ""; position: fixed; z-index
   .home { display: flex; flex-direction: column; padding: calc(14px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left)); }
   .chartcol, .chartwrap { display: contents; }
   .masthead { order: 1; padding: 0 8px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 2px 12px; }
-  .masthead h1 { grid-column: 1 / span 2; font-size: 21px; }
-  .masthead .plate-no { grid-column: 3; grid-row: 1; }
+  .masthead h1 { grid-column: 1 / -1; font-size: 21px; }
   .masthead .plate-title { grid-column: 1; grid-row: 2; font-size: 13px; }
   .masthead .plate-desc { grid-column: 2 / span 2; grid-row: 2; }
   .chart { order: 2; width: 100%; aspect-ratio: 1 / 1.09; margin-top: 2px; }

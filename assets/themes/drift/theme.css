@@ -209,6 +209,9 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
 .z2 .cap-title { font-size: 22px; }
 .z0 .cap-title { font-size: 18px; }
 .z0 .cap { opacity: .88; }
+/* every print carries its line; further away it is set a little smaller, like the title above it */
+.z1 .cap-quote { font-size: 14px; }
+.z0 .cap-quote { font-size: 13.5px; line-height: 1.75; }
 
 @media (hover: hover) and (pointer: fine) {
   .item:hover { z-index: 6; }
