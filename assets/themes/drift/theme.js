@@ -729,12 +729,13 @@ export default {
         if (stops.length && (at < 0 || at === (e.shiftKey ? 0 : stops.length - 1))) { e.preventDefault(); stops[to].focus(); }
         return;
       }
-      if (t && t.closest && t.closest('input, textarea, select, [contenteditable], [role="slider"], .theme-switcher[data-open]')) return;   // (a reader inside the open list of themes is not turning pages)
+      if (t && t.closest && t.closest('input, textarea, select, [contenteditable], [role="slider"]')) return;
       if (e.key === 'Escape') goHome();
       else if (e.key === 'Home' || e.key === 'End') {      // the open letter is the page: Home and End stay inside it
         e.preventDefault();
         window.scrollTo(0, e.key === 'Home' ? sheetTarget() : Math.max(sheetTarget(), Math.round(sheet.getBoundingClientRect().bottom + window.scrollY - innerHeight + 40)));
       }
+      else if (t && t.closest && t.closest('.theme-switcher[data-open]')) return;   // (a reader inside the open list of themes is not turning pages)
       else if (e.key === 'ArrowLeft' && openL.prev) router.go(openL.prev.url, { replace: true });
       else if (e.key === 'ArrowRight' && openL.next) router.go(openL.next.url, { replace: true });
     });

@@ -399,6 +399,14 @@ test.describe('夜航 (drift)', () => {
       }
       await page.keyboard.press('ArrowRight');                      // (← and → turn to the neighbouring letter, but not from inside the list)
       expect(await pathOf(page)).toBe(url);
+      // Home and End keep their meaning from inside the list: the head and the end of this letter, not the top
+      // or the foot of the river (going there would close the letter)
+      const sheetAt = () => page.evaluate(() => { const r = document.querySelector('#theme-root .sheet').getBoundingClientRect(); return { top: Math.round(r.top), endOnScreen: r.bottom > 0 && r.bottom <= innerHeight }; });
+      await page.keyboard.press('End');
+      await expect.poll(sheetAt, 'End: the end of the letter').toMatchObject({ endOnScreen: true });
+      await page.keyboard.press('Home');
+      await expect.poll(async () => { const { top } = await sheetAt(); return top >= 0 && top < 100; }, 'Home: the head of the letter').toBe(true);
+      expect(await pathOf(page), 'the letter is still open').toBe(url);
       await page.keyboard.press('Tab');                             // past the last name: on to 合上, and the list closes behind
       expect(await focus()).toEqual({ on: 'sb-close', inSheet: true });
       await expect(list).toBeHidden();

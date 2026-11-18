@@ -70,8 +70,8 @@ body { margin: 0; overflow-x: hidden; overflow-x: clip; }
 .bar-song a { font: 500 13px/1.3 var(--serif); letter-spacing: .06em; color: var(--text-2); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 14px 0; }
 /* changing theme: its list is the river in small, a ring per theme, a lamp on the one worn */
 .theme-switcher { position: relative; display: flex; align-items: center; align-self: stretch; margin-left: 4px; }
-.theme-switcher i { width: 6px; height: 6px; margin: -3px 1px 0; border: solid; border-width: 0 1px 1px 0; rotate: 45deg; transition: .3s var(--ease); }
-[data-open] i { margin-top: 4px; rotate: 225deg; }
+.theme-switcher i { width: .46em; height: .46em; margin: -.23em 1px 0; border: solid; border-width: 0 1px 1px 0; rotate: 45deg; transition: .3s var(--ease); }
+[data-open] i { margin-top: .3em; rotate: 225deg; }
 .theme-switcher ul {
   position: absolute; z-index: 2; right: 0; top: 100%; margin: 0; padding: 6px 0; list-style: none; letter-spacing: .12em; color: var(--text-2);
   background: #1f1d18; border: 1px solid var(--line); box-shadow: 0 16px 30px -10px rgba(0, 0, 0, .85);
@@ -477,7 +477,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 @media (max-width: 759px) {
   .bar { height: calc(52px + env(safe-area-inset-top, 0px)); padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
   /* a name with no room beside the rest (larger text) wraps out of sight, whole */
-  .brand { font-size: 13px; letter-spacing: .24em; padding-right: 12px; }
+  .brand { font-size: 13px; letter-spacing: clamp(.09em, 4vw - 12px, .3em); padding-right: 12px; }
   .brand, .sb-no { display: flex; align-items: center; min-width: 0; height: 44px; overflow: hidden; flex-wrap: wrap; }
   .brand::before, .sb-no::before { content: ""; height: 44px; }
   .bar-link, .bar-toggle, .theme-switcher-toggle { padding: 0 8px; letter-spacing: .08em; }
@@ -579,7 +579,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
   .bar-nav { gap: 0; margin-right: -4px; }
   .bar-link, .bar-toggle, .theme-switcher-toggle { padding: 0 6px; letter-spacing: 0; }
 }
-@media (max-width: 359px) { .sn-k { white-space: normal; line-height: 1.5; } .brand { letter-spacing: .09em; } }
+@media (max-width: 359px) { .sn-k { white-space: normal; line-height: 1.5; } }
 
 /* ═════════ reduced motion: everything is still ═════════ */
 @media (prefers-reduced-motion: reduce) {
