@@ -175,6 +175,29 @@ for (const [index, [kind, where]] of KINDS.entries()) {
   });
 }
 
+for (const width of [375, 360, 320]) {
+  test(`classic: on a phone ${width}px wide both rows stay on one line`, async ({ page, request, isMobile }) => {
+    const pages = await samplePages(request);
+    await page.setViewportSize({ width, height: 640 });
+    await openClassic(page, pages.letter);
+    const lines = (row) => page.locator(`${row} a[data-theme-id]`).evaluateAll((links) => ({
+      tops: [...new Set(links.map((a) => Math.round(a.getBoundingClientRect().top)))].length,
+      small: links.filter((a) => { const box = a.getBoundingClientRect(); return box.width < 44 || box.height < 44; }).map((a) => a.dataset.themeId),
+      outside: links.filter((a) => { const box = a.getBoundingClientRect(); return box.left < 0 || box.right > window.innerWidth; }).map((a) => a.dataset.themeId),
+    }));
+    await page.locator(FOOT).scrollIntoViewIfNeeded();
+    expect(await lines(FOOT), 'at the foot of the page').toEqual({ tops: 1, small: [], outside: [] });
+    await expectNoSidewaysScroll(page);
+
+    const burger = page.locator('label.sidebar-toggle-wrapper');
+    await (isMobile ? burger.tap() : burger.click());
+    await expect(page.locator(DRAWER)).toBeVisible();
+    await expect.poll(() => page.evaluate(() => Math.round(window.innerWidth - document.querySelector('nav.sidebar').getBoundingClientRect().right)), 'the drawer has slid in').toBe(0);
+    expect(await lines(DRAWER), 'in the drawer').toEqual({ tops: 1, small: [], outside: [] });
+    await expectNoSidewaysScroll(page);
+  });
+}
+
 test('classic: the row leaves room for the home indicator of a phone', async ({ request }) => {
   // env(safe-area-inset-bottom) is 0 in every test browser; what can be checked is that the rule asks for it.
   const css = await (await request.get('/assets/css/main.css')).text();

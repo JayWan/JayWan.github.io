@@ -81,6 +81,20 @@ nav.theme-switcher a[aria-current="true"] {
   background-clip: content-box; // as wide as the name, not as the tap target
 }
 
+// A narrow phone (360px, 320px): at the foot of the page the names stand closer together and
+// the row may use 10px of the page's 15px margin on either side, so that it still fits on one
+// line there, also in a fallback face wider than Roboto. Every name keeps its 44px.
+@media (max-width: 374px) {
+  .section--footer .theme-switcher {
+    margin-left: -10px;
+    margin-right: -10px;
+
+    a {
+      padding: 0 4px;
+    }
+  }
+}
+
 // A footer that holds nothing but the row (home, 404): the cards above already end with a
 // line of space, so it needs none of its own on top.
 .section--footer--switcher {
