@@ -178,6 +178,25 @@ export default {
     const newest = own[own.length - 1] || letters.latest;
     const dToday = site.today.days.met;                   // 今天是相识的第几日
 
+    /* ── 浏览器只放大文字时（Firefox 的「仅缩放文本」、系统的文字大小）──
+       版面是按像素定的，字却大了一截：眉批顶到年份索引上，书名伸出格子，信的字不在格线上。
+       这里不去猜是哪个浏览器的哪项设置，只量结果：一个 16px、行高 1 的「日」实际排出来多高，就是倍数 ts（平时是 1）。
+       只量高不量宽：行高 1 的一行就是字号那么高，和哪个字体、字体到没到都无关；字宽要看字体（Chrome、WebKit 里是 16.02px）。
+       量不到（盒子是 0）就当作 1：最坏也只是回到原来的版面。
+       ts 写在 #theme-root 上（--ts 和 data-ts），样式表里装字的尺寸都乘上它；ts 是 1 时什么都不写，版面和原来分毫不差。
+       量要等到这一页排过一遍以后（layoutHome、settle、show 里），不在 mount 一开头量：量一次就是排一次版，
+       而 WebKit 里只要在目录放进页面之前排过版，头一回量出来的夹注就有两列和原来不一样。 */
+    const probe = h('div', { class: 'fo-probe', 'aria-hidden': 'true' }, h('i'));
+    let ts = 1;
+    function rescale() {
+      const k = probe.firstChild.getBoundingClientRect().height / 16;
+      const t = k > 1.01 ? Math.min(3, Math.round(k * 1e3) / 1e3) : 1;      // 百分之一以内的出入不算；缩小了的字本来就放得下
+      if (t === ts) return false;
+      ts = t;
+      if (t > 1) { root.style.setProperty('--ts', t); root.dataset.ts = t; } else { root.style.removeProperty('--ts'); delete root.dataset.ts; fewer = 0; }
+      return true;
+    }
+
     /* 回目录：链接带 data-back，核心会把它当作「后退」（从目录来的话回到原处），并把刚读的那封带到眼前。
        上一封 / 下一封是普通链接：信到信由核心替换历史记录，所以「后退」总是回到目录。 */
     const homeLink = (cls, ...kids) => h('a', { class: cls, href: '/', 'data-back': true }, kids);
@@ -279,9 +298,14 @@ export default {
     const inOrder = () => (oldFirst ? groups : newFirst);
 
     const leaves = h('div', { class: 'leaves' });
-    let lastN = 0;
+    /* 一叶几行照样式表的 --n；字放大以后一行放不下题名时改用少一档的行数（fewer，见 layoutHome），写回 #theme-root 的 --n */
+    const STEPS = [12, 10, 8, 6, 5, 4, 3];
+    let lastN = 0, cssN = 12, fewer = 0;
     function buildLeaves(force) {
-      const n = parseInt(getComputedStyle(root).getPropertyValue('--n'), 10) || 12;
+      cssN = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--n'), 10) || 12;
+      const n = fewer && fewer < cssN ? fewer : cssN;
+      if (n < cssN) root.style.setProperty('--n', n); else root.style.removeProperty('--n');
+      root.toggleAttribute('data-few', n < cssN && n < 6);
       if (n === lastN && !force) return;
       lastN = n;
       const gs = inOrder();
@@ -298,28 +322,46 @@ export default {
       markRead();
     }
     /* 眉批：分成差不多长的几行；靠左放不下时改为向右展开 */
-    function layoutHome(force) {
+    function setMei(m, per) {
+      if (m.dataset.l === String(per)) return;
+      m.dataset.l = per;
+      m.replaceChildren(...quoteLines(m.dataset.q, per).flatMap((ln, i) => [i > 0 && h('br'), ...vt(ln)]).filter(Boolean));
+    }
+    function layoutHome(force, again) {
       if (!homeEl || !homeEl.isConnected) return;
       buildLeaves(force === true);
-      const per = '10';                                      // 一行十个字：多数分句不用拆
-      for (const m of homeEl.querySelectorAll('.mei')) {
-        if (m.dataset.l === per) continue;
-        m.dataset.l = per;
-        m.replaceChildren(...quoteLines(m.dataset.q, Number(per)).flatMap((ln, i) => [i > 0 && h('br'), ...vt(ln)]).filter(Boolean));
-      }
+      const meis = [...homeEl.querySelectorAll('.mei')];
+      for (const m of meis) setMei(m, 10);                   // 一行十个字：多数分句不用拆
       for (const c of homeEl.querySelectorAll('a.col')) {                  // 题名加夹注比这一列还长：歌名拆成两行
         c.classList.remove('is-long', 'no-lead');
         const d = c.querySelector('.day'), ld = c.querySelector('.lead');
         if (d && ld && (ld.offsetHeight < 8 || d.getBoundingClientRect().bottom > c.getBoundingClientRect().bottom + 1)) c.classList.add('is-long');
         if (ld) c.classList.toggle('no-lead', ld.offsetHeight < 48);       // 剩下的地方画不成一道线，就不画
       }
+      if (rescale()) return layoutHome(true);                // 文字的倍数这时才量得到；变了就照新的重排（平时不变，往下走）
+      /* 眉批量一遍：天头是按十个字定的，字比它估的大时（放大的倍数量不准、换了字体）还会顶出去，那就一行少排几个字，直到放得下 */
+      const room = parseFloat(getComputedStyle(homeEl.querySelector('.leaf')).paddingTop) + 0.5;
+      const over = (m) => m.parentNode.getBoundingClientRect().top - m.getBoundingClientRect().top > room;
+      for (const m of meis.filter(over)) for (let per = 9; per > 3; per--) { setMei(m, per); if (!over(m)) break; }
+      if (ts > 1 && !again) {                                // 字放大了：题名和夹注比一行还宽，就照窄屏的办法少排几行
+        let need = 0;
+        for (const el of homeEl.querySelectorAll('a.col > *')) need = Math.max(need, el.getBoundingClientRect().width);
+        const w = leaves.getBoundingClientRect().width;
+        const n = STEPS.find((k) => k <= cssN && w / k >= need) || 3;
+        if (n !== lastN) { fewer = n; return layoutHome(true, true); }
+      }
       for (const lf of homeEl.querySelectorAll('.leaf')) {
-        const left = lf.getBoundingClientRect().left;
+        const { left, right } = lf.getBoundingClientRect();
         for (const c of lf.querySelectorAll('.cell--letter, .cell--latest')) {
           const m = c.querySelector('.mei');
           if (!m) continue;
           m.classList.remove('mei--l');
-          m.classList.toggle('mei--l', m.getBoundingClientRect().left < left - 1);
+          m.style.marginLeft = '';
+          if (m.getBoundingClientRect().left < left - 1) {
+            m.classList.add('mei--l');
+            const out = m.getBoundingClientRect().right - right;       // 行数多了（字大、一行排得少）：向右展开又伸出这一叶，往回收
+            if (out > 0) m.style.marginLeft = -out + 'px';
+          }
         }
       }
     }
@@ -544,15 +586,48 @@ export default {
         }
       }
     }
+    /* 信的行距。浏览器放大文字时把 px 的行高也一起放大（36px 成了 43.2px），格线却还是 36px 一道。
+       gauge 里有两个量字：第一个照设计的 --lh 排，量出浏览器把它变成了多高（nat）；和设计一样就什么都不动。
+       不一样时把行距取成整数个设备像素（零头的格距三个引擎都画不好：有的漏线，有的越画越偏），
+       倒推出该写进 line-height 的值（--ld），再用第二个量字量实际排出来的一行（LP），格距、留白都照它（--lp、--sh）。 */
+    let gauge = null, LP = 0, nat = 0;
+    function pitch() {
+      const el = letterEl, a = gauge && gauge.firstChild;
+      if (!el || !a) return;
+      const cs = getComputedStyle(el), lh = parseFloat(cs.getPropertyValue('--lh')), st = el.style;
+      nat = a.getBoundingClientRect().height;
+      LP = 0;
+      if (!(lh > 0 && nat > 0) || Math.abs(nat - lh) < 0.05) { for (const p of ['--ld', '--lp', '--sh']) st.removeProperty(p); return; }
+      const dpr = window.devicePixelRatio || 1, px = (v) => Math.round(v * dpr) / dpr;
+      const want = px(nat);
+      st.setProperty('--ld', (want * lh / nat).toFixed(4) + 'px');
+      LP = gauge.lastChild.getBoundingClientRect().height || want;
+      st.setProperty('--lp', Number(LP.toFixed(4)) + 'px');
+      st.setProperty('--sh', px(parseFloat(cs.getPropertyValue('--shift')) * LP / lh) + 'px');
+    }
+    function repitch() {
+      pitch();
+      for (const b of root.querySelectorAll('.letter-body .fo-snap')) snap(b);
+      fit();
+    }
+    /* 文字的倍数变了（读者在页面上调了文字缩放）、或者换了断点：量字的大小一变就重排 */
+    const watch = typeof ResizeObserver === 'function' && new ResizeObserver(() => {
+      if (rescale()) layoutHome(true);
+      if (gauge && gauge.isConnected && gauge.firstChild.getBoundingClientRect().height !== nat) repitch();
+    });
+
     /* 图、卡片这些不是字的东西：把它占的高度凑成整行，后面的字才落回格线上 */
     let ro = null;
     function snap(el) {
       const body = el.closest('.letter-body');
       if (!body) return;
-      const L = parseFloat(getComputedStyle(body).lineHeight) || 36;
+      const L = LP || parseFloat(getComputedStyle(body).lineHeight) || 36;
       const hgt = el.getBoundingClientRect().height;
       if (hgt < 2) { el.style.marginBottom = ''; el.style.top = ''; return; }
-      const r = (L - (hgt % L)) % L;
+      let r = (L - (hgt % L)) % L;
+      /* 改过的行距可以带小数，卡片的高又是取整的像素：只多出一点点（不到 0.6px）时不补一整行，而是把这一点从下面的空里扣掉，
+         后面的字照样落在格线上 */
+      if (LP && L - r < 0.6) r -= L;
       const mb = (L + r).toFixed(2) + 'px', top = (r / 2).toFixed(2) + 'px';
       if (el.style.marginBottom !== mb) el.style.marginBottom = mb;
       if (el.style.top !== top) el.style.top = top;
@@ -562,7 +637,7 @@ export default {
       const body = root.querySelector('.letter-body');
       if (!body) return;
       body.style.minHeight = '';
-      const cs = getComputedStyle(body), L = parseFloat(cs.lineHeight) || 36, H = body.getBoundingClientRect().height;
+      const cs = getComputedStyle(body), L = LP || parseFloat(cs.lineHeight) || 36, H = body.getBoundingClientRect().height;
       const inner = H - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - parseFloat(cs.borderTopWidth) - parseFloat(cs.borderBottomWidth);
       const r = inner % L;
       if (r > 0.5 && L - r > 0.5) body.style.minHeight = (H + L - r).toFixed(2) + 'px';
@@ -584,6 +659,9 @@ export default {
       dress(contentEl);
       const body = h('div', { class: 'letter-body body' }, contentEl);
       const quote = l.quote ? quoteLines(l.quote, wide.matches ? 20 : 19) : [];
+      if (watch && gauge) watch.unobserve(gauge.firstChild);
+      gauge = h('div', { class: 'fo-probe', 'aria-hidden': 'true' }, h('i'), h('i'));
+      if (watch) watch.observe(gauge.firstChild);
       letterEl = h('article', { class: 'letter' + (l.quiet ? ' is-quiet' : '') + (guest ? ' is-guest' : ''), 'data-no': l.no },
         h('header', { class: 'bar' },
           homeLink('bar-back', '目录'),
@@ -598,7 +676,8 @@ export default {
             h('span', { class: 'head-l' }, h('span', { lang: 'en' }, site.title), ' 用笺'),
             h('span', { class: 'head-r' }, ymdZh(l.date) + (l.place ? ' · ' + l.place : ''))),
           body,
-          feet(l)));
+          feet(l)),
+        gauge);
       return letterEl;
     }
     /* 读者要求少动（prefers-reduced-motion）时，信里的动图停在第一帧，点一下才动；再点一下停住。
@@ -641,6 +720,8 @@ export default {
     }
     /** 搬进文档之后才能量：翻转卡片按新宽度重量一次，图和卡片凑整行 */
     function settle(contentEl) {
+      rescale();
+      pitch();
       ctx.widgets.init(contentEl);
       /* 卡片的折角、礼物外面的剪刀线都是画出来的，没有字：给读屏的话写在这里 */
       for (const c of contentEl.querySelectorAll('.flip-card')) { c.setAttribute('role', 'group'); c.setAttribute('aria-label', '卡片：正面是信，背面是照片，按回车翻面'); }
@@ -682,7 +763,8 @@ export default {
       home: homeLink('now-home', '目录'),
     };
     now.el.append(now.play, now.title, now.time, now.home);
-    root.replaceChildren(main, colophon, now.el);
+    root.replaceChildren(main, colophon, now.el, probe);
+    if (watch) watch.observe(probe.firstChild);
 
     /* ── 播放器 → 界面 ── */
     function paint(s) {
@@ -749,6 +831,7 @@ export default {
       } else {
         main.replaceChildren(lostView());
         root.dataset.view = 'lost';
+        rescale();
       }
       paint(player.state);
       if (!first) main.focus({ preventScroll: true });
@@ -757,7 +840,7 @@ export default {
 
     /* 栏数随宽度变；字体到了以后眉批要重排一次 */
     let rz = 0;
-    window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { layoutHome(); fit(); }, 120); });
+    window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { layoutHome(); repitch(); }, 120); });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layoutHome(); fit(); });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && root.dataset.view === 'letter' && !e.defaultPrevented && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '')) (router.home ? router.home() : router.back('/'));

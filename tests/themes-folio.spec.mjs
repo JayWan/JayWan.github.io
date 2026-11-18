@@ -3,7 +3,8 @@
 // reader moves between the contents and a letter, and that a letter is set on its ruled lines
 // with its pictures as the couple made them.
 
-import { test, expect } from '@playwright/test';
+import { existsSync } from 'node:fs';
+import { test, expect, firefox } from '@playwright/test';
 import { getIsland, open, watch, expectNoSidewaysScroll } from './helpers.mjs';
 
 const THEME = 'folio';
@@ -369,5 +370,177 @@ test.describe('theme "folio": a letter', () => {
     await open(page, card.url, THEME);
     const inner = page.locator('#theme-root .letter-body .flip-card-inner');
     expect(await inner.evaluate((el) => parseFloat(getComputedStyle(el).transitionDuration)), 'this theme does not move').toBe(0);
+  });
+});
+
+// A reader's browser can enlarge the text and nothing else (Firefox "zoom text only", a system
+// text-size setting): every font is drawn larger, a line-height given in px grows with it, boxes
+// and margins keep their size. The theme is built on pixel measures that hold a given number of
+// characters, so it measures how much larger a character really is and scales those measures
+// (assets/themes/folio/README.md, 「文字被浏览器放大」).
+test.describe('theme "folio": text enlarged by the browser', () => {
+  /** The contents: where the red lines above the columns are, and whether what a column holds stays in it. */
+  const contents = (page) => page.evaluate(() => {
+    const root = document.getElementById('theme-root');
+    const box = (el) => el.getBoundingClientRect();
+    const hit = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+    const years = [...root.querySelectorAll('.yidx a, .yidx button')].map(box);
+    const report = { notes: 0, aboveMargin: [], onYearRow: [], offPage: [], outOfColumn: [], text: '' };
+    for (const note of root.querySelectorAll('.mei')) {            // every one of them: those that only show on hover as well
+      const b = box(note), cell = box(note.parentNode);
+      if (!b.width) continue;
+      report.notes++;
+      report.text += note.textContent.replace(/\s+/g, '');
+      const margin = parseFloat(getComputedStyle(note.closest('.leaf')).paddingTop);   // the row above (or the year row) ends where the margin starts
+      const q = note.dataset.q.slice(0, 10);
+      if (cell.top - b.top > margin + 0.6) report.aboveMargin.push(`${q} (${Math.round(b.height)}px in a margin of ${Math.round(margin)}px)`);
+      if (years.some((y) => hit(b, y))) report.onYearRow.push(q);
+      if (b.top + window.scrollY < 0 || b.left < 0 || b.right > window.innerWidth) report.offPage.push(q);
+    }
+    for (const part of root.querySelectorAll('.cell > .col > *, .cell--name .name, .cell--sub > *')) {
+      const b = box(part), cell = box(part.closest('.cell'));
+      if (b.width && (b.left < cell.left - 1 || b.right > cell.right + 1 || b.top < cell.top - 1 || b.bottom > cell.bottom + 1)) report.outOfColumn.push(`${part.className}: ${part.textContent.trim().slice(0, 10)}`);
+    }
+    report.columns = getComputedStyle(root.querySelector('.leaf--title .cols')).gridTemplateColumns.split(' ').length;
+    report.designed = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--n'), 10);   // as many as the stylesheet gives this width
+    report.scale = root.style.getPropertyValue('--ts');
+    return report;
+  });
+  /** A letter: how far apart its lines really are, how far apart the rules are drawn, and where the lines sit on them. */
+  const paper = (page) => page.evaluate(() => {
+    const body = document.querySelector('#theme-root .letter-body');
+    const content = body.querySelector('.content-body');
+    const sheet = (el) => {                                         // a ruled surface: the paper, or the front of the card
+      const style = getComputedStyle(el);
+      return { rules: parseFloat(style.backgroundSize.split(' ').pop()), top: el.getBoundingClientRect().top + parseFloat(style.borderTopWidth) };
+    };
+    const main = sheet(body);
+    // the real distance between two lines: the tops of the lines of the longest paragraph
+    const longest = [...content.querySelectorAll('p')].filter((p) => !p.closest('.flip-card-back')).sort((a, b) => b.getBoundingClientRect().height - a.getBoundingClientRect().height)[0];
+    const range = document.createRange();
+    range.selectNodeContents(longest);
+    const tops = [...new Set([...range.getClientRects()].filter((r) => r.width > 4).map((r) => Math.round(r.top * 100) / 100))].sort((a, b) => a - b);
+    const gaps = tops.slice(1).map((t, i) => t - tops[i]).filter((gap) => gap > 4);
+    const designed = parseFloat(getComputedStyle(body.closest('.letter')).getPropertyValue('--lh'));   // the line pitch at normal text size
+    const report = { rules: main.rules, designed, lines: gaps.length + 1, pitch: gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length, offRule: 0, offHeight: 0, card: null };
+    for (const el of content.querySelectorAll('p, li, blockquote, h3, h5')) {
+      if (el.closest('.flip-card, .gift-scene, figure')) continue;
+      const b = el.getBoundingClientRect();
+      if (!b.height) continue;
+      const d = ((b.top - main.top) % main.rules + main.rules) % main.rules, tall = b.height % main.rules;
+      report.offRule = Math.max(report.offRule, Math.min(d, main.rules - d));
+      report.offHeight = Math.max(report.offHeight, Math.min(tall, main.rules - tall));
+    }
+    const front = content.querySelector('.flip-card-front');
+    if (front) {                                                    // the card is a small sheet with rules of its own; its lines start one pixel (its border) above a rule
+      const card = sheet(front);
+      report.card = { rules: card.rules, off: 0 };
+      for (const p of front.querySelectorAll('p')) {
+        const d = ((p.getBoundingClientRect().top + 1 - card.top) % card.rules + card.rules) % card.rules;
+        report.card.off = Math.max(report.card.off, Math.min(d, card.rules - d));
+      }
+    }
+    return report;
+  });
+
+  // The desktop the owner reads on (1344 wide) at two sizes, and a phone, where a tenth more is already enough to need fewer columns.
+  for (const [percent, width, height] of [[120, 1344, 760], [150, 1344, 760], [110, 402, 874]]) {
+    test(`at ${percent} % text size, ${width} wide, the red lines keep clear of the year row and a letter stays on its rules`, async ({ baseURL, request }, testInfo) => {
+      // Only Firefox can be told to enlarge text alone, and only when it is started: the test starts its own, once.
+      test.skip(testInfo.project.name !== 'firefox', 'starts its own Firefox; once is enough');
+      test.skip(!existsSync(firefox.executablePath()), 'Playwright\'s Firefox is not installed');
+      const { letters } = await getIsland(request);
+      const browser = await firefox.launch({ firefoxUserPrefs: { 'ui.textScaleFactor': percent, 'browser.display.os-zoom-behavior': 2, 'network.prefetch-next': false } });
+      try {
+        const context = await browser.newContext({ baseURL, viewport: { width, height }, hasTouch: width < 720, locale: 'zh-CN', timezoneId: 'America/Los_Angeles' });
+        const page = await context.newPage();
+        const seen = watch(page, baseURL);
+        await open(page, '/', THEME);
+        await page.evaluate(() => document.fonts.ready);
+        const drawn = await page.evaluate(() => {                    // the text really is larger, the boxes are not
+          const probe = document.getElementById('theme-root').appendChild(document.createElement('div'));
+          probe.style.cssText = 'position:absolute;font:100px/1 serif;width:100px';
+          probe.textContent = '日';
+          const b = probe.getBoundingClientRect();
+          probe.remove();
+          return { height: b.height, width: b.width };
+        });
+        expect(drawn, 'this Firefox enlarges text and nothing else').toEqual({ height: percent, width: 100 });
+
+        const home = await contents(page);
+        expect(Number(home.scale), 'the theme measured the scale').toBeCloseTo(percent / 100, 2);
+        expect(home.notes, 'the contents has its red lines').toBeGreaterThan(10);
+        expect(home.onYearRow, 'no red line touches the row of years').toEqual([]);
+        expect(home.aboveMargin, 'every red line stays inside the top margin of its row').toEqual([]);
+        expect(home.offPage, 'and on the page').toEqual([]);
+        expect(home.outOfColumn, 'titles, notes, day numbers and the name of the book stay inside their columns').toEqual([]);
+        expect(home.columns, 'larger type, fewer columns to a leaf').toBeLessThan(home.designed);
+        await expectNoSidewaysScroll(page);
+
+        for (const date of ['2016-06-08', '2026-08-12']) {           // Hang Zhou: long, five pictures; 木婚快乐: the card
+          const letter = letters.find((l) => l.date === date);
+          if (!letter) continue;
+          await open(page, letter.url, THEME);
+          await page.waitForLoadState('networkidle');
+          await page.evaluate(() => document.fonts.ready);
+          const pictures = page.locator('#theme-root .letter-body .content-body figure img');
+          for (let i = 0; i < await pictures.count(); i++) {
+            await pictures.nth(i).scrollIntoViewIfNeeded();
+            await expect.poll(() => pictures.nth(i).evaluate((img) => img.complete && img.naturalWidth > 0), `picture ${i + 1} loads`).toBe(true);
+          }
+          await expect.poll(async () => (await paper(page)).offRule, `${date}: every paragraph starts on a rule`).toBeLessThan(0.5);
+          const sheet = await paper(page);
+          expect(sheet.lines, `${date}: the longest paragraph has several lines`).toBeGreaterThan(2);
+          expect(Math.abs(sheet.pitch - sheet.rules), `${date}: the rules are as far apart as the lines (${sheet.pitch}px, rules every ${sheet.rules}px)`).toBeLessThan(0.02);
+          expect(sheet.rules, `${date}: and further apart than at normal text size`).toBeGreaterThan(sheet.designed * percent / 100 - 1);
+          expect(sheet.rules % 1, `${date}: a whole number of pixels: a fractional pitch is drawn with rules missing or drifting`).toBe(0);
+          expect(sheet.offHeight, `${date}: paragraphs are whole lines tall`).toBeLessThan(0.5);
+          if (sheet.card) {
+            expect(sheet.card.rules, `${date}: the card is ruled like the paper`).toBe(sheet.rules);
+            expect(sheet.card.off, `${date}: and its lines sit on its rules`).toBeLessThan(0.5);
+          }
+          await expectNoSidewaysScroll(page);
+        }
+        expect(seen.errors).toEqual([]);
+      } finally {
+        await browser.close();
+      }
+    });
+  }
+
+  test('a red line too tall for its margin is set with fewer characters to a line', async ({ page }) => {
+    // No engine but Firefox can be made to enlarge text alone, but the fitting does not depend on why the type
+    // is too large: here the type of the red lines is made a quarter larger than the margin was drawn for
+    // (what a minimum font size does, or a scale the theme could not measure), and the page is laid out again.
+    await open(page, '/', THEME);
+    await page.evaluate(() => document.fonts.ready);
+    const before = await contents(page);
+    expect(before.scale, 'at normal text size the theme scales nothing').toBe('');
+    expect(before.aboveMargin, 'as designed, ten characters to a line fit the margin').toEqual([]);
+    const size = await page.locator('#theme-root .mei').first().evaluate((note) => parseFloat(getComputedStyle(note).fontSize));
+    await page.addStyleTag({ content: `#theme-root .mei{font-size:${size * 1.25}px !important}` });
+    expect((await contents(page)).aboveMargin.length, 'larger type: lines of ten characters no longer fit').toBeGreaterThan(0);
+    await page.evaluate(() => window.dispatchEvent(new Event('resize')));       // the theme lays the contents out again
+    await expect.poll(async () => (await contents(page)).aboveMargin, 'the lines are set again, shorter, until they fit').toEqual([]);
+    const after = await contents(page);
+    expect(after.onYearRow, 'none of them touches the row of years').toEqual([]);
+    expect(after.text, 'and not a character is lost').toBe(before.text);
+    expect(after.columns, 'the leaves themselves are left alone').toBe(before.columns);
+    await expectNoSidewaysScroll(page);
+  });
+
+  test('at normal text size a letter is left exactly as the stylesheet sets it', async ({ page, request }) => {
+    const { letters } = await getIsland(request);
+    await open(page, (letters.find((l) => l.date === '2026-08-12') || letters[0]).url, THEME);
+    await page.evaluate(() => document.fonts.ready);
+    const report = await page.evaluate(() => {
+      const root = document.getElementById('theme-root'), letter = root.querySelector('.letter'), body = root.querySelector('.letter-body');
+      const style = getComputedStyle(body), nominal = getComputedStyle(letter).getPropertyValue('--lh').trim();
+      return { scale: root.style.getPropertyValue('--ts'), marked: root.hasAttribute('data-ts'), inline: letter.getAttribute('style') || '', nominal, lineHeight: style.lineHeight, rules: style.backgroundSize.split(' ').pop() };
+    });
+    expect(report.scale + report.inline, 'nothing is written on the page or on the letter').toBe('');
+    expect(report.marked).toBe(false);
+    expect(report.lineHeight, 'the line height is the designed one').toBe(report.nominal);
+    expect(report.rules, 'and so is the distance between the rules').toBe(report.nominal);
   });
 });

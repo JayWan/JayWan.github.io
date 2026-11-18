@@ -37,6 +37,14 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 :where(#theme-root) :is(h1,h2){font-weight:400}
 .fo-main:focus{outline:none}
 
+/* 量字用的：一个看不见的「日」，16px。浏览器只放大文字时（见 README「文字被浏览器放大」），theme.js 量它得到倍数 --ts，
+   首页装字的尺寸（格高、天头……）都乘上它；信里的两个量的是一行实际多高（.letter 的 --ld / --lp / --sh） */
+.fo-probe{position:absolute;width:0;height:0;overflow:hidden;visibility:hidden}
+.fo-probe i{position:absolute;font:16px/1 var(--fs)}
+.fo-probe i::before{content:"日"}
+.letter .fo-probe i{font-size:var(--fz);line-height:var(--lh)}
+.letter .fo-probe i+i{line-height:var(--ld)}
+
 .v{writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:mixed}
 .tcy{-webkit-text-combine:horizontal;text-combine-upright:all;font-family:var(--lat)}
 #theme-root :lang(en){font-family:var(--lat)}
@@ -46,9 +54,9 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .home{padding:calc(28px + env(safe-area-inset-top)) max(24px,calc((100% - var(--page)) / 2)) 0}
 .spread{display:grid;direction:rtl;grid-template-columns:minmax(0,1fr)}
 .spread--pair{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-.leaf{direction:ltr;padding-top:var(--tian);padding-bottom:36px;scroll-margin-top:8px;min-width:0}
-.cols{list-style:none;padding:0;display:grid;direction:rtl;grid-template-columns:repeat(var(--k,var(--n)),minmax(0,1fr));row-gap:var(--tian)}
-.cell{direction:ltr;text-align:start;position:relative;height:var(--cell-h);min-width:0;
+.leaf{direction:ltr;padding-top:calc(var(--tian) * var(--ts,1));padding-bottom:36px;scroll-margin-top:8px;min-width:0}
+.cols{list-style:none;padding:0;display:grid;direction:rtl;grid-template-columns:repeat(var(--k,var(--n)),minmax(0,1fr));row-gap:calc(var(--tian) * var(--ts,1))}
+.cell{direction:ltr;text-align:start;position:relative;height:calc(var(--cell-h) * var(--ts,1));min-width:0;
   border-top:2px solid var(--frame);border-bottom:1px solid var(--frame);
   border-left:1px solid var(--rule);box-shadow:1px 0 0 var(--rule)}
 /* 下栏的那条线贯穿整叶，空行也有 */
@@ -68,14 +76,14 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .leaf--title .cell--nb{grid-column:4/-2;padding:var(--pad) 40px}
 /* --nb-h：各行合起来能用的高度，即格高减去上下的空、边线（3px）和月份那一行 */
 .nb{flex:1;min-width:0;display:flex;flex-direction:column;font:13.5px/1 var(--lat);letter-spacing:.04em;color:var(--ink-2);font-variant-numeric:oldstyle-nums;
-  --nb-h:calc(var(--cell-h) - var(--pad) * 2 - 37px)}
+  --nb-h:calc(var(--cell-h) * var(--ts,1) - var(--pad) * 2 - 37px)}
 .nb-m,.nb-r{display:flex;flex-direction:row-reverse}
 .nb-m{height:26px;margin-bottom:8px}
 .nb-r{flex:1 1 0;min-height:0;align-items:center}
 /* 行高取成奇数个整像素，横线才落在像素上。不认识 round() 的浏览器（Chrome 124 及以前）照上一行平分，线略虚一点；
    一定要包在 @supports 里：值里有 var()，不认识的浏览器不会丢掉这一条，而是把高度算成 auto，各行就塌在一起 */
 @supports (height:round(down,1px,2px)){ .nb-r{flex:none;height:calc(round(down,var(--nb-h) / var(--k) - 1px,2px) + 1px)} }
-.nb-y{flex:none;width:44px;text-align:right}
+.nb-y{flex:none;width:calc(44px * var(--ts,1));text-align:right}
 .nb-r--ba .nb-y{font:13px/1 var(--fs)}
 .nb-r.is-blank .nb-y{color:var(--ink-3)}
 .nb-x{flex:1;min-width:0;align-self:stretch;position:relative}
@@ -110,7 +118,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .yr-foot{margin-top:auto;height:var(--foot);display:flex;align-items:center;font:13px/1 var(--fs);letter-spacing:.34em;padding-left:.34em;color:var(--ink-2)}
 .leaf--blank .yr-t{color:var(--ink-3)}
 .leaf--slim{padding-top:36px}
-.leaf--slim .cell{height:236px}
+.leaf--slim .cell{height:calc(236px * var(--ts,1))}
 .leaf--slim .cell::after{display:none}
 
 /* 信：一列 */
@@ -157,6 +165,10 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
   .yidx a:hover,.sort:hover,.bar-back:hover,.now-home:hover,.theme-switcher a:hover{color:var(--red)}
 }
 
+/* 字放大以后一叶的行数由 theme.js 减少（--n 写在 #theme-root 上）；少到五行以内，扉页和最窄的手机一样不印年表 */
+[data-few] .leaf--title .cell--nb{display:none}
+[data-few] .leaf--title .cell--name{grid-column:1/-3}
+
 /* 缺页 */
 .home--lost{padding-bottom:40px}
 .leaf--lost{padding-top:40px}
@@ -179,18 +191,20 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 [data-view="letter"] .colophon-today,[data-quiet] .colophon-voice{display:none}
 
 /* ══════════════ 读信：笺 ══════════════ */
-.letter{--lh:36px;--fz:19px;--shift:6px;--letter-leading:var(--lh)}
+/* --lh 是设计的行高；--ld 写进 line-height，--lp 是量尺寸用的格距，--sh 是格线上移的那一点。
+   平时三样都等于设计值；浏览器只放大文字时由 theme.js 的 pitch() 改写（见 README「文字被浏览器放大」） */
+.letter{--lh:36px;--fz:19px;--shift:6px;--ld:var(--lh);--lp:var(--lh);--sh:var(--shift);--letter-leading:var(--lp)}
 .bar{display:flex;align-items:center;justify-content:space-between;height:calc(68px + env(safe-area-inset-top));
   padding:env(safe-area-inset-top) max(20px,calc((100% - var(--page)) / 2)) 0;font-family:var(--fs)}
-.bar-back{display:inline-flex;align-items:center;min-height:44px;min-width:44px;font-size:16px;letter-spacing:.3em;text-decoration:none}
+.bar-back{display:inline-flex;align-items:center;min-height:44px;min-width:44px;font-size:16px;letter-spacing:.3em;text-decoration:none;white-space:nowrap}
 .bar-back::before{content:"";width:22px;height:1px;background:currentColor;margin-right:12px}
 .bar-name{font:13.5px/1 var(--lat);letter-spacing:.34em;padding-left:.34em}
-.bar-no{font:16px/1 var(--lat);letter-spacing:.06em;color:var(--ink-2);min-width:44px;text-align:right;font-variant-numeric:oldstyle-nums}
+.bar-no{font:16px/1 var(--lat);letter-spacing:.06em;color:var(--ink-2);min-width:44px;text-align:right;font-variant-numeric:oldstyle-nums;white-space:nowrap}
 .bar-no b{font-weight:400;color:var(--red)}
 .bar-no b:lang(zh-Hans){font-family:var(--fs);letter-spacing:.2em}
 
 .sheet{display:grid;justify-content:center;padding:20px 20px 0;
-  grid-template-columns:264px 56px minmax(0,740px) 236px;
+  grid-template-columns:264px 56px minmax(0,740px) minmax(236px,var(--tj,236px));
   grid-template-areas:". . head head" "side . body tiji" "side . feet feet"}
 .side{grid-area:side;min-width:0}.tiji{grid-area:tiji}.head{grid-area:head}.body{grid-area:body}.feet{grid-area:feet}
 
@@ -198,13 +212,17 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px;padding:0 1px 10px;font:14px/1.2 var(--fs);letter-spacing:.2em;color:var(--red);white-space:nowrap}
 .head :lang(en){letter-spacing:.24em;font-size:13px}
 .head-r{letter-spacing:.16em;margin-left:auto}
+/* 字放大以后（data-ts）：日期和地点一行放不下就在词与词之间折行（图版的说明也是），窄屏上书名折成两行时居中 */
+[data-ts] .head-r{white-space:normal;word-break:keep-all;text-align:right}
+[data-ts] .plate figcaption{word-break:keep-all}
+[data-ts] .bar-name{text-align:center}
 
 /* 横格。字落在格线上：行高就是格距，段落、歌词、图都占整数行 */
 .body{min-width:0;border:1px solid var(--frame);border-right:0;
-  padding:var(--lh) 46px calc(var(--lh) * 2 - var(--shift) - 1px);
-  font:var(--fz)/var(--lh) var(--fs);overflow-wrap:break-word;
-  background-image:linear-gradient(to bottom,transparent calc(var(--lh) - 1px),var(--rule) calc(var(--lh) - 1px));
-  background-size:100% var(--lh);background-position:0 calc(var(--shift) * -1)}
+  padding:var(--lp) 46px calc(var(--lp) * 2 - var(--sh) - 1px);
+  font:var(--fz)/var(--ld) var(--fs);overflow-wrap:break-word;
+  background-image:linear-gradient(to bottom,transparent calc(var(--lp) - 1px),var(--rule) calc(var(--lp) - 1px));
+  background-size:100% var(--lp);background-position:0 calc(var(--sh) * -1)}
 .body .content-body>:first-child{margin-top:0}
 .body p{text-indent:2em;text-align:justify;line-break:strict}
 .body :is(em,i,code,span,a,sup,sub,b,strong){line-height:1}
@@ -222,7 +240,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .body .fo-rule:first-child{margin-left:0}
 .body .fo-rule:last-child{margin-right:0}
 
-.body blockquote{margin:var(--lh) 0;padding:0 0 0 2em;font-size:calc(var(--fz) - 1px);color:var(--ink-2);letter-spacing:.02em}
+.body blockquote{margin:var(--lp) 0;padding:0 0 0 2em;font-size:calc(var(--fz) - 1px);color:var(--ink-2);letter-spacing:.02em}
 .body blockquote p{text-indent:0;text-align:left}
 .body blockquote.u--startsWithDoubleQuote{text-indent:-.36em}
 .body blockquote.largeQuote{font-size:calc(var(--fz) + 1px);color:var(--ink);letter-spacing:.04em}
@@ -231,24 +249,24 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 /* 段末不留孤字。只给 Chrome：WebKit 的 pretty 会让两端对齐的中文每行早断三四个字、右边空出一条（hanging-punctuation 只有 WebKit 认识，借它来分辨） */
 @supports (text-wrap:pretty) and (not (hanging-punctuation:first)){ @media (min-width:720px){ .body :is(p,blockquote,li){text-wrap:pretty} } }
 @supports (text-autospace:normal){ .body{text-autospace:normal} }
-.body :is(h1,h2,h3,h4,h5,h6){margin:var(--lh) 0 0;font-weight:400;font-family:var(--fs);line-height:var(--lh)}
+.body :is(h1,h2,h3,h4,h5,h6){margin:var(--lp) 0 0;font-weight:400;font-family:var(--fs);line-height:var(--ld)}
 .body :is(h1,h2,h3){font-size:24px;letter-spacing:.12em}
 .body h4{font-size:21px;letter-spacing:.06em}
 .body :is(h5,h6){font-size:17px;letter-spacing:.14em;color:var(--ink-2)}
 .body :is(ol,ul){padding-left:2em}
 .body li{text-align:justify}
-.body li::marker{color:var(--ink-2)}
-.body hr{height:var(--lh);margin:0;border:0}
+.body li::marker{color:var(--ink-2);line-height:1}   /* Firefox 的圆点用它自己的字体，会把第一行撑高半个像素 */
+.body hr{height:var(--lp);margin:0;border:0}
 
 /* 信里的图：保持原来的颜色，带一圈衬纸，宽度随图。高度由脚本凑成整行（.fo-snap） */
-.body .fo-snap{position:relative;margin-top:var(--lh);margin-bottom:var(--lh)}
+.body .fo-snap{position:relative;margin-top:var(--lp);margin-bottom:var(--lp)}
 .body :is(figure,.fo-fig){text-align:center;text-indent:0;line-height:0}
 .body :is(figure,.fo-fig) img{display:inline-block;vertical-align:top;height:auto;max-width:100%;max-height:calc(var(--lh) * 15);object-fit:contain;
   /* --iw / --ir：原图的宽和宽高比，脚本写在 <img> 上；没有的话这一行无效，宽度回到 auto */
   width:min(var(--fig-w,100%),calc(var(--iw) + 12px),calc((var(--lh) * 15 - 12px) * var(--ir) + 12px));
   padding:5px;border:1px solid var(--rule);background:var(--paper-lit)}
 .body img[style*="width"]{max-height:none}
-.body figure figcaption{font-size:14px;line-height:var(--lh);color:var(--ink-2)}
+.body figure figcaption{font-size:14px;line-height:var(--ld);color:var(--ink-2)}
 .body figure .fo-play{display:block;width:44px;height:44px;margin:0 auto;color:var(--red);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .fo-play svg{display:block;width:44px;height:44px}
 .fo-play.is-on .ic-play{display:none}
@@ -256,29 +274,29 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
 .body div.img{border:5px solid var(--paper-lit);outline:1px solid var(--rule);background-color:var(--paper-lit)}
 
 /* 翻转卡片：一张小一号的笺，自己也有横格 */
-.letter{--flip-margin:var(--lh) 0;--flip-front-bg:var(--paper-lit);--flip-front-ink:var(--ink);--flip-front-border:1px solid var(--frame);
-  --flip-front-pad:calc(var(--lh) - 1px) 30px;--flip-back-bg:var(--paper-lit);--flip-back-pad:14px;--flip-photo-shadow:none;
+.letter{--flip-margin:var(--lp) 0;--flip-front-bg:var(--paper-lit);--flip-front-ink:var(--ink);--flip-front-border:1px solid var(--frame);
+  --flip-front-pad:calc(var(--lp) - 1px) 30px;--flip-back-bg:var(--paper-lit);--flip-back-pad:14px;--flip-photo-shadow:none;
   --flip-hint-ink:var(--ink-2);--flip-hint-opacity:1;--flip-focus:var(--red);
-  --gift-ink:var(--ink);--gift-margin:var(--lh) 0;--gift-radius:0;--gift-shadow:none}
-.body .flip-card-front{background-image:linear-gradient(to bottom,transparent calc(var(--lh) - 1px),var(--rule) calc(var(--lh) - 1px));
-  background-size:100% var(--lh);background-position:0 calc(var(--shift) * -1)}
+  --gift-ink:var(--ink);--gift-margin:var(--lp) 0;--gift-radius:0;--gift-shadow:none}
+.body .flip-card-front{background-image:linear-gradient(to bottom,transparent calc(var(--lp) - 1px),var(--rule) calc(var(--lp) - 1px));
+  background-size:100% var(--lp);background-position:0 calc(var(--sh) * -1)}
 .body .flip-card-back{border:1px solid var(--frame)}
 .body :is(.flip-card-inner,.flip-card-front,.flip-card-back){transition:none}   /* 这个主题不动：卡片直接换面 */
-.body .flip-card-hint{margin-top:var(--lh);font-size:14px;line-height:var(--lh);letter-spacing:.14em;text-indent:0}
+.body .flip-card-hint{margin-top:var(--lp);font-size:14px;line-height:var(--ld);letter-spacing:.14em;text-indent:0}
 /* 折角：这张卡片翻得过来。正面折的是右下角；背面看到的是同一个角，所以在左下 */
 .body .flip-card-front::after,.body .flip-card-back::after{content:"";position:absolute;bottom:-1px;width:30px;height:30px;border:0 solid var(--frame);
   background:linear-gradient(var(--to),var(--rule) calc(50% - 1px),var(--frame) calc(50% - 1px),var(--frame) 50%,var(--paper) 50%)}
 .body .flip-card-front::after{right:-1px;--to:to bottom right;border-width:1px 0 0 1px}
 .body .flip-card-back::after{left:-1px;--to:to bottom left;border-width:1px 1px 0 0}
 /* 礼物盒：盒子八行高，拆开后图九行、字一行，都落在格线上；图不浮动（彩纸是信自己的，照旧） */
-#theme-root .body .gift-scene{display:block;min-height:0;text-align:center;text-indent:0;line-height:var(--lh)}
+#theme-root .body .gift-scene{display:block;min-height:0;text-align:center;text-indent:0;line-height:var(--ld)}
 #theme-root .body .gift-anim{width:auto;height:calc(var(--lh) * 8);max-width:100%}
 /* 沿虚线剪开：一圈朱色的虚线，线上一把剪刀 */
 #theme-root .body #gift-container{transition:none;display:inline-block;vertical-align:top;position:relative;max-width:100%;padding:0 var(--lh);border:1px dashed var(--red)}
 #theme-root .body #gift-container::after{content:"";position:absolute;left:20px;top:-11px;width:22px;height:21px;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 21' fill='none' stroke='%23A03A29' stroke-width='1.2'%3E%3Ccircle cx='4.5' cy='5' r='3'/%3E%3Ccircle cx='4.5' cy='16' r='3'/%3E%3Cpath d='M7 6.8 20.5 14.5M7 14.2 20.5 6.5'/%3E%3C/svg%3E") no-repeat}
 #theme-root .body .float-img{box-sizing:border-box;width:auto;height:calc(var(--lh) * 9);max-width:100%;object-fit:contain;padding:5px;border:1px solid var(--rule);background:var(--paper-lit);animation:none;vertical-align:top}
-#theme-root .body .reveal-words{margin:0;font-size:inherit;line-height:var(--lh);text-indent:0;text-align:center;animation:none}
+#theme-root .body .reveal-words{margin:0;font-size:inherit;line-height:var(--ld);text-indent:0;text-align:center;animation:none}
 
 /* 题记：竖在右边的书口 */
 .tiji{border:1px solid var(--frame);border-left:1px solid var(--rule);min-width:0}
@@ -344,11 +362,13 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 var(--fs);
   padding:5px calc(16px + env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
   background:var(--paper-lit);border-top:1px solid var(--frame)}
 .now[data-on]{display:flex}
-.now-t{flex:1;min-width:0;display:block;height:44px;font:17px/44px var(--fs);letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none}
+.now-t{flex:1;min-width:0;display:block;height:calc(44px * var(--ts,1));font:17px/44px var(--fs);letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none}
 .now-k{font-size:13px;letter-spacing:.3em;color:var(--red);margin-right:.9em}
 .now-home{display:none;align-items:center;min-height:44px;padding:0 4px 0 14px;margin-left:8px;border-left:1px solid var(--rule);font:15px/1 var(--fs);letter-spacing:.3em;text-decoration:none}
 [data-song] .colophon{padding-bottom:calc(64px + var(--bar-h) + env(safe-area-inset-bottom))}
 @media (min-width:1180px){
+  [data-ts] .sheet{--tj:max-content}        /* 字放大以后题记那一栏随内容加宽，正文让出地方 */
+  [data-ts] .tiji-in{padding-left:12px;padding-right:12px}
   .now[data-on][data-same]{display:none}
   [data-song]:has(.now[data-same]) .colophon{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 }
@@ -360,7 +380,7 @@ html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(-
   .mei{font-size:17px}
   .name{font-size:68px}
   .letter{--lh:38px;--fz:20px}
-  .sheet{grid-template-columns:284px 60px minmax(0,796px) 252px}
+  .sheet{grid-template-columns:284px 60px minmax(0,796px) minmax(252px,var(--tj,252px))}
   .tiji-title{font-size:43px}
   .tiji-quote{font-size:18px}
 }
@@ -398,9 +418,9 @@ html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(-
   .home{padding:calc(8px + env(safe-area-inset-top)) 16px 0}
   .leaf{padding-bottom:18px}
   .leaf--title .cell--nb{padding:16px 7px 14px 8px}
-  .nb{font-size:11px;letter-spacing:0;--nb-h:calc(var(--cell-h) - 59px)}
+  .nb{font-size:11px;letter-spacing:0;--nb-h:calc(var(--cell-h) * var(--ts,1) - 59px)}
   .nb-m{height:20px;margin-bottom:6px}
-  .nb-y{width:28px}
+  .nb-y{width:calc(28px * var(--ts,1))}
   .nb-r--ba .nb-y{font-size:11px}
   .nb-m1,.nb-m2{font-size:10px;letter-spacing:.06em;margin:0}
   .nb-m i{height:3px}
@@ -430,7 +450,9 @@ html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(-
   .mei{font-size:13.5px;line-height:1.56;right:0;bottom:calc(100% + 10px)}
   .mei.mei--l{left:4px}
   .leaf--slim{padding-top:18px}
-  .leaf--slim .cell{height:190px}
+  .leaf--slim .cell{height:calc(190px * var(--ts,1))}
+  [data-few] .leaf--slim .cell{height:calc(216px * var(--ts,1))}
+  [data-few] .yidx{grid-template-columns:repeat(calc(var(--n) + 1),minmax(0,1fr))}
   .colophon{padding-top:40px}
   .colophon-today{font-size:15.5px;letter-spacing:.1em}
   .colophon-voice{font-size:15px}
@@ -447,7 +469,7 @@ html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(-
   .body p.fo-voice{margin-left:-9px;padding-left:8px}
   .body blockquote{padding:0 0 0 1.5em}
   .body :is(h1,h2,h3){font-size:22px}
-  .letter{--flip-front-pad:calc(var(--lh) - 1px) 14px;--flip-back-pad:8px}
+  .letter{--flip-front-pad:calc(var(--lp) - 1px) 14px;--flip-back-pad:8px}
   .tiji-title{font-size:32px;gap:6px}
   .tiji-quote{font-size:15px;line-height:1.75;padding-top:2.4em}
   .plate{margin-bottom:16px}
@@ -469,7 +491,7 @@ html[data-navigating] .bar-name,html[data-navigating] .colophon-name{color:var(-
   :root{--t:20px;--wari:12.5px}
   .col.is-long .wari{line-height:1.08}
 }
-@media (max-width:349px){ :root{--n:5} .leaf--title .cell--nb{display:none} .leaf--title .cell--name{grid-column:span 3} .leaf--slim .cell{height:216px} .yidx{grid-template-columns:repeat(6,minmax(0,1fr))} }
+@media (max-width:349px){ :root{--n:5} .leaf--title .cell--nb{display:none} .leaf--title .cell--name{grid-column:span 3} .leaf--slim .cell{height:calc(216px * var(--ts,1))} .yidx{grid-template-columns:repeat(6,minmax(0,1fr))} }
 
 /* 这个主题本来就不动；保险起见 */
 @media (prefers-reduced-motion:reduce){
