@@ -4,7 +4,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { open, root } from './helpers.mjs';
+import { expectNoSidewaysScroll, open, root } from './helpers.mjs';
 
 const present = ['theme.js', 'theme.css'].every((file) => existsSync(path.join(root, 'assets/themes/drift', file)));
 
@@ -304,6 +304,27 @@ test.describe('夜航 (drift)', () => {
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await expect.poll(() => pathOf(page)).toBe('/');
     expect(await showing()).toEqual(['river']);
+  });
+
+  test('on a narrow phone both rows of names stay on one line, each name a finger wide', async ({ browser, baseURL }) => {
+    for (const width of [375, 360, 320]) {
+      const context = await browser.newContext({ baseURL, viewport: { width, height: 640 }, hasTouch: true });
+      const page = await context.newPage();
+      await open(page, '/', 'drift');
+      const url = await page.evaluate(() => window.__theme.ctx.letters.byNo(31).url);
+      await open(page, url, 'drift');
+      const rows = await page.evaluate(() => [...document.querySelectorAll('#theme-root nav.theme-switcher')].filter((nav) => nav.getClientRects().length).map((nav) => {
+        const names = [...nav.querySelectorAll('a')].map((a) => a.getBoundingClientRect()), box = nav.getBoundingClientRect();
+        return {
+          lines: new Set(names.map((r) => Math.round(r.top))).size,
+          small: names.filter((r) => r.width < 43.5 || r.height < 43.5).length,
+          inside: box.left >= 0 && box.right <= window.innerWidth && names.every((r) => r.left >= box.left - 0.5 && r.right <= box.right + 0.5),
+        };
+      }));
+      expect(rows, `${width}px wide: the row in the letter, the row at the foot of the river`).toEqual([{ lines: 1, small: 0, inside: true }, { lines: 1, small: 0, inside: true }]);
+      await expectNoSidewaysScroll(page);
+      await context.close();
+    }
   });
 
   test('pictures in a letter keep their place before they load; the progress line takes a finger', async ({ page, baseURL }) => {

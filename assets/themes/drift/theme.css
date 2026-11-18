@@ -464,7 +464,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 }
 /* the theme being worn: full strength, and a hairline under its name (the mark does not rest on colour alone) */
 #theme-root .theme-switcher a[aria-current="true"] { color: var(--text); }
-#theme-root .theme-switcher a[aria-current="true"]::after { content: ""; position: absolute; left: calc(12px + .12em); right: calc(12px + .12em); top: calc(50% + 13px); height: 1px; background: currentColor; }
+#theme-root .theme-switcher a[aria-current="true"]::after { content: ""; position: absolute; left: calc(12px + .12em); right: calc(12px + .12em); top: calc(50% + 13px); height: 0; border-top: 1px solid currentColor; }   /* a border, not a background: it survives forced colours */
 @media (hover: hover) { #theme-root .theme-switcher a:hover { color: var(--text); } }
 #theme-root .sheet-foot .theme-switcher a { color: var(--ink-2); }
 #theme-root .sheet-foot .theme-switcher a[aria-current="true"] { color: var(--ink); }
@@ -562,7 +562,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
   .letter-body { font-size: 17px; line-height: 1.95; --letter-leading: 1.35rem; --flip-front-pad: 1.6rem 1.2rem; }
   .letter-body blockquote { padding-left: 1.1em; }
   .letter-body .flip-card-front::after { right: 1.2rem; bottom: 1.6rem; line-height: 1.95; }
-  .sheet-foot { padding: 24px 22px 48px; }
+  .sheet-foot { padding: 24px 22px calc(72px + env(safe-area-inset-bottom, 0px)); }   /* the row of names at its end clears the dock (56px + the home indicator) */
   .sheet-nav { margin-top: 40px; }
   .sn-k { font-size: 12px; letter-spacing: 0; white-space: nowrap; }
   .sn-t { font-size: 15.5px; }
@@ -571,6 +571,7 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
   .foot { padding: 20px 22px calc(96px + env(safe-area-inset-bottom, 0px)); }
 }
 @media (max-width: 359px) { .sn-k { white-space: normal; line-height: 1.5; } }
+@media (max-width: 339px) { #theme-root .theme-switcher ul { gap: 0; } }   /* five names, each a finger wide, on one line down to 320px */
 
 /* ═════════ reduced motion: everything is still ═════════ */
 @media (prefers-reduced-motion: reduce) {

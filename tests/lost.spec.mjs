@@ -29,6 +29,7 @@ test('the page for a missing address is built where GitHub Pages looks for it', 
   expect(own.status()).toBe(200);
   const html = await own.text();
   expect(html, 'it knows what it is').toContain('"page":{"type":"404"');
+  expect(html, 'and asks not to be listed by search engines').toContain('<meta name="robots" content="noindex">');
   for (const path of NOWHERE) {
     const answer = await request.get(path);
     expect(answer.status(), path).toBe(404);
@@ -62,6 +63,8 @@ for (const theme of THEMES) {
         const lines = page.locator('.section--lost');
         await expect(lines).toBeVisible();
         await expect(lines).toContainText('没有信');
+        // the logo at the top left, the way home on every classic page, is the black one: the page is white
+        await expect(page.locator('a.brandLogo.brandLogo--black[href="/"]')).toBeVisible();
         await expect(page.locator('#theme-root')).toBeEmpty();
       } else {
         await expect(page.locator('#theme-root'), 'the theme says what happened').toContainText(LOST);

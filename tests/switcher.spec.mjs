@@ -275,20 +275,29 @@ for (const theme of NEW_THEMES) {
       // "drift", and the row inside that letter is then no longer showing.
       const rows = [];
       for (const row of await page.locator(OWN).elementHandles()) if (await row.isVisible()) rows.push(row);
-      expect(rows.length, `a row is showing on ${from}`).toBeGreaterThanOrEqual(1);
+      // one row per page; "drift" with a letter open has two (the end of the letter, the foot of the river)
+      expect(rows.length, `rows showing on ${from}`).toBe(theme === 'drift' && from === pages.letter ? 2 : 1);
       for (const row of rows) {
-        await row.scrollIntoViewIfNeeded();
-        const links = await row.$$eval('a[data-theme-id]', (all) => all.map((a) => {
-          const style = getComputedStyle(a), after = getComputedStyle(a, '::after'), box = a.getBoundingClientRect();
-          const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
-          return {
-            id: a.dataset.themeId,
-            current: a.getAttribute('aria-current') === 'true',
-            look: [style.color, style.textDecorationLine, style.fontWeight, after.content !== 'none' && after.content !== 'normal' ? `${after.content} ${after.height}` : ''].join(' | '),
-            width: Math.round(box.width), height: Math.round(box.height),
-            covered: !(hit && (hit === a || a.contains(hit))),
-          };
-        }));
+        // Bring the row to the middle of the screen and measure in the same step. A letter whose
+        // pictures are still arriving keeps growing: measured a moment after the scroll, the row
+        // may have been pushed off the screen, and a point off the screen has nothing under it.
+        const links = await row.evaluate((nav) => {
+          nav.scrollIntoView({ block: 'center', behavior: 'instant' });
+          return [...nav.querySelectorAll('a[data-theme-id]')].map((a) => {
+            const style = getComputedStyle(a), after = getComputedStyle(a, '::after'), box = a.getBoundingClientRect();
+            const x = box.left + box.width / 2, y = box.top + box.height / 2;
+            const hit = document.elementFromPoint(x, y);
+            return {
+              id: a.dataset.themeId,
+              current: a.getAttribute('aria-current') === 'true',
+              look: [style.color, style.textDecorationLine, style.fontWeight, after.content !== 'none' && after.content !== 'normal' ? `${after.content} ${after.borderTopWidth} ${after.height}` : ''].join(' | '),
+              width: Math.round(box.width), height: Math.round(box.height),
+              onScreen: x >= 0 && x <= window.innerWidth && y >= 0 && y <= window.innerHeight,
+              covered: !(hit && (hit === a || a.contains(hit))),
+            };
+          });
+        });
+        expect(links.filter((l) => !l.onScreen).map((l) => l.id), 'the row can be brought onto the screen').toEqual([]);
         const worn = links.filter((l) => l.current);
         expect(worn.map((l) => l.id), 'one name is marked for assistive technology').toEqual([theme]);
         const others = new Set(links.filter((l) => !l.current).map((l) => l.look));
