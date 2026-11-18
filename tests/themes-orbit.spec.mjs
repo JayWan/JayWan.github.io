@@ -41,6 +41,23 @@ test.describe('theme "orbit", its own promises', () => {
     await expect(page.locator('#theme-root .kicker')).toContainText('Pikajay 起头 · Pikachi 写');
   });
 
+  test('the chart orients by drawing: arrows for the direction, years on the rings, no sentence telling how to read it', async ({ page, request }) => {
+    const { letters, site } = await getIsland(request);
+    await open(page, '/', THEME);
+    await expect(page.locator('#theme-root .chart svg .ah'), 'two arrowheads on the outer ring').toHaveCount(2);
+    const years = await page.locator('#theme-root .chart svg .t-year').allTextContents();
+    expect(years[0], 'the outermost ring is the year they met, written in full').toBe(site.met.slice(0, 4));
+    expect(years.every((y) => /^\d{4}$/.test(y)) && years.join() === [...years].sort().join(), 'years in full, growing inwards').toBe(true);
+    await expect(page.locator('#theme-root .readout .ro-today'), 'at rest the readout is the reading of the day').toBeVisible();
+    const text = await page.locator('#theme-root').innerText();
+    for (const gone of ['逆时针', '年环由外向内', '一行一封', '把指针移到', '点图上哪里', '日心轨道']) expect(text, `「${gone}」 is drawn, not written`).not.toContain(gone);
+    // the two ends of the archive are the chart's own marks, not sentences
+    await open(page, letters[0].url, THEME);
+    await expect(page.locator('#theme-root .pn .none')).toContainText('认识');
+    await open(page, letters[letters.length - 1].url, THEME);
+    await expect(page.locator('#theme-root .pn .none')).toContainText('今日');
+  });
+
   test('a selected letter turns amber and draws the arc since the letter before it', async ({ page, request }) => {
     const { letters } = await getIsland(request);
     const silent = letters.find((l) => l.date === '2021-07-04');           // 838 days after the letter before it: more than two laps
@@ -105,6 +122,25 @@ test.describe('theme "orbit", its own promises', () => {
     expect(seen.errors).toEqual([]);
   });
 
+  test('the card draws its two faces instead of saying 点一下; the gift box says nothing', async ({ page, request }) => {
+    const after = (selector) => page.evaluate((s) => getComputedStyle(document.querySelector(s), '::after').content, selector);
+    await open(page, await urlOf(request, (l) => l.date === '2026-08-12'), THEME);
+    const card = page.locator('#theme-root .letter-body .flip-card');
+    const cue = card.locator('svg.cue');
+    await expect(cue, 'one pictogram under the card: the written side, the photo side').toHaveCount(1);
+    await expect(cue, 'a screen reader still hears what the picture means').toHaveAttribute('aria-label', '点一下，换一面');
+    expect(await after('#theme-root .flip-card'), 'no generated sentence under the card').toMatch(/^(none|normal)$/);
+    const lit = () => cue.evaluate((svg) => ['a', 'b'].map((face) => getComputedStyle(svg.querySelector('.' + face)).stroke));
+    const [front, back] = await lit();
+    expect(front, 'the face that is up is the brighter one').not.toBe(back);
+    await card.click({ position: { x: 20, y: 20 } });
+    await expect(card).toHaveClass(/is-flipped/);
+    expect(await lit(), 'turned over, the other face lights up').toEqual([back, front]);
+    await open(page, await urlOf(request, (l) => l.standalone), THEME);
+    await expect(page.locator('#theme-root #gift-container')).toBeVisible();
+    expect(await after('#theme-root #gift-container'), 'no generated sentence under the box').toMatch(/^(none|normal)$/);
+  });
+
   test('the letter itself is on the first screen of a desktop', async ({ page, request }) => {
     test.skip(!wide(page), 'the two-column letter page is the desktop layout');
     for (const find of [(l) => l.date === '2024-11-19', (l) => l.quiet, (l) => l.title.length > 12]) {
@@ -117,7 +153,8 @@ test.describe('theme "orbit", its own promises', () => {
   test('the page for an address without a letter is one centred column, with a way back', async ({ page }) => {
     await open(page, '/404/', THEME);
     const lost = page.locator('#theme-root .lost-body');
-    await expect(lost).toContainText('这个位置上没有信');
+    await expect(lost).toContainText('没有信');
+    await expect(lost.locator('.loc svg .sel-halo'), 'an empty ring off the orbits stands for the missing letter').toHaveCount(1);
     await expect(lost.locator('a[href="/"]')).toBeVisible();
     const off = await page.evaluate(() => [...document.querySelectorAll('#theme-root .lost-body > *')].map((el) => {
       const box = el.getBoundingClientRect();

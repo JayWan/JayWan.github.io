@@ -76,9 +76,12 @@ function byline(letter) {
   return role === 'guest' ? `${letter.author} · 访客` : `${letter.author} 执笔`;
 }
 
+// 图上的两个记号，图例、读数栏和信的末尾都用它们：⊕ = 今日，◇ = 认识 · 在一起 · 结婚
+const G_TODAY = '<circle cx="7" cy="7" r="4.6" class="s"/><path d="M2.4 7h9.2M7 2.4v9.2" class="s"/>';
+const G_EVT = '<path d="M7 3.2L10.8 7 7 10.8 3.2 7z" class="s"/>';
 const ARROW = '<path d="M0 5h14M10 1l4 4-4 4" fill="none" stroke="currentColor"/>';
 const RING = 2 * Math.PI * 19;
-const PLAY = `<circle class="p-ring" cx="22" cy="22" r="19"/><circle class="p-prog" cx="22" cy="22" r="19" transform="translate(22 22) scale(-1 1) rotate(-90) translate(-22 -22)" stroke-dasharray="${f1(RING)}" stroke-dashoffset="${f1(RING)}"/><circle class="p-dot" cx="22" cy="3" r="2.4"/><path class="i-play" d="M18.2 14.6v14.8L30 22z"/><path class="i-pause" d="M16.6 15h3.6v14h-3.6zM23.8 15h3.6v14h-3.6z"/>`;
+const PLAY = `<circle class="p-ring" cx="22" cy="22" r="19"/><circle class="p-prog" cx="22" cy="22" r="19" transform="translate(22 22) scale(-1 1) rotate(-90) translate(-22 -22)" stroke-dasharray="${f1(RING)}" stroke-dashoffset="${f1(RING)}"/><circle class="p-dot" cx="22" cy="3" r="2.4"/><path class="i-play" d="M18.2 14.6v14.8L30 22z"/><path class="i-pause" d="M16.6 15h3.6v14h-3.6zM23.8 15h3.6v14h-3.6z"/><g class="i-retry" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M28.1 25.5A7 7 0 1 0 15.8 25.2"/><path d="M17.3 28.2L17.4 23.6L13.4 25.8Z" fill="currentColor"/></g>`;
 
 export default {
   mount(ctx) {
@@ -125,7 +128,8 @@ export default {
         if (tr && tr.bottom > hr.top && tr.right > hr.left) R = Math.min(R, Math.hypot(cx - (tr.right - hr.left - 4), cy - (tr.bottom - hr.top - 6)) - 2);
         band = 20; rOut = R - band - 16; rIn = R * 0.25; dotR = Math.max(3.2, Math.min(4.4, R / 82)); sunR = 9;
       }
-      if (big) svg.style.setProperty('--z', f1(Math.min(1.3, Math.max(1, R / 290))));     // 图大了，图上的字跟着大
+      const z = big ? f1(Math.min(1.3, Math.max(1, R / 290))) : 1;                       // 图大了，图上的字跟着大
+      if (big) svg.style.setProperty('--z', z);
       const step = (rOut - rIn) / Math.max(1, Y1 - Y0);
       const rOf = (y) => rOut - (Math.min(Math.max(y, Y0), Y1) - Y0) * step;
       const P = (deg, r) => { const a = deg * Math.PI / 180; return [f1(cx + r * Math.cos(a)), f1(cy - r * Math.sin(a))]; };
@@ -212,10 +216,13 @@ export default {
           if (to > from) S('path', { d: arc(r, helio(from), to >= d31 ? helioT(d31 + DAY) : helio(to)), class: 'ring' }, gRings);
           if (to < d31) S('path', { d: arc(r, helio(Math.max(to, j1)), helioT(d31 + DAY)), class: 'ring off' }, gRings);
         }
-        // 年份写在 6 点钟方向；手机上只标首尾和每五年
+        // 年份写在 6 点钟方向，由外向内一年一环；手机上只标首尾和每五年。那里正好有一封信时，年份往旁边让
         if (!mini && (big || y === Y0 || y === Y1 || ((y - Y0) % 5 === 0 && Y1 - y > 1))) {
-          const py = P(270, r);
-          text(phone ? String(y).slice(2) : String(y), py[0], py[1] + 0.3, 't-year halo', gOut);
+          const half = (phone ? 11 : 12.5 * z) + dotR + 3;
+          let dx = 0;
+          letters.forEach((l, i) => { const a = geo[i].a * Math.PI / 180, x = r * Math.cos(a); if (l.year === y && Math.sin(a) < 0 && Math.abs(x) < half) dx = x > 0 ? x - half : x + half; });
+          const py = P(360 - Math.acos(Math.max(-1, Math.min(1, dx / r))) * 180 / Math.PI, r);
+          text(String(y), py[0], py[1] + 0.3, 't-year halo', gOut);
         }
       }
 
@@ -275,12 +282,12 @@ export default {
         todayAt = { x: tp[0], y: tp[1] };
       }
 
-      // 前进方向
-      if (big) {
-        const rr = R + 12, e = P(212, rr), tl = P(208.8, rr + 3.2), trr = P(208.8, rr - 3.2);
-        S('path', { d: arc(rr, 198, 212), class: 'la' }, gOut);
-        S('path', { d: `M${tl[0]} ${tl[1]}L${e[0]} ${e[1]}L${trr[0]} ${trr[1]}`, class: 'la' }, gOut);
-      }
+      // 前进方向：尺外两支相对的箭头，逆时针
+      if (!mini) [16, 196].forEach((a) => {
+        const rr = R + (big ? 12 : 7), w = big ? 4 : 3.2, k = w * 2.6 / rr * 180 / Math.PI, t = P(a + 18, rr), u = P(a + 18 - k, rr + w), v = P(a + 18 - k, rr - w);
+        S('path', { d: arc(rr, a, a + 18 - k / 2), class: 'la' }, gOut);
+        S('path', { d: `M${u[0]} ${u[1]}L${t[0]} ${t[1]}L${v[0]} ${v[1]}Z`, class: 'ah' }, gOut);
+      });
 
       /** 从 a 那天到 b 那天连续扫过的轨迹：中间每满一年就是一整圈 */
       function tracePath(a, b) {
@@ -329,6 +336,7 @@ export default {
         return { no: best.no, dist: bd, inside: Math.hypot(x - cx, y - cy) <= R + 24, today: todayAt ? Math.hypot(todayAt.x - x, todayAt.y - y) : 1e9 };
       }
       select(opt.sel || null, false);
+      if (opt.lost) { const p = P(38, R + 17); S('circle', { cx: p[0], cy: p[1], r: 6.5, class: 'sel-halo', style: 'stroke-width:1.2;stroke-dasharray:2.3 2.2' }, gOut); }      // 轨道之外的一个空位
       return { svg, select, nearest, phone, get current() { return current; } };
     }
 
@@ -367,13 +375,14 @@ export default {
     };
     np.el.append(h('span', { class: 'np-rule' }, np.fill), np.btn, h('span', { class: 'np-meta' }, np.title, np.sub), np.time);
     let strip = null;                       // 信页上那一行配乐的各个零件
+    const FAILED = '放不出来';              // 歌没放出来：四个字，播放键自己变成「再来一次」的箭头
     const clockOf = (st, letter) => (st.letter === letter ? `${fmt.clock(st.time)} / ${fmt.clock(st.duration)}` : `0:00 / ${letter.song.duration ? fmt.clock(letter.song.duration) : '–:––'}`);
     function tick(st) {
       const cur = st.letter, q = cur && st.duration ? Math.min(1, st.time / st.duration) : 0;
       root.querySelectorAll('[data-play]').forEach((b) => orbitDot(b, cur && String(cur.no) === b.dataset.play ? q : 0));
       orbitDot(np.btn, q);
       np.fill.style.width = `${q * 100}%`;
-      if (cur) np.time.textContent = `${fmt.clock(st.time)} / ${fmt.clock(st.duration)}`;
+      if (cur) np.time.textContent = st.error ? FAILED : `${fmt.clock(st.time)} / ${fmt.clock(st.duration)}`;
       if (strip) {
         const mine = cur === strip.letter;
         strip.fill.style.width = strip.knob.style.left = `${mine ? q * 100 : 0}%`;
@@ -393,13 +402,13 @@ export default {
       const here = ctx.page.letter;
       root.dataset.np = !cur ? 'off' : here === cur ? 'same' : 'on';
       if (cur) {
-        np.title.textContent = st.error ? `《${cur.song.title}》放不出来，再点一次试试` : cur.song.title;
+        np.title.textContent = cur.song.title;
         np.title.href = cur.url;
         np.sub.textContent = `№ ${cur.no} ${cur.title}`;
       }
       if (strip) {
         strip.el.classList.toggle('is-loaded', cur === strip.letter);
-        strip.note.textContent = cur === strip.letter && st.error ? '放不出来，再点一次试试' : cur === strip.letter && st.loading ? '歌在路上…' : '这封信的歌';
+        strip.note.textContent = cur === strip.letter && st.error ? FAILED : cur === strip.letter && st.loading ? '歌在路上…' : '这封信的歌';
       }
       tick(st);
     }
@@ -445,6 +454,13 @@ export default {
         img.replaceWith(cy); cy.append(img);
         cy.after(h('div', { class: 'o-cap' }, h('span', {}, h('b', {}, `图 ${letter.no}·${n}`), '手写的那一面'), capToggle()));
       });
+      // 卡片有两面：下面画出「字的一面 ⇄ 照片的一面」，正朝上的那一面亮着，不写字
+      el.querySelectorAll('.flip-card').forEach((card) => {
+        if (card.querySelector('.cue')) return;
+        const cue = icon(64, 22, '<path class="a" d="M1.5 1.5h15v19h-15zM5 7h8M5 11h8M5 15h5"/><path d="M25 8h14M35.5 5l3.5 3-3.5 3M39 14H25M28.5 11L25 14l3.5 3"/><path class="b" d="M47.5 1.5h15v19h-15zM50 16l4-5.5 2.5 3 1.5-1.5 2.5 4"/><circle class="b" cx="57.6" cy="6.6" r="1.4"/>', 'cue');
+        cue.removeAttribute('aria-hidden'); cue.setAttribute('role', 'img'); cue.setAttribute('aria-label', '点一下，换一面');      // 看不见的人照旧听到这一句
+        card.append(cue);
+      });
       // 整段都是西文的段落交给拉丁字体（引号、撇号才不会占一个汉字宽）
       el.querySelectorAll('p, li, blockquote, h3, h4, h5').forEach((p) => {
         const t = p.textContent.trim();
@@ -487,8 +503,8 @@ export default {
         li(icon(12, 12, GLYPH.her, 'g'), '她 Pikachi', count('her')),
         count('both') ? li(icon(12, 12, GLYPH.both, 'g'), '合写', count('both')) : null,
         count('guest') ? li(icon(12, 12, GLYPH.guest, 'g'), '访客', count('guest')) : null,
-        li(icon(14, 14, '<circle cx="7" cy="7" r="4.6" class="s"/><path d="M2.4 7h9.2M7 2.4v9.2" class="s"/>', 'g'), '今日'),
-        li(icon(14, 14, '<path d="M7 3.2L10.8 7 7 10.8 3.2 7z" class="s"/>', 'g'), '认识 · 在一起 · 结婚'),
+        li(icon(14, 14, G_TODAY, 'g'), '今日'),
+        li(icon(14, 14, G_EVT, 'g'), '认识 · 在一起 · 结婚'),
         li(icon(14, 14, '<path d="M0 7h14" class="s" stroke-dasharray="1.2 3"/>', 'g'), '每年都会经过的五个日子'),
         li(icon(14, 14, '<path d="M1 9.5A7 7 0 0 1 13 9.5" class="s"/>', 'g sunny'), '自上一封走过的弧'));
       const tilt = letters.byNo(29) && /绕日/.test(letters.byNo(29).title) ? letters.byNo(29) : null;
@@ -498,23 +514,25 @@ export default {
             h('h1', { lang: 'en' }, site.title),
             h('p', { class: 'plate-title' }, '绕日图'),
             h('p', { class: 'plate-no' }, '图版 I'),
-            h('p', { class: 'plate-desc' }, `${letters.length} 封信的日心轨道`, h('br'), h('span', {}, `${Y0} – ${Y1}`))),
+            h('p', { class: 'plate-desc' }, `${Y0} – ${Y1}`)),
           chartHost,
-          h('p', { class: 'chartnote' }, h('span', {}, '自黄道北极俯视，逆时针前进。'), h('span', {}, '冬至在正上，1 月 1 日在其左约 11°。'), h('span', {}, `年环由外向内：${Y0} → ${Y1}。`)),
+          // 公转：逆时针，一圈 360°，365.24 天。和右边的自转倾角是一对小图
+          h('figure', { class: 'tilt orb' },
+            icon(64, 64, '<circle cx="32" cy="32" r="21" class="h2" stroke-dasharray="1 3"/><path d="M50.2 42.5A21 21 0 1 0 14.2 43.1" class="h1"/><path d="M17.1 47.3L15.8 39.1L9.9 43.3Z" class="hf"/><circle cx="50.2" cy="42.5" r="2.6" class="hf"/><circle cx="32" cy="32" r="3.4" class="hs"/>'),
+            h('figcaption', {}, h('b', {}, '360°'), '365.24 d')),
           tilt && h('figure', { class: 'tilt' },
             icon(64, 64, '<path d="M4 32h56M32 5v54" class="h2" stroke-dasharray="1 3"/><circle cx="32" cy="32" r="13" class="h1"/><path d="M21.2 56.8L42.8 7.2M32 13A19 19 0 0 1 39.6 14.6" class="h1"/><ellipse cx="32" cy="32" rx="13" ry="3.4" class="h2" transform="rotate(-23.5 32 32)"/>'),
             h('figcaption', {}, h('b', {}, '23.5°'), '地球自转倾角，', h('br'), '“撞出了春夏秋冬”。', h('a', { href: tilt.url }, `№ ${tilt.no}`)))),
           legend,
           readout),
         h('section', { class: 'tablecol', 'aria-label': '星历表' },
-          h('header', { class: 'eph-head' }, h('h2', {}, '星历表'), h('p', {}, `一行一封。T+ 为自认识那天（${dots(site.met)}）起的整日数。`), sort),
+          h('header', { class: 'eph-head' }, h('h2', {}, '星历表'), sort),
           eph));
 
       function today() {
         const last = letters.latest, lp = lapOf(TODAY), d = site.today.date, away = Math.max(0, Math.round((TODAY - geo[last.index].ms) / DAY));
         readout.replaceChildren(h('div', { class: 'ro ro-today' },
-          h('p', { class: 'ro-kicker' }, h('strong', {}, '今日读数'), h('span', {}, `${dots(d)} ${fmt.date(d, 'weekday')}`),
-            h('span', { class: 'ro-tip' }, touch ? '点图上哪里都行，会落到最近的一封信上。' : '把指针移到图上的点或右表的行，在此读出那封信。')),
+          h('p', { class: 'ro-kicker' }, h('strong', {}, icon(14, 14, G_TODAY, 'g'), '今日读数'), h('span', {}, `${dots(d)} ${fmt.date(d, 'weekday')}`)),
           h('dl', { class: 'strip' },
             cell('自认识', [h('span', { class: 'tp' }, 'T+'), String(site.today.days.met), h('i', {}, 'd')], `${dots(site.met)} 起`),
             lp && cell('圈次', `第 ${lp.n} 圈`, `本圈已走 ${lp.deg}°`),
@@ -655,9 +673,12 @@ export default {
       } else strip = null;
 
       function pn(q, dir) {
+        // 第一封再往前是认识那天（◇），最新一封再往后是今天（⊕）：两头用图上的记号收住
+        const at = q ? geo[q.index].ms : dir < 0 ? MET : Math.max(TODAY, g.ms), days = Math.abs(Math.round((at - g.ms) / DAY));
+        if (!q) return h('span', { class: 'none' }, arcIcon(dir), h('span', { class: 'dir' }, dir < 0 ? '逆行' : '顺行'),
+          h('span', { class: 'ttl' }, icon(14, 14, dir < 0 ? G_EVT : G_TODAY, 'g'), dir < 0 ? '认识' : '今日'),
+          h('span', { class: 'gap' }, dots(dir < 0 ? site.met : site.today.date) + (days ? `　${days} d ${dir < 0 ? '前' : '后'}` : '')));
         const label = h('span', { class: 'dir' }, dir < 0 ? '逆行 · 上一封' : '顺行 · 下一封');
-        if (!q) return h('span', { class: 'none' }, arcIcon(dir), label, h('span', { class: 'ttl' }, dir < 0 ? '这是第一封，再往前就是认识之前了。' : '下一封还没写。'));
-        const days = Math.abs(Math.round((geo[q.index].ms - g.ms) / DAY));
         // 普通链接：信到信之间核心会替换当前这条历史记录，所以后退总是回到图上
         return h('a', { href: q.url, rel: dir < 0 ? 'prev' : 'next' },
           arcIcon(dir), label, h('span', { class: 'ttl', lang: latin(q.title) ? 'en' : null }, q.title), h('span', { class: 'gap' }, `№ ${q.no}　${dots(q.date)}　${days} d ${dir < 0 ? '前' : '后'}`));
@@ -700,10 +721,9 @@ export default {
         h('header', { class: 'topbar' }, h('a', { class: 'brand', href: '/' }, site.title), h('a', { class: 'back', href: '/' }, icon(20, 20, TARGET), '回到绕日图')),
         h('div', { class: 'lost-body' }, loc,
           h('p', { class: 'kicker' }, '404 · 轨道之外'),
-          h('h1', { class: 'l-title' }, '这个位置上没有信'),
-          h('p', { class: 'lost-p' }, `图上一共 ${letters.length} 封，每一封都在自己的那一天。`),
+          h('h1', { class: 'l-title' }, '没有信'),
           h('a', { class: 'btn', href: '/' }, '回到绕日图 ', icon(16, 10, ARROW))));
-      return { el, enter() { keepDrawn(loc, () => makeChart(loc, { mini: true })); } };
+      return { el, enter() { keepDrawn(loc, () => makeChart(loc, { mini: true, lost: true })); } };
     }
 
     // ───────────────────────── 路由 ─────────────────────────
