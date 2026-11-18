@@ -330,6 +330,8 @@ export default {
       const frac = (d) => { const y = +d.slice(0, 4), a = Date.UTC(y, 0, 1); return (Date.UTC(y, +d.slice(5, 7) - 1, +d.slice(8, 10)) - a + 432e5) / (Date.UTC(y + 1, 0, 1) - a); };
       const at = (d) => (frac(d) * 100).toFixed(2) + '%';
       const stroke = (l) => h('i', { class: 'nb-s', style: `--x:${at(l.date)}` });
+      /* 线两头的日数。--n 是位数：靠近一年的两端时，CSS 按它把数字收在刻度之内，不压到格线和年份上 */
+      const count = (d, text) => h('b', { class: 'nb-d', lang: 'en', style: `--x:${at(d)};--n:${text.length}` }, text);
       const met = ok(site.met) ? site.met : null, today = ok(site.today.date) ? site.today.date : null;
       const y0 = letters[0].year, y1 = Math.max(letters[letters.length - 1].year, today ? +today.slice(0, 4) : 0);
       const rows = [h('div', { class: 'nb-m' }, h('span', { class: 'nb-y' }),
@@ -342,8 +344,8 @@ export default {
           h('span', { class: 'nb-x' },
             h('i', { class: 'nb-l', style: `right:${(from * 100).toFixed(2)}%;left:${((1 - to) * 100).toFixed(2)}%` }),
             list.map(stroke),
-            from > 0 && h('b', { class: 'nb-d', lang: 'en', style: `right:${at(met)}` }, '0'),
-            to < 1 && dToday != null && h('b', { class: 'nb-d', lang: 'en', style: `right:${at(today)}` }, String(dToday)))));
+            from > 0 && count(met, '0'),
+            to < 1 && dToday != null && count(today, String(dToday)))));
       }
       if (guests.length) rows.push(h('div', { class: 'nb-r nb-r--ba' }, h('span', { class: 'nb-y' }, '跋'), h('span', { class: 'nb-x' }, guests.map(stroke))));
       return h('li', { class: 'cell cell--nb' },
