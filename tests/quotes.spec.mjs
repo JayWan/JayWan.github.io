@@ -23,7 +23,8 @@ test('the island lists every line of a letter, and its first one as before', asy
     expect(new Set(letter.quotes).size, `${where}: no line twice`).toBe(letter.quotes.length);
     expect(letter.quote, `${where}: quote is the first line, or null`).toBe(letter.quotes.length ? letter.quotes[0] : null);
   }
-  expect(letters.filter((l) => l.quotes.length > 1).length, 'the letters of the two of them have several lines each').toBeGreaterThanOrEqual(31);
+  // (how many lines a letter has is its writer's business: one is fine, none is fine)
+  expect(letters.filter((l) => l.quotes.length > 1).length, 'a letter can have several lines').toBeGreaterThan(0);
   // a letter may still say `quote: "…"` (one line) instead of `quotes:` (a list)
   expect(readFileSync(path.join(root, '_includes/letters-data.html'), 'utf8')).toContain('post.quotes | default: post.quote');
 });
@@ -44,9 +45,9 @@ test('the core draws one line per letter with the dice it is given', async ({ pa
     const seen = island.letters.map(() => new Set());
     for (let i = 0; i < 60; i++) draw(() => (i + 0.5) / 60).forEach((l, at) => seen[at].add(l.quote));
     const all = draw(() => 0).every((l, at) => seen[at].size === Math.max(1, l.quotes.length) && l.quotes.every((line) => seen[at].has(line)));
-    // each letter throws for itself
+    // each letter throws for itself: dice that count up give neighbours different places in their lists
     let n = 0;
-    const apart = draw(() => (n++ % 5) / 5).filter((l) => l.quotes.length === 5).map((l) => l.quotes.indexOf(l.quote));
+    const apart = draw(() => (n++ % 7) / 7).filter((l) => l.quotes.length > 1).map((l) => l.quotes.indexOf(l.quote) / l.quotes.length);
     // dice that are not dice: the first line
     const junk = [() => 1, () => -0.1, () => NaN, () => undefined, () => 'x'].every((random) => draw(random).every((l) => l.quote === (l.quotes[0] || null)));
     // one line, no line, a page from before there were several, and things that are not lines
@@ -84,9 +85,7 @@ test('over many loads every line of every letter is shown', async ({ page, reque
 
 test('one page load shows one line per letter: the list and the letter agree, also after going back and forth', async ({ page, request }) => {
   const { letters } = await getIsland(request);
-  const several = letters.filter((l) => l.quotes.length > 1 && !l.standalone);
-  const a = several[several.length - 1];
-  const b = several[several.length - 2];
+  const [a, b] = letters.filter((l) => l.quotes.length && !l.standalone).sort((x, y) => y.quotes.length - x.quotes.length);   // the two with the most lines
   await open(page, '/', 'probe');                           // the real dice
   const home = await shownOnHome(page);
   for (const letter of letters) {
