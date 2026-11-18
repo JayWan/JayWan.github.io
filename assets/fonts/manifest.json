@@ -7,43 +7,43 @@
    "files": [
     {
      "file": "serif-sc/a-vf.woff2",
-     "bytes": 237908,
-     "chars": 760
+     "bytes": 237004,
+     "chars": 758
     },
     {
      "file": "serif-sc/q-vf.woff2",
-     "bytes": 43928,
-     "chars": 111
+     "bytes": 160000,
+     "chars": 435
     },
     {
      "file": "serif-sc/b01-vf.woff2",
-     "bytes": 59904,
+     "bytes": 62908,
      "chars": 160
     },
     {
      "file": "serif-sc/b02-vf.woff2",
-     "bytes": 107204,
+     "bytes": 109104,
      "chars": 280
     },
     {
      "file": "serif-sc/b03-vf.woff2",
-     "bytes": 163704,
-     "chars": 408
+     "bytes": 65680,
+     "chars": 145
     },
     {
      "file": "serif-sc/l01-vf.woff2",
-     "bytes": 3428,
-     "chars": 4
+     "bytes": 3008,
+     "chars": 3
     },
     {
      "file": "serif-sc/l02-vf.woff2",
-     "bytes": 24556,
-     "chars": 55
+     "bytes": 23068,
+     "chars": 52
     },
     {
      "file": "serif-sc/l03-vf.woff2",
-     "bytes": 8032,
-     "chars": 14
+     "bytes": 7272,
+     "chars": 12
     },
     {
      "file": "serif-sc/l04-vf.woff2",
@@ -52,28 +52,28 @@
     },
     {
      "file": "serif-sc/l05-vf.woff2",
-     "bytes": 14008,
-     "chars": 26
+     "bytes": 13284,
+     "chars": 24
     },
     {
      "file": "serif-sc/l06-vf.woff2",
-     "bytes": 28388,
-     "chars": 63
+     "bytes": 26996,
+     "chars": 59
     },
     {
      "file": "serif-sc/l07-vf.woff2",
-     "bytes": 7600,
-     "chars": 13
+     "bytes": 7188,
+     "chars": 12
     },
     {
      "file": "serif-sc/l08-vf.woff2",
-     "bytes": 4016,
-     "chars": 5
+     "bytes": 3784,
+     "chars": 4
     },
     {
      "file": "serif-sc/l09-vf.woff2",
-     "bytes": 12784,
-     "chars": 26
+     "bytes": 12400,
+     "chars": 25
     },
     {
      "file": "serif-sc/l10-vf.woff2",
@@ -82,113 +82,113 @@
     },
     {
      "file": "serif-sc/l11-vf.woff2",
-     "bytes": 15560,
-     "chars": 32
+     "bytes": 14776,
+     "chars": 30
     },
     {
      "file": "serif-sc/l12-vf.woff2",
-     "bytes": 3884,
-     "chars": 5
+     "bytes": 2888,
+     "chars": 3
     },
     {
      "file": "serif-sc/l13-vf.woff2",
-     "bytes": 20356,
-     "chars": 41
+     "bytes": 18464,
+     "chars": 37
     },
     {
      "file": "serif-sc/l14-vf.woff2",
-     "bytes": 6896,
-     "chars": 12
+     "bytes": 5800,
+     "chars": 9
     },
     {
      "file": "serif-sc/l15-vf.woff2",
-     "bytes": 7176,
-     "chars": 11
+     "bytes": 6820,
+     "chars": 10
     },
     {
      "file": "serif-sc/l16-vf.woff2",
-     "bytes": 6520,
-     "chars": 11
+     "bytes": 5488,
+     "chars": 9
     },
     {
      "file": "serif-sc/l17-vf.woff2",
-     "bytes": 8956,
-     "chars": 16
+     "bytes": 8500,
+     "chars": 14
     },
     {
      "file": "serif-sc/l18-vf.woff2",
-     "bytes": 3752,
-     "chars": 5
+     "bytes": 2448,
+     "chars": 2
     },
     {
      "file": "serif-sc/l19-vf.woff2",
-     "bytes": 4776,
-     "chars": 9
+     "bytes": 4100,
+     "chars": 7
     },
     {
      "file": "serif-sc/l20-vf.woff2",
-     "bytes": 11432,
-     "chars": 22
+     "bytes": 11176,
+     "chars": 21
     },
     {
      "file": "serif-sc/l21-vf.woff2",
-     "bytes": 10080,
-     "chars": 17
+     "bytes": 9000,
+     "chars": 14
     },
     {
      "file": "serif-sc/l22-vf.woff2",
-     "bytes": 3944,
-     "chars": 4
+     "bytes": 3300,
+     "chars": 3
     },
     {
      "file": "serif-sc/l23-vf.woff2",
-     "bytes": 9544,
-     "chars": 15
+     "bytes": 8416,
+     "chars": 13
     },
     {
      "file": "serif-sc/l24-vf.woff2",
-     "bytes": 9328,
-     "chars": 18
+     "bytes": 7952,
+     "chars": 15
     },
     {
      "file": "serif-sc/l25-vf.woff2",
-     "bytes": 12332,
-     "chars": 23
+     "bytes": 11512,
+     "chars": 21
     },
     {
      "file": "serif-sc/l26-vf.woff2",
-     "bytes": 9972,
-     "chars": 18
+     "bytes": 9496,
+     "chars": 17
     },
     {
      "file": "serif-sc/l27-vf.woff2",
-     "bytes": 12736,
-     "chars": 25
+     "bytes": 11980,
+     "chars": 23
     },
     {
      "file": "serif-sc/l28-vf.woff2",
-     "bytes": 37456,
-     "chars": 73
+     "bytes": 36176,
+     "chars": 70
     },
     {
      "file": "serif-sc/l29-vf.woff2",
-     "bytes": 15236,
-     "chars": 28
+     "bytes": 14704,
+     "chars": 27
     },
     {
      "file": "serif-sc/l30-vf.woff2",
-     "bytes": 12292,
-     "chars": 22
+     "bytes": 10900,
+     "chars": 19
     },
     {
      "file": "serif-sc/l31-vf.woff2",
-     "bytes": 3876,
-     "chars": 5
+     "bytes": 3332,
+     "chars": 4
     },
     {
      "file": "serif-sc/l32-vf.woff2",
-     "bytes": 5520,
-     "chars": 9
+     "bytes": 8864,
+     "chars": 17
     },
     {
      "file": "serif-sc/s1-400.woff2",
@@ -222,8 +222,8 @@
     },
     {
      "file": "serif-sc/c004-400.woff2",
-     "bytes": 3096,
-     "chars": 8
+     "bytes": 2540,
+     "chars": 6
     },
     {
      "file": "serif-sc/c005-400.woff2",
@@ -312,8 +312,8 @@
     },
     {
      "file": "serif-sc/c022-400.woff2",
-     "bytes": 3224,
-     "chars": 6
+     "bytes": 2928,
+     "chars": 5
     },
     {
      "file": "serif-sc/c023-400.woff2",
@@ -382,8 +382,8 @@
     },
     {
      "file": "serif-sc/c036-400.woff2",
-     "bytes": 4480,
-     "chars": 15
+     "bytes": 4308,
+     "chars": 14
     },
     {
      "file": "serif-sc/c037-400.woff2",
@@ -412,8 +412,8 @@
     },
     {
      "file": "serif-sc/c042-400.woff2",
-     "bytes": 4704,
-     "chars": 20
+     "bytes": 4548,
+     "chars": 19
     },
     {
      "file": "serif-sc/c043-400.woff2",
@@ -447,8 +447,8 @@
     },
     {
      "file": "serif-sc/c049-400.woff2",
-     "bytes": 5752,
-     "chars": 18
+     "bytes": 5516,
+     "chars": 17
     },
     {
      "file": "serif-sc/c050-400.woff2",
@@ -522,8 +522,8 @@
     },
     {
      "file": "serif-sc/c064-400.woff2",
-     "bytes": 6800,
-     "chars": 25
+     "bytes": 6596,
+     "chars": 24
     },
     {
      "file": "serif-sc/c065-400.woff2",
@@ -722,8 +722,8 @@
     },
     {
      "file": "serif-sc/c104-400.woff2",
-     "bytes": 17776,
-     "chars": 61
+     "bytes": 17688,
+     "chars": 60
     },
     {
      "file": "serif-sc/c105-400.woff2",
@@ -1044,43 +1044,43 @@
    "files": [
     {
      "file": "sans-sc/a-vf.woff2",
-     "bytes": 184500,
-     "chars": 759
+     "bytes": 183888,
+     "chars": 757
     },
     {
      "file": "sans-sc/q-vf.woff2",
-     "bytes": 34268,
-     "chars": 111
+     "bytes": 125456,
+     "chars": 435
     },
     {
      "file": "sans-sc/b01-vf.woff2",
-     "bytes": 47252,
+     "bytes": 48356,
      "chars": 160
     },
     {
      "file": "sans-sc/b02-vf.woff2",
-     "bytes": 83176,
+     "bytes": 85212,
      "chars": 280
     },
     {
      "file": "sans-sc/b03-vf.woff2",
-     "bytes": 127704,
-     "chars": 408
+     "bytes": 50820,
+     "chars": 145
     },
     {
      "file": "sans-sc/l01-vf.woff2",
-     "bytes": 3184,
-     "chars": 4
+     "bytes": 2744,
+     "chars": 3
     },
     {
      "file": "sans-sc/l02-vf.woff2",
-     "bytes": 18944,
-     "chars": 55
+     "bytes": 17952,
+     "chars": 52
     },
     {
      "file": "sans-sc/l03-vf.woff2",
-     "bytes": 6412,
-     "chars": 14
+     "bytes": 5824,
+     "chars": 12
     },
     {
      "file": "sans-sc/l04-vf.woff2",
@@ -1089,28 +1089,28 @@
     },
     {
      "file": "sans-sc/l05-vf.woff2",
-     "bytes": 11104,
-     "chars": 26
+     "bytes": 10548,
+     "chars": 24
     },
     {
      "file": "sans-sc/l06-vf.woff2",
-     "bytes": 21800,
-     "chars": 63
+     "bytes": 20708,
+     "chars": 59
     },
     {
      "file": "sans-sc/l07-vf.woff2",
-     "bytes": 6372,
-     "chars": 13
+     "bytes": 6128,
+     "chars": 12
     },
     {
      "file": "sans-sc/l08-vf.woff2",
-     "bytes": 3544,
-     "chars": 5
+     "bytes": 3444,
+     "chars": 4
     },
     {
      "file": "sans-sc/l09-vf.woff2",
-     "bytes": 10172,
-     "chars": 26
+     "bytes": 9852,
+     "chars": 25
     },
     {
      "file": "sans-sc/l10-vf.woff2",
@@ -1119,113 +1119,113 @@
     },
     {
      "file": "sans-sc/l11-vf.woff2",
-     "bytes": 11992,
-     "chars": 32
+     "bytes": 11368,
+     "chars": 30
     },
     {
      "file": "sans-sc/l12-vf.woff2",
-     "bytes": 3332,
-     "chars": 5
+     "bytes": 2512,
+     "chars": 3
     },
     {
      "file": "sans-sc/l13-vf.woff2",
-     "bytes": 15276,
-     "chars": 41
+     "bytes": 13756,
+     "chars": 37
     },
     {
      "file": "sans-sc/l14-vf.woff2",
-     "bytes": 5748,
-     "chars": 12
+     "bytes": 4988,
+     "chars": 9
     },
     {
      "file": "sans-sc/l15-vf.woff2",
-     "bytes": 6236,
-     "chars": 11
+     "bytes": 5980,
+     "chars": 10
     },
     {
      "file": "sans-sc/l16-vf.woff2",
-     "bytes": 5292,
-     "chars": 11
+     "bytes": 4584,
+     "chars": 9
     },
     {
      "file": "sans-sc/l17-vf.woff2",
-     "bytes": 7276,
-     "chars": 16
+     "bytes": 6988,
+     "chars": 14
     },
     {
      "file": "sans-sc/l18-vf.woff2",
-     "bytes": 3232,
-     "chars": 5
+     "bytes": 2216,
+     "chars": 2
     },
     {
      "file": "sans-sc/l19-vf.woff2",
-     "bytes": 4016,
-     "chars": 9
+     "bytes": 3476,
+     "chars": 7
     },
     {
      "file": "sans-sc/l20-vf.woff2",
-     "bytes": 8884,
-     "chars": 22
+     "bytes": 8608,
+     "chars": 21
     },
     {
      "file": "sans-sc/l21-vf.woff2",
-     "bytes": 8284,
-     "chars": 17
+     "bytes": 7308,
+     "chars": 14
     },
     {
      "file": "sans-sc/l22-vf.woff2",
-     "bytes": 3404,
-     "chars": 4
+     "bytes": 2884,
+     "chars": 3
     },
     {
      "file": "sans-sc/l23-vf.woff2",
-     "bytes": 7676,
-     "chars": 15
+     "bytes": 6784,
+     "chars": 13
     },
     {
      "file": "sans-sc/l24-vf.woff2",
-     "bytes": 7360,
-     "chars": 18
+     "bytes": 6240,
+     "chars": 15
     },
     {
      "file": "sans-sc/l25-vf.woff2",
-     "bytes": 9816,
-     "chars": 23
+     "bytes": 9324,
+     "chars": 21
     },
     {
      "file": "sans-sc/l26-vf.woff2",
-     "bytes": 8016,
-     "chars": 18
+     "bytes": 7640,
+     "chars": 17
     },
     {
      "file": "sans-sc/l27-vf.woff2",
-     "bytes": 9888,
-     "chars": 25
+     "bytes": 9292,
+     "chars": 23
     },
     {
      "file": "sans-sc/l28-vf.woff2",
-     "bytes": 28656,
-     "chars": 73
+     "bytes": 27696,
+     "chars": 70
     },
     {
      "file": "sans-sc/l29-vf.woff2",
-     "bytes": 12528,
-     "chars": 28
+     "bytes": 12056,
+     "chars": 27
     },
     {
      "file": "sans-sc/l30-vf.woff2",
-     "bytes": 9580,
-     "chars": 22
+     "bytes": 8572,
+     "chars": 19
     },
     {
      "file": "sans-sc/l31-vf.woff2",
-     "bytes": 3288,
-     "chars": 5
+     "bytes": 2728,
+     "chars": 4
     },
     {
      "file": "sans-sc/l32-vf.woff2",
-     "bytes": 4572,
-     "chars": 9
+     "bytes": 7340,
+     "chars": 17
     },
     {
      "file": "sans-sc/s1-400.woff2",
@@ -1259,8 +1259,8 @@
     },
     {
      "file": "sans-sc/c004-400.woff2",
-     "bytes": 2856,
-     "chars": 8
+     "bytes": 2276,
+     "chars": 6
     },
     {
      "file": "sans-sc/c005-400.woff2",
@@ -1349,8 +1349,8 @@
     },
     {
      "file": "sans-sc/c022-400.woff2",
-     "bytes": 2836,
-     "chars": 6
+     "bytes": 2568,
+     "chars": 5
     },
     {
      "file": "sans-sc/c023-400.woff2",
@@ -1419,8 +1419,8 @@
     },
     {
      "file": "sans-sc/c036-400.woff2",
-     "bytes": 3840,
-     "chars": 15
+     "bytes": 3680,
+     "chars": 14
     },
     {
      "file": "sans-sc/c037-400.woff2",
@@ -1449,8 +1449,8 @@
     },
     {
      "file": "sans-sc/c042-400.woff2",
-     "bytes": 4028,
-     "chars": 20
+     "bytes": 3852,
+     "chars": 19
     },
     {
      "file": "sans-sc/c043-400.woff2",
@@ -1484,8 +1484,8 @@
     },
     {
      "file": "sans-sc/c049-400.woff2",
-     "bytes": 4724,
-     "chars": 18
+     "bytes": 4608,
+     "chars": 17
     },
     {
      "file": "sans-sc/c050-400.woff2",
@@ -1559,8 +1559,8 @@
     },
     {
      "file": "sans-sc/c064-400.woff2",
-     "bytes": 5640,
-     "chars": 25
+     "bytes": 5436,
+     "chars": 24
     },
     {
      "file": "sans-sc/c065-400.woff2",
@@ -1759,8 +1759,8 @@
     },
     {
      "file": "sans-sc/c104-400.woff2",
-     "bytes": 14260,
-     "chars": 61
+     "bytes": 14064,
+     "chars": 60
     },
     {
      "file": "sans-sc/c105-400.woff2",
@@ -2081,43 +2081,43 @@
    "files": [
     {
      "file": "sans-sc/a-400.woff2",
-     "bytes": 100184,
-     "chars": 759
+     "bytes": 99888,
+     "chars": 757
     },
     {
      "file": "sans-sc/q-400.woff2",
-     "bytes": 19124,
-     "chars": 111
+     "bytes": 67776,
+     "chars": 435
     },
     {
      "file": "sans-sc/b01-400.woff2",
-     "bytes": 26084,
+     "bytes": 26676,
      "chars": 160
     },
     {
      "file": "sans-sc/b02-400.woff2",
-     "bytes": 45164,
+     "bytes": 46312,
      "chars": 280
     },
     {
      "file": "sans-sc/b03-400.woff2",
-     "bytes": 68672,
-     "chars": 408
+     "bytes": 28000,
+     "chars": 145
     },
     {
      "file": "sans-sc/l01-400.woff2",
-     "bytes": 2168,
-     "chars": 4
+     "bytes": 1984,
+     "chars": 3
     },
     {
      "file": "sans-sc/l02-400.woff2",
-     "bytes": 10924,
-     "chars": 55
+     "bytes": 10412,
+     "chars": 52
     },
     {
      "file": "sans-sc/l03-400.woff2",
-     "bytes": 4064,
-     "chars": 14
+     "bytes": 3704,
+     "chars": 12
     },
     {
      "file": "sans-sc/l04-400.woff2",
@@ -2126,28 +2126,28 @@
     },
     {
      "file": "sans-sc/l05-400.woff2",
-     "bytes": 6564,
-     "chars": 26
+     "bytes": 6300,
+     "chars": 24
     },
     {
      "file": "sans-sc/l06-400.woff2",
-     "bytes": 12452,
-     "chars": 63
+     "bytes": 11840,
+     "chars": 59
     },
     {
      "file": "sans-sc/l07-400.woff2",
-     "bytes": 4016,
-     "chars": 13
+     "bytes": 3832,
+     "chars": 12
     },
     {
      "file": "sans-sc/l08-400.woff2",
-     "bytes": 2432,
-     "chars": 5
+     "bytes": 2340,
+     "chars": 4
     },
     {
      "file": "sans-sc/l09-400.woff2",
-     "bytes": 6164,
-     "chars": 26
+     "bytes": 5964,
+     "chars": 25
     },
     {
      "file": "sans-sc/l10-400.woff2",
@@ -2156,113 +2156,113 @@
     },
     {
      "file": "sans-sc/l11-400.woff2",
-     "bytes": 7096,
-     "chars": 32
+     "bytes": 6760,
+     "chars": 30
     },
     {
      "file": "sans-sc/l12-400.woff2",
-     "bytes": 2304,
-     "chars": 5
+     "bytes": 1852,
+     "chars": 3
     },
     {
      "file": "sans-sc/l13-400.woff2",
-     "bytes": 8832,
-     "chars": 41
+     "bytes": 8024,
+     "chars": 37
     },
     {
      "file": "sans-sc/l14-400.woff2",
-     "bytes": 3676,
-     "chars": 12
+     "bytes": 3220,
+     "chars": 9
     },
     {
      "file": "sans-sc/l15-400.woff2",
-     "bytes": 3936,
-     "chars": 11
+     "bytes": 3852,
+     "chars": 10
     },
     {
      "file": "sans-sc/l16-400.woff2",
-     "bytes": 3440,
-     "chars": 11
+     "bytes": 3040,
+     "chars": 9
     },
     {
      "file": "sans-sc/l17-400.woff2",
-     "bytes": 4516,
-     "chars": 16
+     "bytes": 4348,
+     "chars": 14
     },
     {
      "file": "sans-sc/l18-400.woff2",
-     "bytes": 2196,
-     "chars": 5
+     "bytes": 1656,
+     "chars": 2
     },
     {
      "file": "sans-sc/l19-400.woff2",
-     "bytes": 2660,
-     "chars": 9
+     "bytes": 2380,
+     "chars": 7
     },
     {
      "file": "sans-sc/l20-400.woff2",
-     "bytes": 5324,
-     "chars": 22
+     "bytes": 5228,
+     "chars": 21
     },
     {
      "file": "sans-sc/l21-400.woff2",
-     "bytes": 5088,
-     "chars": 17
+     "bytes": 4576,
+     "chars": 14
     },
     {
      "file": "sans-sc/l22-400.woff2",
-     "bytes": 2396,
-     "chars": 4
+     "bytes": 2020,
+     "chars": 3
     },
     {
      "file": "sans-sc/l23-400.woff2",
-     "bytes": 4748,
-     "chars": 15
+     "bytes": 4232,
+     "chars": 13
     },
     {
      "file": "sans-sc/l24-400.woff2",
-     "bytes": 4644,
-     "chars": 18
+     "bytes": 3948,
+     "chars": 15
     },
     {
      "file": "sans-sc/l25-400.woff2",
-     "bytes": 5944,
-     "chars": 23
+     "bytes": 5648,
+     "chars": 21
     },
     {
      "file": "sans-sc/l26-400.woff2",
-     "bytes": 4908,
-     "chars": 18
+     "bytes": 4784,
+     "chars": 17
     },
     {
      "file": "sans-sc/l27-400.woff2",
-     "bytes": 5920,
-     "chars": 25
+     "bytes": 5596,
+     "chars": 23
     },
     {
      "file": "sans-sc/l28-400.woff2",
-     "bytes": 16144,
-     "chars": 73
+     "bytes": 15672,
+     "chars": 70
     },
     {
      "file": "sans-sc/l29-400.woff2",
-     "bytes": 7448,
-     "chars": 28
+     "bytes": 7132,
+     "chars": 27
     },
     {
      "file": "sans-sc/l30-400.woff2",
-     "bytes": 5732,
-     "chars": 22
+     "bytes": 5216,
+     "chars": 19
     },
     {
      "file": "sans-sc/l31-400.woff2",
-     "bytes": 2228,
-     "chars": 5
+     "bytes": 1968,
+     "chars": 4
     },
     {
      "file": "sans-sc/l32-400.woff2",
-     "bytes": 2972,
-     "chars": 9
+     "bytes": 4552,
+     "chars": 17
     }
    ],
    "missing": "ɏͰϿง❙鿿﫿＀￯🎁🎉👻💎😂😌😒😘😢😭😳😴😶🤣"
@@ -2273,43 +2273,43 @@
    "files": [
     {
      "file": "fangsong/a-400.woff2",
-     "bytes": 194776,
-     "chars": 742
+     "bytes": 193820,
+     "chars": 740
     },
     {
      "file": "fangsong/q-400.woff2",
-     "bytes": 41436,
-     "chars": 111
+     "bytes": 156260,
+     "chars": 435
     },
     {
      "file": "fangsong/b01-400.woff2",
-     "bytes": 57832,
+     "bytes": 60108,
      "chars": 160
     },
     {
      "file": "fangsong/b02-400.woff2",
-     "bytes": 103320,
+     "bytes": 107172,
      "chars": 280
     },
     {
      "file": "fangsong/b03-400.woff2",
-     "bytes": 160676,
-     "chars": 408
+     "bytes": 62900,
+     "chars": 145
     },
     {
      "file": "fangsong/l01-400.woff2",
-     "bytes": 3156,
-     "chars": 4
+     "bytes": 2784,
+     "chars": 3
     },
     {
      "file": "fangsong/l02-400.woff2",
-     "bytes": 23544,
-     "chars": 55
+     "bytes": 22128,
+     "chars": 52
     },
     {
      "file": "fangsong/l03-400.woff2",
-     "bytes": 7644,
-     "chars": 14
+     "bytes": 6788,
+     "chars": 12
     },
     {
      "file": "fangsong/l04-400.woff2",
@@ -2318,28 +2318,28 @@
     },
     {
      "file": "fangsong/l05-400.woff2",
-     "bytes": 12756,
-     "chars": 26
+     "bytes": 11892,
+     "chars": 24
     },
     {
      "file": "fangsong/l06-400.woff2",
-     "bytes": 26748,
-     "chars": 63
+     "bytes": 25264,
+     "chars": 59
     },
     {
      "file": "fangsong/l07-400.woff2",
-     "bytes": 6584,
-     "chars": 13
+     "bytes": 6224,
+     "chars": 12
     },
     {
      "file": "fangsong/l08-400.woff2",
-     "bytes": 3760,
-     "chars": 5
+     "bytes": 3456,
+     "chars": 4
     },
     {
      "file": "fangsong/l09-400.woff2",
-     "bytes": 12000,
-     "chars": 26
+     "bytes": 11672,
+     "chars": 25
     },
     {
      "file": "fangsong/l10-400.woff2",
@@ -2348,113 +2348,113 @@
     },
     {
      "file": "fangsong/l11-400.woff2",
-     "bytes": 14704,
-     "chars": 32
+     "bytes": 14032,
+     "chars": 30
     },
     {
      "file": "fangsong/l12-400.woff2",
-     "bytes": 3584,
-     "chars": 5
+     "bytes": 2696,
+     "chars": 3
     },
     {
      "file": "fangsong/l13-400.woff2",
-     "bytes": 18692,
-     "chars": 41
+     "bytes": 16976,
+     "chars": 37
     },
     {
      "file": "fangsong/l14-400.woff2",
-     "bytes": 6576,
-     "chars": 12
+     "bytes": 5496,
+     "chars": 9
     },
     {
      "file": "fangsong/l15-400.woff2",
-     "bytes": 6356,
-     "chars": 11
+     "bytes": 6092,
+     "chars": 10
     },
     {
      "file": "fangsong/l16-400.woff2",
-     "bytes": 6256,
-     "chars": 11
+     "bytes": 5352,
+     "chars": 9
     },
     {
      "file": "fangsong/l17-400.woff2",
-     "bytes": 8228,
-     "chars": 16
+     "bytes": 7684,
+     "chars": 14
     },
     {
      "file": "fangsong/l18-400.woff2",
-     "bytes": 3656,
-     "chars": 5
+     "bytes": 2240,
+     "chars": 2
     },
     {
      "file": "fangsong/l19-400.woff2",
-     "bytes": 4292,
-     "chars": 9
+     "bytes": 3644,
+     "chars": 7
     },
     {
      "file": "fangsong/l20-400.woff2",
-     "bytes": 10544,
-     "chars": 22
+     "bytes": 10260,
+     "chars": 21
     },
     {
      "file": "fangsong/l21-400.woff2",
-     "bytes": 8872,
-     "chars": 17
+     "bytes": 7748,
+     "chars": 14
     },
     {
      "file": "fangsong/l22-400.woff2",
-     "bytes": 3436,
-     "chars": 4
+     "bytes": 2932,
+     "chars": 3
     },
     {
      "file": "fangsong/l23-400.woff2",
-     "bytes": 8616,
-     "chars": 15
+     "bytes": 7692,
+     "chars": 13
     },
     {
      "file": "fangsong/l24-400.woff2",
-     "bytes": 8964,
-     "chars": 18
+     "bytes": 7788,
+     "chars": 15
     },
     {
      "file": "fangsong/l25-400.woff2",
-     "bytes": 11696,
-     "chars": 23
+     "bytes": 10856,
+     "chars": 21
     },
     {
      "file": "fangsong/l26-400.woff2",
-     "bytes": 9352,
-     "chars": 18
+     "bytes": 8856,
+     "chars": 17
     },
     {
      "file": "fangsong/l27-400.woff2",
-     "bytes": 11476,
-     "chars": 25
+     "bytes": 10776,
+     "chars": 23
     },
     {
      "file": "fangsong/l28-400.woff2",
-     "bytes": 34724,
-     "chars": 73
+     "bytes": 33452,
+     "chars": 70
     },
     {
      "file": "fangsong/l29-400.woff2",
-     "bytes": 14024,
-     "chars": 28
+     "bytes": 13508,
+     "chars": 27
     },
     {
      "file": "fangsong/l30-400.woff2",
-     "bytes": 11208,
-     "chars": 22
+     "bytes": 10020,
+     "chars": 19
     },
     {
      "file": "fangsong/l31-400.woff2",
-     "bytes": 3380,
-     "chars": 5
+     "bytes": 2980,
+     "chars": 4
     },
     {
      "file": "fangsong/l32-400.woff2",
-     "bytes": 5228,
-     "chars": 9
+     "bytes": 8088,
+     "chars": 17
     },
     {
      "file": "fangsong/s1-400.woff2",
@@ -2488,8 +2488,8 @@
     },
     {
      "file": "fangsong/c004-400.woff2",
-     "bytes": 4360,
-     "chars": 8
+     "bytes": 3524,
+     "chars": 6
     },
     {
      "file": "fangsong/c005-400.woff2",
@@ -2578,8 +2578,8 @@
     },
     {
      "file": "fangsong/c022-400.woff2",
-     "bytes": 4428,
-     "chars": 6
+     "bytes": 3976,
+     "chars": 5
     },
     {
      "file": "fangsong/c023-400.woff2",
@@ -2648,8 +2648,8 @@
     },
     {
      "file": "fangsong/c036-400.woff2",
-     "bytes": 6812,
-     "chars": 15
+     "bytes": 6500,
+     "chars": 14
     },
     {
      "file": "fangsong/c037-400.woff2",
@@ -2678,8 +2678,8 @@
     },
     {
      "file": "fangsong/c042-400.woff2",
-     "bytes": 7144,
-     "chars": 20
+     "bytes": 6972,
+     "chars": 19
     },
     {
      "file": "fangsong/c043-400.woff2",
@@ -2713,8 +2713,8 @@
     },
     {
      "file": "fangsong/c049-400.woff2",
-     "bytes": 8348,
-     "chars": 18
+     "bytes": 7992,
+     "chars": 17
     },
     {
      "file": "fangsong/c050-400.woff2",
@@ -2788,8 +2788,8 @@
     },
     {
      "file": "fangsong/c064-400.woff2",
-     "bytes": 10616,
-     "chars": 25
+     "bytes": 10184,
+     "chars": 24
     },
     {
      "file": "fangsong/c065-400.woff2",
@@ -2988,8 +2988,8 @@
     },
     {
      "file": "fangsong/c104-400.woff2",
-     "bytes": 30476,
-     "chars": 61
+     "bytes": 30156,
+     "chars": 60
     },
     {
      "file": "fangsong/c105-400.woff2",
