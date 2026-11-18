@@ -321,10 +321,10 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
   margin-left: auto; display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px 0 18px; text-decoration: none;
   background: none; border: 0; cursor: pointer; font: 500 14px/1 var(--serif); letter-spacing: .3em; color: var(--ink); white-space: nowrap;
 }
-.sb-close i { position: relative; width: 13px; height: 13px; display: block; }
-.sb-close i::before, .sb-close i::after { content: ""; position: absolute; left: -2px; right: -2px; top: 6px; height: 1px; background: currentColor; }
-.sb-close i::before { transform: rotate(45deg); }
-.sb-close i::after { transform: rotate(-45deg); }
+.sb-close i, .sheet-close2 i { position: relative; width: 13px; height: 13px; display: block; }
+.sb-close i::before, .sb-close i::after, .sheet-close2 i::before, .sheet-close2 i::after { content: ""; position: absolute; left: -2px; right: -2px; top: 6px; height: 1px; background: currentColor; }
+.sb-close i::before, .sheet-close2 i::before { transform: rotate(45deg); }
+.sb-close i::after, .sheet-close2 i::after { transform: rotate(-45deg); }
 
 .sheet-cover { margin: 14px 14px 0; transform-origin: 0 0; text-align: center; line-height: 0; }
 .sheet-cover { --mh: min(42vh, 460px); }
@@ -436,8 +436,8 @@ html[data-navigating] .item.is-pending .frame { animation: dr-wait 1s ease-in-ou
 .sn-t { display: block; margin-top: 11px; font: 500 17px/1.45 var(--serif); letter-spacing: .02em; text-wrap: balance; }
 @media (hover: hover) { a.sn:hover .sn-t { text-decoration: underline; text-underline-offset: .3em; text-decoration-thickness: 1px; } }
 .sheet-close2 {
-  display: flex; align-items: center; justify-content: center; width: fit-content; margin: 34px auto 0; min-height: 48px; padding: 0 30px; background: none; border: 1px solid var(--ink);
-  font: 500 14px/1 var(--serif); letter-spacing: .3em; text-indent: .3em; color: var(--ink); cursor: pointer; text-decoration: none;
+  display: flex; align-items: center; justify-content: center; gap: 10px; width: fit-content; margin: 34px auto 0; min-height: 48px; padding: 0 28px 0 30px; background: none; border: 1px solid var(--ink);
+  font: 500 14px/1 var(--serif); letter-spacing: .3em; color: var(--ink); cursor: pointer; text-decoration: none;
 }
 @media (hover: hover) { #theme-root .sheet-close2:hover { background: var(--ink); color: var(--paper); } }
 

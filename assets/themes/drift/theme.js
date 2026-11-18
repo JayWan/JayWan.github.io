@@ -522,11 +522,11 @@ export default {
     };
     S.mini = playButton('play play-s', '播放或暂停', miniToggle);
     S.track = h('div', { className: 'track' }, S.play, h('div', { className: 'track-txt' }, h('span', { className: 'track-k' }, '这封信的歌'), S.song), S.time, S.line);
-    S.bar = h('div', { className: 'sheet-bar' }, S.no, h('div', { className: 'sb-song' }, S.mini, S.miniName),
-      h('a', { className: 'sb-close', href: '/', 'data-back': '', onclick: closeClick }, h('span', {}, '合上'), h('i', { 'aria-hidden': 'true' })));
+    /* closing is one word and one mark, the same at the head of the sheet and at its foot */
+    const closeLink = (cls) => h('a', { className: cls, href: '/', 'data-back': '', onclick: closeClick }, h('span', {}, '合上'), h('i', { 'aria-hidden': 'true' }));
+    S.bar = h('div', { className: 'sheet-bar' }, S.no, h('div', { className: 'sb-song' }, S.mini, S.miniName), closeLink('sb-close'));
     S.head = h('header', { className: 'sheet-head' }, h('div', { className: 'sh-main' }, S.meta, S.title, S.by), S.days, S.track);
-    S.foot = h('footer', { className: 'sheet-foot' }, S.sign, S.nav,
-      h('a', { className: 'sheet-close2', href: '/', 'data-back': '', onclick: closeClick }, '合上，回到河里'));
+    S.foot = h('footer', { className: 'sheet-foot' }, S.sign, S.nav, closeLink('sheet-close2'));
     sheet.append(S.paper, S.bar, S.cover, S.head, S.body, S.foot);
 
     const season = (d) => (typeof fmt.season === 'function' ? fmt.season(d) : '');
