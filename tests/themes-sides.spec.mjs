@@ -46,7 +46,8 @@ test.describe('theme "sides": its own rules', () => {
       await expect(page.locator('#theme-root .sd-yr--empty:visible'), 'empty years are not listed while filtering').toHaveCount(0);
     }
     await page.locator('#theme-root .sd-tab[data-filter="all"]').click();
-    await expect(page.locator('#theme-root .sd-yr--empty:visible').first()).toContainText('这一年没有信');
+    // the year is printed beside it, so the row says only 「没有信」 (the contract's wording, three characters)
+    await expect(page.locator('#theme-root .sd-yr--empty:visible span').last()).toHaveText('没有信');
   });
 
   test('the site\'s own line never fetches a font for itself', async ({ page, baseURL }) => {

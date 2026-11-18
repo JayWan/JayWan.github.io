@@ -314,7 +314,7 @@ export default {
         if (ofYear.length) {
           const n = h('span', {}, `${ofYear.length} 封`);
           yearRows.push([list.appendChild(h('li', { class: 'sd-yr' }, h('span', {}, String(year)), n)), ofYear, n]);
-        } else if (!all) yearRows.push([list.appendChild(h('li', { class: 'sd-yr sd-yr--empty' }, h('span', {}, String(year)), h('span', {}, '这一年没有信'))), ofYear, null]);
+        } else if (!all) yearRows.push([list.appendChild(h('li', { class: 'sd-yr sd-yr--empty' }, h('span', {}, String(year)), h('span', {}, '没有信'))), ofYear, null]);     // 年份就印在旁边，不用再说「这一年」
         ofYear.forEach((l) => list.append(row(l)));
       });
       const extras = letters.filter((l) => !trackNo.has(l));
